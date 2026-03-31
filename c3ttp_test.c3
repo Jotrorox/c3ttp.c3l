@@ -21,6 +21,15 @@ fn void? handle_ping_keep_alive(Request* request, Response* response, void* cont
 	response.set_header("Connection", "keep-alive");
 }
 
+fn void? handle_head_ping(Request* request, Response* response, void* context)
+{
+	test::eq("HEAD", request.method);
+	test::eq("/ping", request.target);
+	response.status = 200;
+	response.set_body("pong");
+	response.set_header("Content-Type", "text/plain");
+}
+
 struct RequestCounter
 {
 	int value;
@@ -114,6 +123,77 @@ fn void response_roundtrip() @test
 	test::eq("application/json", parsed.header("CONTENT-TYPE")!!);
 }
 
+fn void informational_response_roundtrip_has_no_body() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "HTTP/1.1 100 Continue\r\nContent-Length: 4\r\n\r\nbodytail")!!;
+	defer buffer.free();
+
+	Response response = read_response(tmem, &buffer)!!;
+	defer response.free();
+
+	test::eq(100, response.status);
+	test::eq("", response.body);
+	test::eq("bodytail", (String)buffer.bytes[buffer.read_idx:8]);
+}
+
+fn void no_content_response_writer_suppresses_body() @test
+{
+	Response response;
+	response.init(tmem, 204, "No Content", "ignored");
+	defer response.free();
+
+	io::ByteBuffer buffer;
+	buffer.tinit(64);
+	defer buffer.free();
+
+	write_response(&buffer, &response)!!;
+
+	String encoded = (String)buffer.bytes[:buffer.write_idx];
+	test::@check(!encoded.contains("ignored"), "did not expect a 204 response body");
+	test::@check(!encoded.contains("Content-Length:"), "did not expect an implicit content-length for 204");
+	test::eq("HTTP/1.1 204 No Content\r\n\r\n", encoded);
+}
+
+fn void not_modified_response_roundtrip_has_no_body() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "HTTP/1.1 304 Not Modified\r\nContent-Length: 7\r\n\r\npayload")!!;
+	defer buffer.free();
+
+	Response response = read_response(tmem, &buffer)!!;
+	defer response.free();
+
+	test::eq(304, response.status);
+	test::eq("", response.body);
+	test::eq("payload", (String)buffer.bytes[buffer.read_idx:7]);
+}
+
+fn void head_exchange_does_not_send_or_read_a_response_body() @test
+{
+	tcp::TcpSocketPair pair;
+	pair.init()!!;
+	defer if (catch pair.destroy()) {}
+
+	RespondOnceArgs args = { .socket = &pair.recv };
+	thread::Thread worker;
+	worker.create(&respond_head_thread, &args)!!;
+
+	Request request;
+	request.init(tmem, "HEAD", "/ping");
+	defer request.free();
+	request.set_header("Host", "example.com");
+	request.set_header("Connection", "close");
+
+	Response response = exchange(tmem, &pair.send, &request)!!;
+	defer response.free();
+
+	test::eq(200, response.status);
+	test::eq("", response.body);
+	test::eq("4", response.header("Content-Length")!!);
+	test::eq(0, worker.join()!!);
+}
+
 fn void chunked_request_roundtrip() @test
 {
 	Request request;
@@ -181,7 +261,7 @@ fn void zero_length_response_roundtrip() @test
 
 	test::eq(204, parsed.status);
 	test::eq("", parsed.body);
-	test::eq("0", parsed.header("Content-Length")!!);
+	test::@error(parsed.header("Content-Length"), INVALID_HEADER);
 }
 
 fn void invalid_status_line_without_reason() @test
@@ -333,6 +413,14 @@ fn void write_request_rejects_unsupported_method() @test
 	test::@error(write_request(&buffer, &request), UNSUPPORTED_METHOD);
 }
 
+fn void send_url_rejects_unsupported_scheme() @test
+{
+	Client client = new_client();
+
+	test::@error(client.send_url(tmem, "GET", "https://example.com/"), UNSUPPORTED_SCHEME);
+	test::@error(client.send_url(tmem, "GET", "mailto:user@example.com"), UNSUPPORTED_SCHEME);
+}
+
 struct ServeOnceArgs
 {
 	Server* server;
@@ -378,6 +466,21 @@ fn int respond_keep_alive_thread(void* arg)
 			if (catch args.socket.close()) {}
 			return 1;
 		}
+		return 0;
+	};
+}
+
+fn int respond_head_thread(void* arg)
+{
+	@pool_init(mem, 4096)
+	{
+		RespondOnceArgs* args = arg;
+		if (catch respond_once(mem, args.socket, &handle_head_ping))
+		{
+			if (catch args.socket.close()) {}
+			return 1;
+		}
+		if (catch args.socket.close()) {}
 		return 0;
 	};
 }

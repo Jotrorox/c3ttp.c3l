@@ -158,6 +158,7 @@ fn Response? client_send_impl(Client* self, Allocator allocator, String host, ui
 fn Response? client_send_url_impl(Client* self, Allocator allocator, String method, String url_string, String body = "") @private
 {
 	url::Url parsed = url::parse(tmem, url_string)!;
+	if (parsed.scheme && parsed.scheme != "http") return UNSUPPORTED_SCHEME~;
 	if (!parsed.host) return MISSING_HOST~;
 
 	String target = parsed.path ? parsed.path : "/";
@@ -290,13 +291,13 @@ fn Request? read_request_impl(Allocator allocator, Stream stream) <Stream> @priv
 <*
  @require allocator != null : "allocator must be set"
 *>
-fn Response? read_response_impl(Allocator allocator, Stream stream) <Stream> @private
+fn Response? read_response_impl(Allocator allocator, Stream stream, String request_method = "") <Stream> @private
 {
 	String line = io::readline(allocator, stream)!;
 	defer line.free(allocator);
 
 	Response response = parse_status_line(allocator, line)!;
-	if (catch err = read_headers_and_body(allocator, stream, &response.headers, &response.body, false))
+	if (catch err = read_headers_and_body(allocator, stream, &response.headers, &response.body, false, !response_has_no_message_body(response.status, request_method)))
 	{
 		response_free_impl(&response);
 		return err~;
@@ -313,18 +314,21 @@ fn void? write_request_impl(Stream stream, Request* request) <Stream> @private
 	write_body(stream, &request.headers, request.body)!;
 }
 
-fn void? write_response_impl(Stream stream, Response* response) <Stream> @private
+fn void? write_response_impl(Stream stream, Response* response, String request_method = "") <Stream> @private
 {
 	validate_version(response.version)!;
 	io::fprintf(stream, "%s %d %s\r\n", response.version, response.status, response.reason)!;
-	write_headers(stream, &response.headers, response.body)!;
-	write_body(stream, &response.headers, response.body)!;
+	write_headers(stream, &response.headers, response.body, response_should_emit_implicit_content_length(response.status, request_method))!;
+	if (!response_has_no_message_body(response.status, request_method))
+	{
+		write_body(stream, &response.headers, response.body)!;
+	}
 }
 
 fn Response? exchange_impl(Allocator allocator, Stream stream, Request* request) <Stream> @private
 {
 	write_request_impl{$typeof(stream)}(stream, request)!;
-	return read_response_impl{$typeof(stream)}(allocator, stream);
+	return read_response_impl{$typeof(stream)}(allocator, stream, request.method);
 }
 
 fn void? respond_once_impl(Allocator allocator, Stream stream, Handler handler, void* context) <Stream> @private
@@ -346,7 +350,7 @@ fn void? respond_impl(Allocator allocator, Stream stream, Handler handler, uint 
 
 		handler(&request, &response, context)!;
 		apply_default_connection_policy(allocator, &request.headers, &response.headers);
-		write_response_impl{$typeof(stream)}(stream, &response)!;
+		write_response_impl{$typeof(stream)}(stream, &response, request.method)!;
 		handled++;
 		if (should_close_connection(&request.headers) || should_close_connection(&response.headers)) return;
 	}
@@ -386,7 +390,7 @@ fn Response? parse_status_line(Allocator allocator, String line) @private
 	};
 }
 
-fn void? read_headers_and_body(Allocator allocator, Stream stream, HeaderList* headers, String* body, bool require_host) <Stream> @private
+fn void? read_headers_and_body(Allocator allocator, Stream stream, HeaderList* headers, String* body, bool require_host, bool read_body = true) <Stream> @private
 {
 	while (true)
 	{
@@ -398,29 +402,32 @@ fn void? read_headers_and_body(Allocator allocator, Stream stream, HeaderList* h
 	}
 
 	validate_headers(headers, require_host)!;
+	validate_body_headers(headers)!;
+	if (!read_body)
+	{
+		set_empty_body(allocator, body);
+		return;
+	}
 
 	bool use_chunked = uses_chunked_transfer_encoding(headers)!;
 
 	String? content_length_text = get_header(headers, "Content-Length");
 	if (use_chunked)
 	{
-		if (try content_length_text) return CONFLICTING_BODY_HEADERS~;
 		read_chunked_body{$typeof(stream)}(allocator, stream, body)!;
 		return;
 	}
 
 	if (catch err = content_length_text)
 	{
-		(*body).free(allocator);
-		*body = "".copy(allocator);
+		set_empty_body(allocator, body);
 		return;
 	}
 
 	usz content_length = content_length_text.to_uint()!;
 	if (!content_length)
 	{
-		(*body).free(allocator);
-		*body = "".copy(allocator);
+		set_empty_body(allocator, body);
 		return;
 	}
 	char* buffer = allocator::alloc_array(allocator, char, content_length + 1);
@@ -507,7 +514,7 @@ fn Header? parse_header(Allocator allocator, String line) @private
 	};
 }
 
-fn void? write_headers(Stream stream, HeaderList* headers, String body) <Stream> @private
+fn void? write_headers(Stream stream, HeaderList* headers, String body, bool include_implicit_content_length = true) <Stream> @private
 {
 	bool use_chunked = uses_chunked_transfer_encoding(headers)!;
 	foreach (header : *headers)
@@ -515,7 +522,7 @@ fn void? write_headers(Stream stream, HeaderList* headers, String body) <Stream>
 		if (header_name_eq(header.name, "Content-Length")) continue;
 		io::fprintf(stream, "%s: %s\r\n", header.name, header.value)!;
 	}
-	if (!use_chunked) io::fprintf(stream, "Content-Length: %d\r\n", body.len)!;
+	if (include_implicit_content_length && !use_chunked) io::fprintf(stream, "Content-Length: %d\r\n", body.len)!;
 	io::fprintf(stream, "\r\n")!;
 }
 
@@ -564,6 +571,22 @@ fn String? get_header(HeaderList* headers, String name) @private
 {
 	Header* header = find_header_ref(headers, name)!;
 	return header.value;
+}
+
+fn void set_empty_body(Allocator allocator, String* body) @private
+{
+	(*body).free(allocator);
+	*body = "".copy(allocator);
+}
+
+fn void? validate_body_headers(HeaderList* headers) @private
+{
+	bool use_chunked = uses_chunked_transfer_encoding(headers)!;
+	String? content_length_text = get_header(headers, "Content-Length");
+	if (use_chunked)
+	{
+		if (try content_length_text) return CONFLICTING_BODY_HEADERS~;
+	}
 }
 
 fn void? validate_headers(HeaderList* headers, bool require_host) @private
@@ -658,6 +681,26 @@ fn bool header_name_eq(String left, String right) @private
 		if (c.to_lower() != right[i].to_lower()) return false;
 	}
 	return true;
+}
+
+fn bool response_status_disallows_body(ushort status) @private
+{
+	if (status >= 100 && status < 200) return true;
+	if (status == 204) return true;
+	if (status == 304) return true;
+	return false;
+}
+
+fn bool response_has_no_message_body(ushort status, String request_method = "") @private
+{
+	if (request_method == "HEAD") return true;
+	return response_status_disallows_body(status);
+}
+
+fn bool response_should_emit_implicit_content_length(ushort status, String request_method = "") @private
+{
+	if (request_method == "HEAD") return true;
+	return !response_status_disallows_body(status);
 }
 
 fn void? validate_version(String version) @private

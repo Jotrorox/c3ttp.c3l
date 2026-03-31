@@ -55,6 +55,16 @@ fn void response_roundtrip() @test
 	test::eq("application/json", parsed.header("CONTENT-TYPE")!!);
 }
 
+fn void invalid_status_line_without_reason() @test
+{
+	io::ByteBuffer buffer;
+	buffer.tinit(32);
+	defer buffer.free();
+
+	buffer.write("HTTP/1.1 204\r\nContent-Length: 0\r\n\r\n")!!;
+	test::@error(read_response(tmem, &buffer), INVALID_STATUS_LINE);
+}
+
 fn void socket_roundtrip() @test
 {
 	io::ByteBuffer buffer;

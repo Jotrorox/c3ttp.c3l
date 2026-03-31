@@ -429,14 +429,12 @@ fn Response? parse_status_line(Allocator allocator, String line)
 	@pool()
 	{
 		String[] parts = line.tsplit(" ", 3, true);
-		if (parts.len < 2) return INVALID_STATUS_LINE~;
+		if (parts.len != 3) return INVALID_STATUS_LINE~;
 		validate_version(parts[0])!;
 		ushort status = (ushort)parts[1].to_uint()!;
-		String reason = parts.len >= 3 ? parts[2] : "";
-		if (!reason) reason = "OK";
 
 		Response response;
-		response.init(allocator, status, reason, "", parts[0]);
+		response.init(allocator, status, parts[2], "", parts[0]);
 		return response;
 	};
 }

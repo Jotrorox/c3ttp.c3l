@@ -254,7 +254,7 @@ fn void? server_serve_once_impl(Server* self, Handler handler, void* context = n
 	server_listen_impl(self)!;
 	tcp::TcpSocket socket = tcp::accept(&self.listener)!;
 	defer catch (void)socket.close();
-	respond_once_impl{tcp::TcpSocket*}(self.allocator, &socket, handler, context)!;
+	respond_impl{tcp::TcpSocket*}(self.allocator, &socket, handler, 0, context)!;
 }
 
 <*
@@ -310,7 +310,7 @@ fn void? write_request_impl(Stream stream, Request* request) <Stream> @private
 	validate_method(request.method)!;
 	io::fprintf(stream, "%s %s %s\r\n", request.method, request.target, request.version)!;
 	write_headers(stream, &request.headers, request.body)!;
-	stream.write(request.body)!;
+	write_body(stream, &request.headers, request.body)!;
 }
 
 fn void? write_response_impl(Stream stream, Response* response) <Stream> @private
@@ -318,7 +318,7 @@ fn void? write_response_impl(Stream stream, Response* response) <Stream> @privat
 	validate_version(response.version)!;
 	io::fprintf(stream, "%s %d %s\r\n", response.version, response.status, response.reason)!;
 	write_headers(stream, &response.headers, response.body)!;
-	stream.write(response.body)!;
+	write_body(stream, &response.headers, response.body)!;
 }
 
 fn Response? exchange_impl(Allocator allocator, Stream stream, Request* request) <Stream> @private
@@ -329,16 +329,27 @@ fn Response? exchange_impl(Allocator allocator, Stream stream, Request* request)
 
 fn void? respond_once_impl(Allocator allocator, Stream stream, Handler handler, void* context) <Stream> @private
 {
-	Request request = read_request_impl{$typeof(stream)}(allocator, stream)!;
-	defer request_free_impl(&request);
+	respond_impl{$typeof(stream)}(allocator, stream, handler, 1, context)!;
+}
 
-	Response response;
-	response_init_impl(&response, allocator, 200, "OK");
-	defer response_free_impl(&response);
-	response_set_header_impl(&response, "Connection", "close");
+fn void? respond_impl(Allocator allocator, Stream stream, Handler handler, uint max_requests, void* context) <Stream> @private
+{
+	uint handled;
+	while (!max_requests || handled < max_requests)
+	{
+		Request request = read_request_impl{$typeof(stream)}(allocator, stream)!;
+		defer request_free_impl(&request);
 
-	handler(&request, &response, context)!;
-	write_response_impl{$typeof(stream)}(stream, &response)!;
+		Response response;
+		response_init_impl(&response, allocator, 200, "OK");
+		defer response_free_impl(&response);
+
+		handler(&request, &response, context)!;
+		apply_default_connection_policy(allocator, &request.headers, &response.headers);
+		write_response_impl{$typeof(stream)}(stream, &response)!;
+		handled++;
+		if (should_close_connection(&request.headers) || should_close_connection(&response.headers)) return;
+	}
 }
 
 fn Request? parse_request_line(Allocator allocator, String line) @private
@@ -388,13 +399,16 @@ fn void? read_headers_and_body(Allocator allocator, Stream stream, HeaderList* h
 
 	validate_headers(headers, require_host)!;
 
-	String? transfer_encoding = get_header(headers, "Transfer-Encoding");
-	if (try te = transfer_encoding)
-	{
-		if (te.to_lower_tcopy() != "identity") return UNSUPPORTED_TRANSFER_ENCODING~;
-	}
+	bool use_chunked = uses_chunked_transfer_encoding(headers)!;
 
 	String? content_length_text = get_header(headers, "Content-Length");
+	if (use_chunked)
+	{
+		if (try content_length_text) return CONFLICTING_BODY_HEADERS~;
+		read_chunked_body{$typeof(stream)}(allocator, stream, body)!;
+		return;
+	}
+
 	if (catch err = content_length_text)
 	{
 		(*body).free(allocator);
@@ -431,6 +445,54 @@ fn void? read_headers_and_body(Allocator allocator, Stream stream, HeaderList* h
 	*body = (String)buffer[:content_length];
 }
 
+fn void? read_chunked_body(Allocator allocator, Stream stream, String* body) <Stream> @private
+{
+	DString chunks = dstring::new_with_capacity(allocator, 32);
+	defer chunks.free();
+
+	while (true)
+	{
+		String line = io::readline(allocator, stream)!;
+		defer line.free(allocator);
+
+		usz extension = line.index_of_char(';') ?? line.len;
+		usz? chunk_size_value = line[:extension].trim().to_uint(16);
+		if (catch err = chunk_size_value) return INVALID_CHUNK~;
+		usz chunk_size = chunk_size_value;
+		if (!chunk_size)
+		{
+			while (true)
+			{
+				String trailer = io::readline(allocator, stream)!;
+				defer trailer.free(allocator);
+				if (!trailer) break;
+				parse_header(allocator, trailer)!;
+			}
+			(*body).free(allocator);
+			*body = chunks.copy_str(allocator);
+			chunks.free();
+			return;
+		}
+
+		char[] chunk = allocator::alloc_array(allocator, char, chunk_size);
+		defer allocator::free(allocator, chunk);
+
+		usz read;
+		while (read < chunk_size)
+		{
+			usz n = stream.read(chunk[read:chunk_size - read])!;
+			if (!n) return io::UNEXPECTED_EOF~;
+			read += n;
+		}
+
+		char[2] chunk_crlf = {};
+		read_exact{$typeof(stream)}(stream, chunk_crlf[..])!;
+		if ((String)chunk_crlf[..] != "\r\n") return INVALID_CHUNK~;
+
+		chunks.append_bytes(chunk);
+	}
+}
+
 fn Header? parse_header(Allocator allocator, String line) @private
 {
 	usz? split_value = line.index_of_char(':');
@@ -447,13 +509,35 @@ fn Header? parse_header(Allocator allocator, String line) @private
 
 fn void? write_headers(Stream stream, HeaderList* headers, String body) <Stream> @private
 {
+	bool use_chunked = uses_chunked_transfer_encoding(headers)!;
 	foreach (header : *headers)
 	{
 		if (header_name_eq(header.name, "Content-Length")) continue;
 		io::fprintf(stream, "%s: %s\r\n", header.name, header.value)!;
 	}
-	io::fprintf(stream, "Content-Length: %d\r\n", body.len)!;
+	if (!use_chunked) io::fprintf(stream, "Content-Length: %d\r\n", body.len)!;
 	io::fprintf(stream, "\r\n")!;
+}
+
+fn void? write_body(Stream stream, HeaderList* headers, String body) <Stream> @private
+{
+	if (!uses_chunked_transfer_encoding(headers)!)
+	{
+		stream.write(body)!;
+		return;
+	}
+	write_chunked_body{$typeof(stream)}(stream, body)!;
+}
+
+fn void? write_chunked_body(Stream stream, String body) <Stream> @private
+{
+	if (body)
+	{
+		io::fprintf(stream, "%x\r\n", body.len)!;
+		stream.write(body)!;
+		io::fprintf(stream, "\r\n")!;
+	}
+	io::fprintf(stream, "0\r\n\r\n")!;
 }
 
 fn void upsert_header(HeaderList* headers, Allocator allocator, String name, String value) @private
@@ -517,6 +601,53 @@ fn void? validate_headers(HeaderList* headers, bool require_host) @private
 	}
 
 	if (require_host && !seen_host) return MISSING_HOST~;
+}
+
+fn bool should_close_connection(HeaderList* headers) @private
+{
+	String? connection = get_header(headers, "Connection");
+	if (catch err = connection) return false;
+	return header_contains_token(connection, "close");
+}
+
+fn void apply_default_connection_policy(Allocator allocator, HeaderList* request_headers, HeaderList* response_headers) @private
+{
+	if (should_close_connection(request_headers))
+	{
+		upsert_header(response_headers, allocator, "Connection", "close");
+		return;
+	}
+}
+
+fn bool? uses_chunked_transfer_encoding(HeaderList* headers) @private
+{
+	String? transfer_encoding = get_header(headers, "Transfer-Encoding");
+	if (catch err = transfer_encoding) return false;
+	String te = transfer_encoding;
+	if (te.to_lower_tcopy() == "identity") return false;
+	if (header_contains_token(te, "chunked")) return true;
+	return UNSUPPORTED_TRANSFER_ENCODING~;
+}
+
+fn bool header_contains_token(String header_value, String token) @private
+{
+	Splitter splitter = header_value.tokenize(",");
+	while (try part = splitter.next())
+	{
+		if (part.trim().to_lower_tcopy() == token) return true;
+	}
+	return false;
+}
+
+fn void? read_exact(Stream stream, char[] buffer) <Stream> @private
+{
+	usz read;
+	while (read < buffer.len)
+	{
+		usz n = stream.read(buffer[read:buffer.len - read])!;
+		if (!n) return io::UNEXPECTED_EOF~;
+		read += n;
+	}
 }
 
 fn bool header_name_eq(String left, String right) @private

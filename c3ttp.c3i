@@ -8,7 +8,9 @@ faultdef
 	INVALID_REQUEST_LINE,
 	INVALID_STATUS_LINE,
 	INVALID_HEADER,
+	INVALID_CHUNK,
 	INVALID_VERSION,
+	CONFLICTING_BODY_HEADERS,
 	MISSING_HOST,
 	UNSUPPORTED_TRANSFER_ENCODING,
 	UNSUPPORTED_METHOD,
@@ -133,4 +135,9 @@ macro Response? exchange(Allocator allocator, stream, Request* request)
 macro void? respond_once(Allocator allocator, stream, Handler handler, void* context = null)
 {
 	return respond_once_impl{$typeof(stream)}(allocator, stream, handler, context);
+}
+
+macro void? respond(Allocator allocator, stream, Handler handler, uint max_requests = 0, void* context = null)
+{
+	return respond_impl{$typeof(stream)}(allocator, stream, handler, max_requests, context);
 }

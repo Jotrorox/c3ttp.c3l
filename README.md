@@ -13,20 +13,21 @@ It focuses on:
 Current scope:
 
 - HTTP/1.1 request and response parsing
-- `Content-Length` bodies
+- `Content-Length` and `Transfer-Encoding: chunked` bodies
 - simple client requests over TCP
 - simple server accept / handle / respond flow
+- persistent HTTP/1.1 connections when neither side asks to close
 
 Validation rules:
 
 - request methods are limited to `GET`, `HEAD`, `POST`, `PUT`, `DELETE`, `OPTIONS`, `PATCH`, `TRACE`, and `CONNECT`
 - parsed HTTP/1.1 requests must include `Host`
 - duplicate singleton headers are rejected for `Host`, `Content-Length`, `Transfer-Encoding`, and `Connection`
-- `respond_once` emits `Connection: close` by default
+- `Transfer-Encoding: chunked` cannot be combined with `Content-Length`
+- `respond_once` preserves HTTP/1.1 keep-alive unless the request or response asks to close
 
 Out of scope for now:
 
-- chunked transfer encoding
 - TLS / HTTPS
 - HTTP/2+
 
@@ -49,7 +50,9 @@ Supported faults:
 - `INVALID_REQUEST_LINE`
 - `INVALID_STATUS_LINE`
 - `INVALID_HEADER`
+- `INVALID_CHUNK`
 - `INVALID_VERSION`
+- `CONFLICTING_BODY_HEADERS`
 - `MISSING_HOST`
 - `UNSUPPORTED_TRANSFER_ENCODING`
 - `UNSUPPORTED_METHOD`
@@ -71,6 +74,7 @@ Supported top-level API:
 - `c3ttp::write_response`
 - `c3ttp::exchange`
 - `c3ttp::respond_once`
+- `c3ttp::respond`
 
 Not part of the intentional public API:
 

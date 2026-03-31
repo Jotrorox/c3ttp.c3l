@@ -2,6 +2,7 @@ module c3ttp;
 
 import std::core::test;
 import std::io;
+import std::thread;
 
 fn void? handle_ping(Request* request, Response* response, void* context)
 {
@@ -65,22 +66,57 @@ fn void invalid_status_line_without_reason() @test
 	test::@error(read_response(tmem, &buffer), INVALID_STATUS_LINE);
 }
 
-fn void socket_roundtrip() @test
+struct ServeOnceArgs
 {
-	io::ByteBuffer buffer;
-	buffer.tinit(128);
-	defer buffer.free();
+	Server* server;
+}
+
+fn int serve_once_thread(void* arg)
+{
+	@pool_init(mem, 4096)
+	{
+		ServeOnceArgs* args = arg;
+		if (catch args.server.serve_once(&handle_ping)) return 1;
+		return 0;
+	};
+}
+
+fn uint? bind_test_server(Server* server)
+{
+	for (uint port = 18080; port < 18112; port++)
+	{
+		server.init(mem, "127.0.0.1", port);
+		if (catch server.listen())
+		{
+			server.free();
+			continue;
+		}
+		return port;
+	}
+	return io::GENERAL_ERROR~;
+}
+
+fn void tcp_listener_roundtrip() @test
+{
+	Server server;
+	defer server.free();
+	uint port = bind_test_server(&server)!!;
+
+	ServeOnceArgs args = { .server = &server };
+	thread::Thread worker;
+	worker.create(&serve_once_thread, &args)!!;
 
 	Request request;
 	request.init(tmem, "GET", "/ping");
 	defer request.free();
-	request.set_header("Host", "example.test");
+	request.set_header("Host", string::tformat("127.0.0.1:%d", port));
 	request.set_header("Connection", "close");
 
-	write_request(&buffer, &request)!!;
-	respond_once(tmem, &buffer, &handle_ping)!!;
-	Response response = read_response(tmem, &buffer)!!;
+	Client client = new_client();
+	Response response = client.send(tmem, "127.0.0.1", port, &request)!!;
 	defer response.free();
+
+	test::eq(0, worker.join()!!);
 	test::eq(200, response.status);
 	test::eq("pong", response.body);
 	test::eq("text/plain", response.header("content-type")!!);

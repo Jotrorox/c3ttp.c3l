@@ -343,7 +343,7 @@ macro void? respond_once(Allocator allocator, stream, Handler handler, void* con
 <*
  @require allocator != null : "allocator must be set"
 *>
-fn Request? read_request_impl(Allocator allocator, Stream stream) <Stream>
+fn Request? read_request_impl(Allocator allocator, Stream stream) <Stream> @private
 {
 	String line = io::readline(allocator, stream)!;
 	defer line.free(allocator);
@@ -360,7 +360,7 @@ fn Request? read_request_impl(Allocator allocator, Stream stream) <Stream>
 <*
  @require allocator != null : "allocator must be set"
 *>
-fn Response? read_response_impl(Allocator allocator, Stream stream) <Stream>
+fn Response? read_response_impl(Allocator allocator, Stream stream) <Stream> @private
 {
 	String line = io::readline(allocator, stream)!;
 	defer line.free(allocator);
@@ -374,7 +374,7 @@ fn Response? read_response_impl(Allocator allocator, Stream stream) <Stream>
 	return response;
 }
 
-fn void? write_request_impl(Stream stream, Request* request) <Stream>
+fn void? write_request_impl(Stream stream, Request* request) <Stream> @private
 {
 	validate_version(request.version)!;
 	io::fprintf(stream, "%s %s %s\r\n", request.method, request.target, request.version)!;
@@ -382,7 +382,7 @@ fn void? write_request_impl(Stream stream, Request* request) <Stream>
 	stream.write(request.body)!;
 }
 
-fn void? write_response_impl(Stream stream, Response* response) <Stream>
+fn void? write_response_impl(Stream stream, Response* response) <Stream> @private
 {
 	validate_version(response.version)!;
 	io::fprintf(stream, "%s %d %s\r\n", response.version, response.status, response.reason)!;
@@ -390,13 +390,13 @@ fn void? write_response_impl(Stream stream, Response* response) <Stream>
 	stream.write(response.body)!;
 }
 
-fn Response? exchange_impl(Allocator allocator, Stream stream, Request* request) <Stream>
+fn Response? exchange_impl(Allocator allocator, Stream stream, Request* request) <Stream> @private
 {
 	write_request(stream, request)!;
 	return read_response(allocator, stream);
 }
 
-fn void? respond_once_impl(Allocator allocator, Stream stream, Handler handler, void* context) <Stream>
+fn void? respond_once_impl(Allocator allocator, Stream stream, Handler handler, void* context) <Stream> @private
 {
 	Request request = read_request(allocator, stream)!;
 	defer request.free();
@@ -410,7 +410,7 @@ fn void? respond_once_impl(Allocator allocator, Stream stream, Handler handler, 
 	write_response(stream, &response)!;
 }
 
-fn Request? parse_request_line(Allocator allocator, String line)
+fn Request? parse_request_line(Allocator allocator, String line) @private
 {
 	@pool()
 	{
@@ -420,11 +420,13 @@ fn Request? parse_request_line(Allocator allocator, String line)
 
 		Request request;
 		request.init(allocator, parts[0], parts[1], "", parts[2]);
+		request.body.free(allocator);
+		request.body = {};
 		return request;
 	};
 }
 
-fn Response? parse_status_line(Allocator allocator, String line)
+fn Response? parse_status_line(Allocator allocator, String line) @private
 {
 	@pool()
 	{
@@ -435,11 +437,13 @@ fn Response? parse_status_line(Allocator allocator, String line)
 
 		Response response;
 		response.init(allocator, status, parts[2], "", parts[0]);
+		response.body.free(allocator);
+		response.body = {};
 		return response;
 	};
 }
 
-fn void? read_headers_and_body(Allocator allocator, Stream stream, HeaderList* headers, String* body) <Stream>
+fn void? read_headers_and_body(Allocator allocator, Stream stream, HeaderList* headers, String* body) <Stream> @private
 {
 	while (true)
 	{
@@ -459,6 +463,7 @@ fn void? read_headers_and_body(Allocator allocator, Stream stream, HeaderList* h
 	String? content_length_text = get_header(headers, "Content-Length");
 	if (catch err = content_length_text)
 	{
+		(*body).free(allocator);
 		*body = "".copy(allocator);
 		return;
 	}
@@ -486,7 +491,7 @@ fn void? read_headers_and_body(Allocator allocator, Stream stream, HeaderList* h
 	*body = (String)buffer[:content_length];
 }
 
-fn Header? parse_header(Allocator allocator, String line)
+fn Header? parse_header(Allocator allocator, String line) @private
 {
 	usz? split_value = line.index_of_char(':');
 	if (catch err = split_value) return INVALID_HEADER~;
@@ -500,7 +505,7 @@ fn Header? parse_header(Allocator allocator, String line)
 	};
 }
 
-fn void? write_headers(Stream stream, HeaderList* headers, String body) <Stream>
+fn void? write_headers(Stream stream, HeaderList* headers, String body) <Stream> @private
 {
 	foreach (header : *headers)
 	{
@@ -511,7 +516,7 @@ fn void? write_headers(Stream stream, HeaderList* headers, String body) <Stream>
 	io::fprintf(stream, "\r\n")!;
 }
 
-fn void upsert_header(HeaderList* headers, Allocator allocator, String name, String value)
+fn void upsert_header(HeaderList* headers, Allocator allocator, String name, String value) @private
 {
 	if (try header = find_header_ref(headers, name))
 	{
@@ -522,7 +527,7 @@ fn void upsert_header(HeaderList* headers, Allocator allocator, String name, Str
 	headers.push({ .name = name.copy(allocator), .value = value.copy(allocator) });
 }
 
-fn Header*? find_header_ref(HeaderList* headers, String name)
+fn Header*? find_header_ref(HeaderList* headers, String name) @private
 {
 	foreach (&header : *headers)
 	{
@@ -531,13 +536,13 @@ fn Header*? find_header_ref(HeaderList* headers, String name)
 	return INVALID_HEADER~;
 }
 
-fn String? get_header(HeaderList* headers, String name)
+fn String? get_header(HeaderList* headers, String name) @private
 {
 	Header* header = find_header_ref(headers, name)!;
 	return header.value;
 }
 
-fn bool header_name_eq(String left, String right)
+fn bool header_name_eq(String left, String right) @private
 {
 	if (left.len != right.len) return false;
 	foreach (i, c : left)
@@ -547,7 +552,7 @@ fn bool header_name_eq(String left, String right)
 	return true;
 }
 
-fn void? validate_version(String version)
+fn void? validate_version(String version) @private
 {
 	if (version != HTTP_11) return INVALID_VERSION~;
 }

@@ -6,7 +6,6 @@ import std::io;
 import std::net;
 import std::net::os;
 import std::net::tcp;
-import std::net::url;
 import std::time;
 
 const String HTTP_11 @private = "HTTP/1.1";
@@ -157,33 +156,16 @@ fn Response? client_send_impl(Client* self, Allocator allocator, String host, ui
 *>
 fn Response? client_send_url_impl(Client* self, Allocator allocator, String method, String url_string, String body = "") @private
 {
-	url::Url parsed = url::parse(tmem, url_string)!;
-	if (parsed.scheme && parsed.scheme != "http") return UNSUPPORTED_SCHEME~;
-	if (!parsed.host) return MISSING_HOST~;
-
-	String target = parsed.path ? parsed.path : "/";
-	if (parsed.query)
-	{
-		@pool()
-		{
-			DString combined = dstring::temp(target);
-			combined.append_char('?');
-			combined.append_string(parsed.query);
-			target = combined.copy_str(allocator);
-		};
-	}
-	else
-	{
-		target = target.copy(allocator);
-	}
+	HttpUrlParts parsed = parse_http_url(url_string)!;
+	String target = build_origin_form_target(allocator, parsed.path, parsed.query);
 	defer target.free(allocator);
 
 	Request request;
 	request_init_impl(&request, allocator, method, target, body);
 	defer request_free_impl(&request);
-	request_set_header_impl(&request, "Host", parsed.port ? string::tformat("%s:%d", parsed.host, parsed.port) : parsed.host);
+	request_set_header_impl(&request, "Host", parsed.host_header);
 	request_set_header_impl(&request, "Connection", "close");
-	return client_send_impl(self, allocator, parsed.host, parsed.port ? parsed.port : 80, &request);
+	return client_send_impl(self, allocator, parsed.connect_host, parsed.port, &request);
 }
 
 <*
@@ -309,6 +291,9 @@ fn void? write_request_impl(Stream stream, Request* request) <Stream> @private
 {
 	validate_version(request.version)!;
 	validate_method(request.method)!;
+	validate_request_target(request.method, request.target)!;
+	validate_headers(&request.headers, true)!;
+	validate_body_headers(&request.headers)!;
 	io::fprintf(stream, "%s %s %s\r\n", request.method, request.target, request.version)!;
 	write_headers(stream, &request.headers, request.body)!;
 	write_body(stream, &request.headers, request.body)!;
@@ -364,6 +349,7 @@ fn Request? parse_request_line(Allocator allocator, String line) @private
 		if (parts.len != 3) return INVALID_REQUEST_LINE~;
 		validate_version(parts[2])!;
 		validate_method(parts[0])!;
+		validate_request_target(parts[0], parts[1])!;
 
 		Request request;
 		request_init_impl(&request, allocator, parts[0], parts[1], "", parts[2]);
@@ -601,6 +587,7 @@ fn void? validate_headers(HeaderList* headers, bool require_host) @private
 		if (header_name_eq(header.name, "Host"))
 		{
 			if (seen_host) return DUPLICATE_HEADER~;
+			validate_host_header_value(header.value)!;
 			seen_host = true;
 			continue;
 		}
@@ -624,6 +611,183 @@ fn void? validate_headers(HeaderList* headers, bool require_host) @private
 	}
 
 	if (require_host && !seen_host) return MISSING_HOST~;
+}
+
+struct HttpUrlParts
+{
+	String connect_host;
+	String host_header;
+	String path;
+	String query;
+	uint port;
+}
+
+fn HttpUrlParts? parse_http_url(String url_string) @private
+{
+	usz? scheme_end_value = url_string.index_of("://");
+	if (catch err = scheme_end_value)
+	{
+		if (try url_string.index_of_char(':')) return UNSUPPORTED_SCHEME~;
+		return INVALID_TARGET~;
+	}
+	usz scheme_end = scheme_end_value;
+	String scheme = url_string[:scheme_end];
+	if (!scheme) return INVALID_TARGET~;
+	if (scheme != "http") return UNSUPPORTED_SCHEME~;
+
+	String rest = url_string[scheme_end + 3 ..];
+	usz authority_end = rest.index_of_chars("/?#") ?? rest.len;
+	String authority = rest[:authority_end];
+	if (!authority) return MISSING_HOST~;
+
+	HttpUrlParts parts = { .port = 80 };
+	parse_authority(authority, false, &parts.host_header, &parts.connect_host, &parts.port)!;
+
+	String path_and_query = rest[authority_end ..];
+	parts.path = path_and_query;
+	if (try query_index = path_and_query.index_of_char('?'))
+	{
+		parts.path = path_and_query[:query_index];
+		parts.query = path_and_query[query_index + 1 ..];
+	}
+	if (path_and_query.contains("#")) return INVALID_TARGET~;
+	if (!parts.path) parts.path = "/";
+	return parts;
+}
+
+fn void? validate_request_target(String method, String target) @private
+{
+	if (target == "*")
+	{
+		if (method != "OPTIONS") return INVALID_TARGET~;
+		return;
+	}
+
+	if (method == "CONNECT")
+	{
+		String host_header;
+		String connect_host;
+		uint port;
+		parse_authority(target, true, &host_header, &connect_host, &port)!;
+		return;
+	}
+
+	if (target.contains("://"))
+	{
+		parse_http_url(target)!;
+		return;
+	}
+
+	validate_origin_form_target(target)!;
+}
+
+fn void? validate_origin_form_target(String target) @private
+{
+	if (!target.starts_with("/")) return INVALID_TARGET~;
+	if (target.contains("#")) return INVALID_TARGET~;
+	foreach (c : target)
+	{
+		if (c <= 0x20 || c == 0x7f) return INVALID_TARGET~;
+	}
+}
+
+fn String build_origin_form_target(Allocator allocator, String path, String query) @private
+{
+	String normalized_path = path ? path : "/";
+	if (!query) return normalized_path.copy(allocator);
+	@pool()
+	{
+		DString combined = dstring::temp(normalized_path);
+		combined.append_char('?');
+		combined.append_string(query);
+		return combined.copy_str(allocator);
+	};
+}
+
+fn void? validate_host_header_value(String value) @private
+{
+	String host_header;
+	String connect_host;
+	uint port;
+	parse_authority(value, false, &host_header, &connect_host, &port)!;
+}
+
+fn void? parse_authority(String authority, bool require_port, String* host_header, String* connect_host, uint* port_out) @private
+{
+	if (!authority) return INVALID_HOST~;
+	if (try authority.index_of_chars("/?#@")) return INVALID_HOST~;
+
+	String host;
+	String port_text = "";
+	if (authority[0] == '[')
+	{
+		usz? closing_value = authority.index_of_char(']');
+		if (catch err = closing_value) return INVALID_HOST~;
+		usz closing = closing_value;
+		if (closing + 1 == authority.len)
+		{
+			host = authority;
+			*connect_host = authority[1 .. closing - 1];
+		}
+		else
+		{
+			if (authority[closing + 1] != ':') return INVALID_HOST~;
+			host = authority[:closing + 1];
+			port_text = authority[closing + 2 ..];
+			*connect_host = authority[1 .. closing - 1];
+		}
+		if (host.len <= 2) return INVALID_HOST~;
+	}
+	else
+	{
+		usz? first_colon = authority.index_of_char(':');
+		if (catch err = first_colon)
+		{
+			host = authority;
+			*connect_host = authority;
+		}
+		else
+		{
+			usz colon = first_colon;
+			if (authority[colon + 1 ..].contains(":")) return INVALID_HOST~;
+			host = authority[:colon];
+			port_text = authority[colon + 1 ..];
+			*connect_host = host;
+		}
+	}
+
+	if (!host) return INVALID_HOST~;
+	if (!is_valid_reg_name(host) && !(host.starts_with("[") && host.ends_with("]"))) return INVALID_HOST~;
+
+	if (!port_text)
+	{
+		if (require_port) return INVALID_HOST~;
+		*host_header = authority;
+		return;
+	}
+
+	usz? parsed_port_value = port_text.to_uint();
+	if (catch err = parsed_port_value) return INVALID_HOST~;
+	usz parsed_port = parsed_port_value;
+	if (!parsed_port || parsed_port > 65535) return INVALID_HOST~;
+	*host_header = authority;
+	*port_out = (uint)parsed_port;
+}
+
+fn bool is_valid_reg_name(String host) @private
+{
+	foreach (c : host)
+	{
+		if (char_is_alpha_num(c)) continue;
+		if (c == '.' || c == '-' || c == '_') continue;
+		return false;
+	}
+	return true;
+}
+
+fn bool char_is_alpha_num(char c) @private
+{
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
 }
 
 fn bool should_close_connection(HeaderList* headers) @private

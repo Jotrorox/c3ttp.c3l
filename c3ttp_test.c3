@@ -44,6 +44,14 @@ fn void? handle_count(Request* request, Response* response, void* context)
 	if (request.target == "/close") response.set_header("Connection", "close");
 }
 
+fn void? handle_echo_request_observation(Request* request, Response* response, void* context)
+{
+	response.status = 200;
+	response.set_body(request.target);
+	response.set_header("X-Observed-Method", request.method);
+	response.set_header("X-Observed-Host", request.header("Host")!!);
+}
+
 fn void? init_buffer(io::ByteBuffer* buffer, String contents = "")
 {
 	buffer.tinit(contents.len + 16);
@@ -63,7 +71,7 @@ fn usz count_headers(HeaderList* headers, String name)
 fn void request_roundtrip() @test
 {
 	Request request;
-	request.init(tmem, "POST", "/echo", "hello");
+	request.init(tmem, "POST", "/echo?x=1", "hello");
 	defer request.free();
 	request.set_header("Host", "example.com");
 	request.set_header("Content-Type", "text/plain");
@@ -77,10 +85,66 @@ fn void request_roundtrip() @test
 	defer parsed.free();
 
 	test::eq("POST", parsed.method);
-	test::eq("/echo", parsed.target);
+	test::eq("/echo?x=1", parsed.target);
 	test::eq("hello", parsed.body);
 	test::eq("text/plain", parsed.header("content-type")!!);
 	test::eq("5", parsed.header("Content-Length")!!);
+}
+
+fn void absolute_form_request_roundtrip() @test
+{
+	Request request;
+	request.init(tmem, "GET", "http://example.com:8080/path?q=1");
+	defer request.free();
+	request.set_header("Host", "example.com:8080");
+
+	io::ByteBuffer buffer;
+	buffer.tinit(96);
+	defer buffer.free();
+
+	write_request(&buffer, &request)!!;
+	Request parsed = read_request(tmem, &buffer)!!;
+	defer parsed.free();
+
+	test::eq("http://example.com:8080/path?q=1", parsed.target);
+	test::eq("example.com:8080", parsed.header("Host")!!);
+}
+
+fn void authority_form_connect_roundtrip() @test
+{
+	Request request;
+	request.init(tmem, "CONNECT", "example.com:443");
+	defer request.free();
+	request.set_header("Host", "example.com:443");
+
+	io::ByteBuffer buffer;
+	buffer.tinit(64);
+	defer buffer.free();
+
+	write_request(&buffer, &request)!!;
+	Request parsed = read_request(tmem, &buffer)!!;
+	defer parsed.free();
+
+	test::eq("CONNECT", parsed.method);
+	test::eq("example.com:443", parsed.target);
+}
+
+fn void asterisk_form_options_roundtrip() @test
+{
+	Request request;
+	request.init(tmem, "OPTIONS", "*");
+	defer request.free();
+	request.set_header("Host", "example.com");
+
+	io::ByteBuffer buffer;
+	buffer.tinit(64);
+	defer buffer.free();
+
+	write_request(&buffer, &request)!!;
+	Request parsed = read_request(tmem, &buffer)!!;
+	defer parsed.free();
+
+	test::eq("*", parsed.target);
 }
 
 fn void zero_length_request_roundtrip() @test
@@ -283,6 +347,52 @@ fn void invalid_request_header_without_separator() @test
 	test::@error(read_request(tmem, &buffer), INVALID_HEADER);
 }
 
+fn void get_asterisk_request_is_rejected() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "GET * HTTP/1.1\r\nHost: example.com\r\n\r\n")!!;
+	defer buffer.free();
+
+	test::@error(read_request(tmem, &buffer), INVALID_TARGET);
+}
+
+fn void connect_with_origin_form_is_rejected() @test
+{
+	Request request;
+	request.init(tmem, "CONNECT", "/proxy");
+	defer request.free();
+	request.set_header("Host", "example.com");
+
+	io::ByteBuffer buffer;
+	buffer.tinit(64);
+	defer buffer.free();
+
+	test::@error(write_request(&buffer, &request), INVALID_HOST);
+}
+
+fn void origin_form_without_leading_slash_is_rejected() @test
+{
+	Request request;
+	request.init(tmem, "GET", "relative");
+	defer request.free();
+	request.set_header("Host", "example.com");
+
+	io::ByteBuffer buffer;
+	buffer.tinit(64);
+	defer buffer.free();
+
+	test::@error(write_request(&buffer, &request), INVALID_TARGET);
+}
+
+fn void request_with_invalid_host_port_is_rejected() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "GET / HTTP/1.1\r\nHost: example.com:notaport\r\n\r\n")!!;
+	defer buffer.free();
+
+	test::@error(read_request(tmem, &buffer), INVALID_HOST);
+}
+
 fn void invalid_request_header_without_name() @test
 {
 	io::ByteBuffer buffer;
@@ -421,6 +531,27 @@ fn void send_url_rejects_unsupported_scheme() @test
 	test::@error(client.send_url(tmem, "GET", "mailto:user@example.com"), UNSUPPORTED_SCHEME);
 }
 
+fn void send_url_builds_origin_form_target_and_host_header() @test
+{
+	Server server;
+	server.init(mem, "127.0.0.1", 0);
+	defer server.free();
+	server.listen()!!;
+
+	ServeOnceArgs args = { .server = &server };
+	thread::Thread worker;
+	worker.create(&serve_once_echo_thread, &args)!!;
+
+	Client client = new_client();
+	Response response = client.send_url(tmem, "GET", string::tformat("http://127.0.0.1:%d?x=1", server.port))!!;
+	defer response.free();
+
+	test::eq(0, worker.join()!!);
+	test::eq("GET", response.header("X-Observed-Method")!!);
+	test::eq("/?x=1", response.body);
+	test::eq(string::tformat("127.0.0.1:%d", server.port), response.header("X-Observed-Host")!!);
+}
+
 struct ServeOnceArgs
 {
 	Server* server;
@@ -437,6 +568,16 @@ fn int serve_once_thread(void* arg)
 	{
 		ServeOnceArgs* args = arg;
 		if (catch args.server.serve_once(&handle_ping)) return 1;
+		return 0;
+	};
+}
+
+fn int serve_once_echo_thread(void* arg)
+{
+	@pool_init(mem, 4096)
+	{
+		ServeOnceArgs* args = arg;
+		if (catch args.server.serve_once(&handle_echo_request_observation)) return 1;
 		return 0;
 	};
 }

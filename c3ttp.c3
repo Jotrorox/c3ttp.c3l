@@ -1,4 +1,4 @@
-module c3ttp;
+module c3ttp @private;
 
 import std::collections::list;
 import std::io;
@@ -7,63 +7,7 @@ import std::net::tcp;
 import std::net::url;
 import std::time;
 
-const String HTTP_11 = "HTTP/1.1";
-
-faultdef
-	INVALID_REQUEST_LINE,
-	INVALID_STATUS_LINE,
-	INVALID_HEADER,
-	INVALID_VERSION,
-	INVALID_CONTENT_LENGTH,
-	MISSING_HOST,
-	MISSING_HANDLER,
-	UNSUPPORTED_TRANSFER_ENCODING,
-	UNSUPPORTED_METHOD,
-	DUPLICATE_HEADER;
-
-struct Header
-{
-	String name;
-	String value;
-}
-
-alias HeaderList = List { Header };
-alias Handler = fn void?(Request* request, Response* response, void* context);
-
-struct Request
-{
-	Allocator allocator;
-	String method;
-	String target;
-	String version;
-	String body;
-	HeaderList headers;
-}
-
-struct Response
-{
-	Allocator allocator;
-	ushort status;
-	String reason;
-	String version;
-	String body;
-	HeaderList headers;
-}
-
-struct Client
-{
-	Duration timeout;
-}
-
-struct Server
-{
-	Allocator allocator;
-	String host;
-	uint port;
-	uint backlog;
-	tcp::TcpServerSocket listener;
-	bool is_listening;
-}
+const String HTTP_11 @private = "HTTP/1.1";
 
 <*
  @require allocator != null : "allocator must be set"
@@ -71,7 +15,7 @@ struct Server
  @require target.len > 0 : "target must not be empty"
  @require version.len > 0 : "version must not be empty"
 *>
-fn Request* Request.init(&self, Allocator allocator, String method, String target, String body = "", String version = HTTP_11)
+fn Request* request_init_impl(Request* self, Allocator allocator, String method, String target, String body = "", String version = HTTP_11) @private
 {
 	self.allocator = allocator;
 	self.method = method.copy(allocator);
@@ -82,7 +26,7 @@ fn Request* Request.init(&self, Allocator allocator, String method, String targe
 	return self;
 }
 
-fn void Request.free(&self)
+fn void request_free_impl(Request* self) @private
 {
 	if (!self.allocator) return;
 	foreach (&header : self.headers)
@@ -98,10 +42,32 @@ fn void Request.free(&self)
 	*self = {};
 }
 
-fn void Request.set_body(&self, String body)
+fn void request_set_body_impl(Request* self, String body) @private
 {
 	self.body.free(self.allocator);
 	self.body = body.copy(self.allocator);
+}
+
+fn String? request_header_impl(Request* self, String name) @private
+{
+	Header* h = find_header_ref(&self.headers, name)!;
+	return h.value;
+}
+
+<*
+ @require name.len > 0 : "header name must not be empty"
+*>
+fn void request_set_header_impl(Request* self, String name, String value) @private
+{
+	upsert_header(&self.headers, self.allocator, name, value);
+}
+
+<*
+ @require name.len > 0 : "header name must not be empty"
+*>
+fn void request_add_header_impl(Request* self, String name, String value) @private
+{
+	self.headers.push({ .name = name.copy(self.allocator), .value = value.copy(self.allocator) });
 }
 
 <*
@@ -110,7 +76,7 @@ fn void Request.set_body(&self, String body)
  @require reason.len > 0 : "reason must not be empty"
  @require version.len > 0 : "version must not be empty"
 *>
-fn Response* Response.init(&self, Allocator allocator, ushort status, String reason, String body = "", String version = HTTP_11)
+fn Response* response_init_impl(Response* self, Allocator allocator, ushort status, String reason, String body = "", String version = HTTP_11) @private
 {
 	self.allocator = allocator;
 	self.status = status;
@@ -121,7 +87,7 @@ fn Response* Response.init(&self, Allocator allocator, ushort status, String rea
 	return self;
 }
 
-fn void Response.free(&self)
+fn void response_free_impl(Response* self) @private
 {
 	if (!self.allocator) return;
 	foreach (&header : self.headers)
@@ -136,38 +102,22 @@ fn void Response.free(&self)
 	*self = {};
 }
 
-fn void Response.set_body(&self, String body)
+fn void response_set_body_impl(Response* self, String body) @private
 {
 	self.body.free(self.allocator);
 	self.body = body.copy(self.allocator);
 }
 
-fn Header*? Request.header_ref(&self, String name)
+fn String? response_header_impl(Response* self, String name) @private
 {
-	return find_header_ref(&self.headers, name);
-}
-
-fn Header*? Response.header_ref(&self, String name)
-{
-	return find_header_ref(&self.headers, name);
-}
-
-fn String? Request.header(&self, String name)
-{
-	Header* h = self.header_ref(name)!;
-	return h.value;
-}
-
-fn String? Response.header(&self, String name)
-{
-	Header* h = self.header_ref(name)!;
+	Header* h = find_header_ref(&self.headers, name)!;
 	return h.value;
 }
 
 <*
  @require name.len > 0 : "header name must not be empty"
 *>
-fn void Request.set_header(&self, String name, String value)
+fn void response_set_header_impl(Response* self, String name, String value) @private
 {
 	upsert_header(&self.headers, self.allocator, name, value);
 }
@@ -175,28 +125,12 @@ fn void Request.set_header(&self, String name, String value)
 <*
  @require name.len > 0 : "header name must not be empty"
 *>
-fn void Response.set_header(&self, String name, String value)
-{
-	upsert_header(&self.headers, self.allocator, name, value);
-}
-
-<*
- @require name.len > 0 : "header name must not be empty"
-*>
-fn void Request.add_header(&self, String name, String value)
+fn void response_add_header_impl(Response* self, String name, String value) @private
 {
 	self.headers.push({ .name = name.copy(self.allocator), .value = value.copy(self.allocator) });
 }
 
-<*
- @require name.len > 0 : "header name must not be empty"
-*>
-fn void Response.add_header(&self, String name, String value)
-{
-	self.headers.push({ .name = name.copy(self.allocator), .value = value.copy(self.allocator) });
-}
-
-fn Client new_client(Duration timeout = time::DURATION_ZERO)
+fn Client new_client_impl(Duration timeout = time::DURATION_ZERO) @private
 {
 	return { .timeout = timeout };
 }
@@ -205,11 +139,11 @@ fn Client new_client(Duration timeout = time::DURATION_ZERO)
  @require allocator != null : "allocator must be set"
  @require host.len > 0 : "host must not be empty"
 *>
-fn Response? Client.send(&self, Allocator allocator, String host, uint port, Request* request)
+fn Response? client_send_impl(Client* self, Allocator allocator, String host, uint port, Request* request) @private
 {
 	tcp::TcpSocket socket = tcp::connect(host, port, self.timeout)!;
 	defer catch (void)socket.close();
-	return exchange(allocator, &socket, request);
+	return exchange_impl{tcp::TcpSocket*}(allocator, &socket, request);
 }
 
 <*
@@ -217,7 +151,7 @@ fn Response? Client.send(&self, Allocator allocator, String host, uint port, Req
  @require method.len > 0 : "method must not be empty"
  @require url_string.len > 0 : "url must not be empty"
 *>
-fn Response? Client.send_url(&self, Allocator allocator, String method, String url_string, String body = "")
+fn Response? client_send_url_impl(Client* self, Allocator allocator, String method, String url_string, String body = "") @private
 {
 	url::Url parsed = url::parse(tmem, url_string)!;
 	if (!parsed.host) return MISSING_HOST~;
@@ -240,11 +174,11 @@ fn Response? Client.send_url(&self, Allocator allocator, String method, String u
 	defer target.free(allocator);
 
 	Request request;
-	request.init(allocator, method, target, body);
-	defer request.free();
-	request.set_header("Host", parsed.port ? string::tformat("%s:%d", parsed.host, parsed.port) : parsed.host);
-	request.set_header("Connection", "close");
-	return self.send(allocator, parsed.host, parsed.port ? parsed.port : 80, &request);
+	request_init_impl(&request, allocator, method, target, body);
+	defer request_free_impl(&request);
+	request_set_header_impl(&request, "Host", parsed.port ? string::tformat("%s:%d", parsed.host, parsed.port) : parsed.host);
+	request_set_header_impl(&request, "Connection", "close");
+	return client_send_impl(self, allocator, parsed.host, parsed.port ? parsed.port : 80, &request);
 }
 
 <*
@@ -252,7 +186,7 @@ fn Response? Client.send_url(&self, Allocator allocator, String method, String u
  @require host.len > 0 : "host must not be empty"
  @require backlog > 0 : "backlog must be greater than zero"
 *>
-fn Server* Server.init(&self, Allocator allocator, String host, uint port, uint backlog = 64)
+fn Server* server_init_impl(Server* self, Allocator allocator, String host, uint port, uint backlog = 64) @private
 {
 	*self = {
 		.allocator = allocator,
@@ -263,23 +197,23 @@ fn Server* Server.init(&self, Allocator allocator, String host, uint port, uint 
 	return self;
 }
 
-fn void? Server.listen(&self)
+fn void? server_listen_impl(Server* self) @private
 {
 	if (self.is_listening) return;
 	self.listener = tcp::listen(self.host, self.port, self.backlog, REUSEADDR)!;
 	self.is_listening = true;
 }
 
-fn void? Server.close(&self)
+fn void? server_close_impl(Server* self) @private
 {
 	if (!self.is_listening) return;
 	defer self.is_listening = false;
 	self.listener.close()!;
 }
 
-fn void Server.free(&self)
+fn void server_free_impl(Server* self) @private
 {
-	if (self.is_listening) self.close()!!;
+	if (self.is_listening) server_close_impl(self)!!;
 	if (self.allocator)
 	{
 		self.host.free(self.allocator);
@@ -290,56 +224,26 @@ fn void Server.free(&self)
 <*
  @require handler != null : "handler must be set"
 *>
-fn void? Server.serve_once(&self, Handler handler, void* context = null)
+fn void? server_serve_once_impl(Server* self, Handler handler, void* context = null) @private
 {
-	self.listen()!;
+	server_listen_impl(self)!;
 	tcp::TcpSocket socket = tcp::accept(&self.listener)!;
 	defer catch (void)socket.close();
-	respond_once(self.allocator, &socket, handler, context)!;
+	respond_once_impl{tcp::TcpSocket*}(self.allocator, &socket, handler, context)!;
 }
 
 <*
  @require handler != null : "handler must be set"
 *>
-fn void? Server.serve(&self, Handler handler, uint max_requests = 0, void* context = null)
+fn void? server_serve_impl(Server* self, Handler handler, uint max_requests = 0, void* context = null) @private
 {
-	self.listen()!;
+	server_listen_impl(self)!;
 	uint served;
 	while (!max_requests || served < max_requests)
 	{
-		self.serve_once(handler, context)!;
+		server_serve_once_impl(self, handler, context)!;
 		served++;
 	}
-}
-
-macro Request? read_request(Allocator allocator, stream)
-{
-	return read_request_impl{$typeof(stream)}(allocator, stream);
-}
-
-macro Response? read_response(Allocator allocator, stream)
-{
-	return read_response_impl{$typeof(stream)}(allocator, stream);
-}
-
-macro void? write_request(stream, Request* request)
-{
-	return write_request_impl{$typeof(stream)}(stream, request);
-}
-
-macro void? write_response(stream, Response* response)
-{
-	return write_response_impl{$typeof(stream)}(stream, response);
-}
-
-macro Response? exchange(Allocator allocator, stream, Request* request)
-{
-	return exchange_impl{$typeof(stream)}(allocator, stream, request);
-}
-
-macro void? respond_once(Allocator allocator, stream, Handler handler, void* context = null)
-{
-	return respond_once_impl{$typeof(stream)}(allocator, stream, handler, context);
 }
 
 <*
@@ -353,7 +257,7 @@ fn Request? read_request_impl(Allocator allocator, Stream stream) <Stream> @priv
 	Request request = parse_request_line(allocator, line)!;
 	if (catch err = read_headers_and_body(allocator, stream, &request.headers, &request.body, true))
 	{
-		request.free();
+		request_free_impl(&request);
 		return err~;
 	}
 	return request;
@@ -370,7 +274,7 @@ fn Response? read_response_impl(Allocator allocator, Stream stream) <Stream> @pr
 	Response response = parse_status_line(allocator, line)!;
 	if (catch err = read_headers_and_body(allocator, stream, &response.headers, &response.body, false))
 	{
-		response.free();
+		response_free_impl(&response);
 		return err~;
 	}
 	return response;
@@ -395,22 +299,22 @@ fn void? write_response_impl(Stream stream, Response* response) <Stream> @privat
 
 fn Response? exchange_impl(Allocator allocator, Stream stream, Request* request) <Stream> @private
 {
-	write_request(stream, request)!;
-	return read_response(allocator, stream);
+	write_request_impl{$typeof(stream)}(stream, request)!;
+	return read_response_impl{$typeof(stream)}(allocator, stream);
 }
 
 fn void? respond_once_impl(Allocator allocator, Stream stream, Handler handler, void* context) <Stream> @private
 {
-	Request request = read_request(allocator, stream)!;
-	defer request.free();
+	Request request = read_request_impl{$typeof(stream)}(allocator, stream)!;
+	defer request_free_impl(&request);
 
 	Response response;
-	response.init(allocator, 200, "OK");
-	defer response.free();
-	response.set_header("Connection", "close");
+	response_init_impl(&response, allocator, 200, "OK");
+	defer response_free_impl(&response);
+	response_set_header_impl(&response, "Connection", "close");
 
 	handler(&request, &response, context)!;
-	write_response(stream, &response)!;
+	write_response_impl{$typeof(stream)}(stream, &response)!;
 }
 
 fn Request? parse_request_line(Allocator allocator, String line) @private
@@ -423,7 +327,7 @@ fn Request? parse_request_line(Allocator allocator, String line) @private
 		validate_method(parts[0])!;
 
 		Request request;
-		request.init(allocator, parts[0], parts[1], "", parts[2]);
+		request_init_impl(&request, allocator, parts[0], parts[1], "", parts[2]);
 		request.body.free(allocator);
 		request.body = {};
 		return request;
@@ -440,7 +344,7 @@ fn Response? parse_status_line(Allocator allocator, String line) @private
 		ushort status = (ushort)parts[1].to_uint()!;
 
 		Response response;
-		response.init(allocator, status, parts[2], "", parts[0]);
+		response_init_impl(&response, allocator, status, parts[2], "", parts[0]);
 		response.body.free(allocator);
 		response.body = {};
 		return response;

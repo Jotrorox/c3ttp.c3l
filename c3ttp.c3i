@@ -1,12 +1,136 @@
 module c3ttp;
-// Source packages currently compile `c3ttp.c3` and `c3ttp.c3i` together,
-// so duplicating declarations here shadows the implementation symbols.
-//
-// The intended consumer surface is:
-// - `Request`, `Response`, `Client`, `Server`, `Header`, `HeaderList`, `Handler`
-// - `new_client`
-// - `Request.init/free/set_body/header/set_header/add_header`
-// - `Response.init/free/set_body/header/set_header/add_header`
-// - `Client.send`, `Client.send_url`
-// - `Server.init/listen/close/free/serve_once/serve`
-// - `read_request`, `read_response`, `write_request`, `write_response`, `exchange`, `respond_once`
+
+import std::collections::list;
+import std::net::tcp;
+import std::time;
+
+faultdef
+	INVALID_REQUEST_LINE,
+	INVALID_STATUS_LINE,
+	INVALID_HEADER,
+	INVALID_VERSION,
+	MISSING_HOST,
+	UNSUPPORTED_TRANSFER_ENCODING,
+	UNSUPPORTED_METHOD,
+	DUPLICATE_HEADER;
+
+struct Header
+{
+	String name;
+	String value;
+}
+
+alias HeaderList = List { Header };
+alias Handler = fn void?(Request* request, Response* response, void* context);
+
+struct Request
+{
+	Allocator allocator;
+	String method;
+	String target;
+	String version;
+	String body;
+	HeaderList headers;
+}
+
+struct Response
+{
+	Allocator allocator;
+	ushort status;
+	String reason;
+	String version;
+	String body;
+	HeaderList headers;
+}
+
+struct Client
+{
+	Duration timeout;
+}
+
+struct Server
+{
+	Allocator allocator;
+	String host;
+	uint port;
+	uint backlog;
+	tcp::TcpServerSocket listener;
+	bool is_listening;
+}
+
+macro Request* Request.init(&self, Allocator allocator, String method, String target, String body = "", String version = "HTTP/1.1")
+	=> request_init_impl(self, allocator, method, target, body, version);
+macro void Request.free(&self)
+	=> request_free_impl(self);
+macro void Request.set_body(&self, String body)
+	=> request_set_body_impl(self, body);
+macro String? Request.header(&self, String name)
+	=> request_header_impl(self, name);
+macro void Request.set_header(&self, String name, String value)
+	=> request_set_header_impl(self, name, value);
+macro void Request.add_header(&self, String name, String value)
+	=> request_add_header_impl(self, name, value);
+
+macro Response* Response.init(&self, Allocator allocator, ushort status, String reason, String body = "", String version = "HTTP/1.1")
+	=> response_init_impl(self, allocator, status, reason, body, version);
+macro void Response.free(&self)
+	=> response_free_impl(self);
+macro void Response.set_body(&self, String body)
+	=> response_set_body_impl(self, body);
+macro String? Response.header(&self, String name)
+	=> response_header_impl(self, name);
+macro void Response.set_header(&self, String name, String value)
+	=> response_set_header_impl(self, name, value);
+macro void Response.add_header(&self, String name, String value)
+	=> response_add_header_impl(self, name, value);
+
+macro Client new_client(Duration timeout = time::DURATION_ZERO)
+	=> new_client_impl(timeout);
+
+macro Response? Client.send(&self, Allocator allocator, String host, uint port, Request* request)
+	=> client_send_impl(self, allocator, host, port, request);
+macro Response? Client.send_url(&self, Allocator allocator, String method, String url_string, String body = "")
+	=> client_send_url_impl(self, allocator, method, url_string, body);
+
+macro Server* Server.init(&self, Allocator allocator, String host, uint port, uint backlog = 64)
+	=> server_init_impl(self, allocator, host, port, backlog);
+macro void? Server.listen(&self)
+	=> server_listen_impl(self);
+macro void? Server.close(&self)
+	=> server_close_impl(self);
+macro void Server.free(&self)
+	=> server_free_impl(self);
+macro void? Server.serve_once(&self, Handler handler, void* context = null)
+	=> server_serve_once_impl(self, handler, context);
+macro void? Server.serve(&self, Handler handler, uint max_requests = 0, void* context = null)
+	=> server_serve_impl(self, handler, max_requests, context);
+
+macro Request? read_request(Allocator allocator, stream)
+{
+	return read_request_impl{$typeof(stream)}(allocator, stream);
+}
+
+macro Response? read_response(Allocator allocator, stream)
+{
+	return read_response_impl{$typeof(stream)}(allocator, stream);
+}
+
+macro void? write_request(stream, Request* request)
+{
+	return write_request_impl{$typeof(stream)}(stream, request);
+}
+
+macro void? write_response(stream, Response* response)
+{
+	return write_response_impl{$typeof(stream)}(stream, response);
+}
+
+macro Response? exchange(Allocator allocator, stream, Request* request)
+{
+	return exchange_impl{$typeof(stream)}(allocator, stream, request);
+}
+
+macro void? respond_once(Allocator allocator, stream, Handler handler, void* context = null)
+{
+	return respond_once_impl{$typeof(stream)}(allocator, stream, handler, context);
+}

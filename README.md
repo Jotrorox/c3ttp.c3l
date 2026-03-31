@@ -24,7 +24,9 @@ Validation rules:
 - parsed HTTP/1.1 requests must include `Host`
 - duplicate singleton headers are rejected for `Host`, `Content-Length`, `Transfer-Encoding`, and `Connection`
 - `Transfer-Encoding: chunked` cannot be combined with `Content-Length`
+- responses to `HEAD` and responses with status `1xx`, `204`, or `304` are treated as having no message body
 - `respond_once` preserves HTTP/1.1 keep-alive unless the request or response asks to close
+- `Client.send_url` accepts plain `http` URLs and rejects unsupported schemes explicitly
 
 Out of scope for now:
 
@@ -54,6 +56,7 @@ Supported faults:
 - `INVALID_VERSION`
 - `CONFLICTING_BODY_HEADERS`
 - `MISSING_HOST`
+- `UNSUPPORTED_SCHEME`
 - `UNSUPPORTED_TRANSFER_ENCODING`
 - `UNSUPPORTED_METHOD`
 - `DUPLICATE_HEADER`

@@ -1,1 +1,12 @@
 module c3ttp;
+// Source packages currently compile `c3ttp.c3` and `c3ttp.c3i` together,
+// so duplicating declarations here shadows the implementation symbols.
+//
+// The intended consumer surface is:
+// - `Request`, `Response`, `Client`, `Server`, `Header`, `HeaderList`, `Handler`
+// - `new_client`
+// - `Request.init/free/set_body/header/set_header/add_header`
+// - `Response.init/free/set_body/header/set_header/add_header`
+// - `Client.send`, `Client.send_url`
+// - `Server.init/listen/close/free/serve_once/serve`
+// - `read_request`, `read_response`, `write_request`, `write_response`, `exchange`, `respond_once`

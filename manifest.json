@@ -1,6 +1,5 @@
 {
   "provides" : "c3ttp",
-  // "sources" : [ "src/**" ],
   "linklib-dir" : "linked-libs",
   "targets" : {
     "android-aarch64" : {

@@ -17,6 +17,13 @@ Current scope:
 - simple client requests over TCP
 - simple server accept / handle / respond flow
 
+Validation rules:
+
+- request methods are limited to `GET`, `HEAD`, `POST`, `PUT`, `DELETE`, `OPTIONS`, `PATCH`, `TRACE`, and `CONNECT`
+- parsed HTTP/1.1 requests must include `Host`
+- duplicate singleton headers are rejected for `Host`, `Content-Length`, `Transfer-Encoding`, and `Connection`
+- `respond_once` emits `Connection: close` by default
+
 Out of scope for now:
 
 - chunked transfer encoding

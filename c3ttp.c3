@@ -1,13 +1,17 @@
 module c3ttp @private;
 
 import std::collections::list;
+import std::core::env;
 import std::io;
 import std::net;
+import std::net::os;
 import std::net::tcp;
 import std::net::url;
 import std::time;
 
 const String HTTP_11 @private = "HTTP/1.1";
+
+extern fn CInt getsockname(os::NativeSocket socket, os::SockAddrPtr address, os::Socklen_t* address_len) @if(env::POSIX);
 
 <*
  @require allocator != null : "allocator must be set"
@@ -197,10 +201,31 @@ fn Server* server_init_impl(Server* self, Allocator allocator, String host, uint
 	return self;
 }
 
+fn uint? server_bound_port(TcpServerSocket* listener) @private
+{
+	tcp::TcpSocket socket_info;
+	socket_info.ai_addrlen = socket_info.ai_addr_storage.len;
+	$if env::WIN32:
+		int result = os::getsockname(listener.sock, (os::SockAddrPtr)&socket_info.ai_addr_storage, &socket_info.ai_addrlen);
+	$else
+		int result = getsockname(listener.sock, (os::SockAddrPtr)&socket_info.ai_addr_storage, &socket_info.ai_addrlen);
+	$endif
+	if (result < 0)
+	{
+		return os::socket_error()~;
+	}
+
+	char[] port_bytes = socket_info.ai_addr_storage[2:2];
+	char msb = port_bytes[0];
+	char lsb = port_bytes[1];
+	return (uint)((msb << 8) | lsb);
+}
+
 fn void? server_listen_impl(Server* self) @private
 {
 	if (self.is_listening) return;
 	self.listener = tcp::listen(self.host, self.port, self.backlog, REUSEADDR)!;
+	self.port = server_bound_port(&self.listener)!;
 	self.is_listening = true;
 }
 
@@ -237,7 +262,6 @@ fn void? server_serve_once_impl(Server* self, Handler handler, void* context = n
 *>
 fn void? server_serve_impl(Server* self, Handler handler, uint max_requests = 0, void* context = null) @private
 {
-	server_listen_impl(self)!;
 	uint served;
 	while (!max_requests || served < max_requests)
 	{

@@ -30,17 +30,65 @@ Out of scope for now:
 - TLS / HTTPS
 - HTTP/2+
 
+## Public API
+
+[`c3ttp.c3i`](/home/johannes/projects/c3ttp.c3l/c3ttp.c3i) is the source of truth for the supported public surface.
+
+Supported types:
+
+- `Header`
+- `HeaderList`
+- `Handler`
+- `Request`
+- `Response`
+- `Client`
+- `Server`
+
+Supported faults:
+
+- `INVALID_REQUEST_LINE`
+- `INVALID_STATUS_LINE`
+- `INVALID_HEADER`
+- `INVALID_VERSION`
+- `MISSING_HOST`
+- `UNSUPPORTED_TRANSFER_ENCODING`
+- `UNSUPPORTED_METHOD`
+- `DUPLICATE_HEADER`
+
+Supported method-style API:
+
+- `Request.init/free/set_body/header/set_header/add_header`
+- `Response.init/free/set_body/header/set_header/add_header`
+- `Client.send/send_url`
+- `Server.init/listen/close/free/serve_once/serve`
+
+Supported top-level API:
+
+- `c3ttp::new_client`
+- `c3ttp::read_request`
+- `c3ttp::read_response`
+- `c3ttp::write_request`
+- `c3ttp::write_response`
+- `c3ttp::exchange`
+- `c3ttp::respond_once`
+
+Not part of the intentional public API:
+
+- `HTTP_11`
+- `Request.header_ref`
+- `Response.header_ref`
+
 ## Build Tests
 
 ```bash
-c3c compile-test c3ttp.c3 c3ttp_test.c3 -O0
+c3c compile-test c3ttp.c3i c3ttp.c3 c3ttp_test.c3 -O0
 ```
 
 ## Example Builds
 
 ```bash
-c3c compile examples/hello_server.c3 --libdir . --lib c3ttp -O0 -o hello_server
-c3c compile examples/client_get.c3 --libdir . --lib c3ttp -O0 -o client_get
+c3c compile examples/hello_server.c3 --libdir .. --lib c3ttp -O0 -o hello_server
+c3c compile examples/client_get.c3 --libdir .. --lib c3ttp -O0 -o client_get
 ```
 
 ## Example: Server

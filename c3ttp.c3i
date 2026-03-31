@@ -37,6 +37,7 @@ struct Request
 	String version;
 	String body;
 	HeaderList headers;
+	HeaderList trailers;
 }
 
 struct Response
@@ -47,6 +48,7 @@ struct Response
 	String version;
 	String body;
 	HeaderList headers;
+	HeaderList trailers;
 }
 
 struct Client
@@ -116,9 +118,19 @@ macro Request? read_request(Allocator allocator, stream)
 	return read_request_impl{$typeof(stream)}(allocator, stream);
 }
 
+macro Request? read_request_to(Allocator allocator, stream, body_stream)
+{
+	return read_request_to_impl(allocator, stream, body_stream);
+}
+
 macro Response? read_response(Allocator allocator, stream)
 {
 	return read_response_impl{$typeof(stream)}(allocator, stream);
+}
+
+macro Response? read_response_to(Allocator allocator, stream, body_stream, String request_method = "")
+{
+	return read_response_to_impl(allocator, stream, body_stream, request_method);
 }
 
 macro void? write_request(stream, Request* request)
@@ -126,9 +138,19 @@ macro void? write_request(stream, Request* request)
 	return write_request_impl{$typeof(stream)}(stream, request);
 }
 
+macro void? write_request_from(stream, Request* request, body_stream, usz content_length = 0)
+{
+	return write_request_from_impl(stream, request, body_stream, content_length);
+}
+
 macro void? write_response(stream, Response* response)
 {
 	return write_response_impl{$typeof(stream)}(stream, response);
+}
+
+macro void? write_response_from(stream, Response* response, body_stream, usz content_length = 0, String request_method = "")
+{
+	return write_response_from_impl(stream, response, body_stream, content_length, request_method);
 }
 
 macro Response? exchange(Allocator allocator, stream, Request* request)

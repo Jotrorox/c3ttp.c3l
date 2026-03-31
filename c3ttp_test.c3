@@ -68,6 +68,11 @@ fn usz count_headers(HeaderList* headers, String name)
 	return count;
 }
 
+fn void init_reader(io::ByteReader* reader, String contents)
+{
+	reader.init((char[])contents);
+}
+
 fn void request_roundtrip() @test
 {
 	Request request;
@@ -284,6 +289,19 @@ fn void chunked_request_roundtrip() @test
 	test::eq("chunked", parsed.header("Transfer-Encoding")!!);
 }
 
+fn void chunked_request_trailers_are_preserved() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "POST /trailers HTTP/1.1\r\nHost: example.com\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\nX-Trailer: done\r\n\r\n")!!;
+	defer buffer.free();
+
+	Request request = read_request(tmem, &buffer)!!;
+	defer request.free();
+
+	test::eq("hello", request.body);
+	test::eq("done", get_header(&request.trailers, "X-Trailer")!!);
+}
+
 fn void chunked_response_roundtrip() @test
 {
 	Response response;
@@ -307,6 +325,37 @@ fn void chunked_response_roundtrip() @test
 
 	test::eq("chunk-response", parsed.body);
 	test::eq("chunked", parsed.header("Transfer-Encoding")!!);
+}
+
+fn void chunked_response_trailers_are_preserved() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n4\r\ntest\r\n0\r\nExpires: soon\r\n\r\n")!!;
+	defer buffer.free();
+
+	Response response = read_response(tmem, &buffer)!!;
+	defer response.free();
+
+	test::eq("test", response.body);
+	test::eq("soon", get_header(&response.trailers, "Expires")!!);
+}
+
+fn void write_chunked_response_emits_trailers() @test
+{
+	Response response;
+	response.init(tmem, 200, "OK", "data");
+	defer response.free();
+	response.set_header("Transfer-Encoding", "chunked");
+	response.trailers.push({ .name = "Expires".copy(tmem), .value = "soon".copy(tmem) });
+
+	io::ByteBuffer buffer;
+	buffer.tinit(96);
+	defer buffer.free();
+
+	write_response(&buffer, &response)!!;
+
+	String encoded = (String)buffer.bytes[:buffer.write_idx];
+	test::@check(encoded.contains("0\r\nExpires: soon\r\n\r\n"), "expected chunked trailers");
 }
 
 fn void zero_length_response_roundtrip() @test
@@ -420,6 +469,33 @@ fn void invalid_chunked_request_body_is_rejected() @test
 	test::@error(read_request(tmem, &buffer), INVALID_CHUNK);
 }
 
+fn void invalid_chunked_body_missing_crlf_is_rejected() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "POST / HTTP/1.1\r\nHost: example.com\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello0\r\n\r\n")!!;
+	defer buffer.free();
+
+	test::@error(read_request(tmem, &buffer), INVALID_CHUNK);
+}
+
+fn void transfer_encoding_with_extra_tokens_is_rejected() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "HTTP/1.1 200 OK\r\nTransfer-Encoding: gzip, chunked\r\n\r\n")!!;
+	defer buffer.free();
+
+	test::@error(read_response(tmem, &buffer), UNSUPPORTED_TRANSFER_ENCODING);
+}
+
+fn void forbidden_chunked_trailer_is_rejected() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n1\r\na\r\n0\r\nContent-Length: 1\r\n\r\n")!!;
+	defer buffer.free();
+
+	test::@error(read_response(tmem, &buffer), INVALID_TRAILER);
+}
+
 fn void conflicting_chunked_and_content_length_are_rejected() @test
 {
 	io::ByteBuffer buffer;
@@ -529,6 +605,84 @@ fn void send_url_rejects_unsupported_scheme() @test
 
 	test::@error(client.send_url(tmem, "GET", "https://example.com/"), UNSUPPORTED_SCHEME);
 	test::@error(client.send_url(tmem, "GET", "mailto:user@example.com"), UNSUPPORTED_SCHEME);
+}
+
+fn void read_request_to_streams_content_length_body() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "POST /upload HTTP/1.1\r\nHost: example.com\r\nContent-Length: 11\r\n\r\nhello worldtail")!!;
+	defer buffer.free();
+
+	io::ByteWriter body;
+	body.tinit();
+	defer body.destroy()!!;
+
+	Request request = read_request_to(tmem, &buffer, &body)!!;
+	defer request.free();
+
+	test::eq("", request.body);
+	test::eq("hello world", body.str_view());
+	test::eq("tail", (String)buffer.bytes[buffer.read_idx:4]);
+}
+
+fn void read_response_to_streams_chunked_body_and_trailers() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n6\r\n world\r\n0\r\nX-Trailer: done\r\n\r\n")!!;
+	defer buffer.free();
+
+	io::ByteWriter body;
+	body.tinit();
+	defer body.destroy()!!;
+
+	Response response = read_response_to(tmem, &buffer, &body)!!;
+	defer response.free();
+
+	test::eq("", response.body);
+	test::eq("hello world", body.str_view());
+	test::eq("done", get_header(&response.trailers, "X-Trailer")!!);
+}
+
+fn void write_request_from_streams_content_length_body() @test
+{
+	Request request;
+	request.init(tmem, "POST", "/stream");
+	defer request.free();
+	request.set_header("Host", "example.com");
+
+	io::ByteReader reader;
+	init_reader(&reader, "stream-body");
+
+	io::ByteBuffer buffer;
+	buffer.tinit(96);
+	defer buffer.free();
+
+	write_request_from(&buffer, &request, &reader, 11)!!;
+
+	String encoded = (String)buffer.bytes[:buffer.write_idx];
+	test::@check(encoded.contains("Content-Length: 11\r\n"), "expected explicit content-length");
+	test::@check(encoded.ends_with("stream-body"), "expected streamed request body");
+}
+
+fn void write_response_from_streams_chunked_body_and_trailers() @test
+{
+	Response response;
+	response.init(tmem, 200, "OK");
+	defer response.free();
+	response.set_header("Transfer-Encoding", "chunked");
+	response.trailers.push({ .name = "X-Trailer".copy(tmem), .value = "done".copy(tmem) });
+
+	io::ByteReader reader;
+	init_reader(&reader, "streaming body");
+
+	io::ByteBuffer buffer;
+	buffer.tinit(128);
+	defer buffer.free();
+
+	write_response_from(&buffer, &response, &reader)!!;
+
+	String encoded = (String)buffer.bytes[:buffer.write_idx];
+	test::@check(encoded.contains("\r\ne\r\nstreaming body\r\n0\r\nX-Trailer: done\r\n\r\n"), "expected chunked streamed response with trailer");
 }
 
 fn void send_url_builds_origin_form_target_and_host_header() @test

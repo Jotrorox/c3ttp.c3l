@@ -17,7 +17,9 @@ faultdef
 	INVALID_CONTENT_LENGTH,
 	MISSING_HOST,
 	MISSING_HANDLER,
-	UNSUPPORTED_TRANSFER_ENCODING;
+	UNSUPPORTED_TRANSFER_ENCODING,
+	UNSUPPORTED_METHOD,
+	DUPLICATE_HEADER;
 
 struct Header
 {
@@ -349,7 +351,7 @@ fn Request? read_request_impl(Allocator allocator, Stream stream) <Stream> @priv
 	defer line.free(allocator);
 
 	Request request = parse_request_line(allocator, line)!;
-	if (catch err = read_headers_and_body(allocator, stream, &request.headers, &request.body))
+	if (catch err = read_headers_and_body(allocator, stream, &request.headers, &request.body, true))
 	{
 		request.free();
 		return err~;
@@ -366,7 +368,7 @@ fn Response? read_response_impl(Allocator allocator, Stream stream) <Stream> @pr
 	defer line.free(allocator);
 
 	Response response = parse_status_line(allocator, line)!;
-	if (catch err = read_headers_and_body(allocator, stream, &response.headers, &response.body))
+	if (catch err = read_headers_and_body(allocator, stream, &response.headers, &response.body, false))
 	{
 		response.free();
 		return err~;
@@ -377,6 +379,7 @@ fn Response? read_response_impl(Allocator allocator, Stream stream) <Stream> @pr
 fn void? write_request_impl(Stream stream, Request* request) <Stream> @private
 {
 	validate_version(request.version)!;
+	validate_method(request.method)!;
 	io::fprintf(stream, "%s %s %s\r\n", request.method, request.target, request.version)!;
 	write_headers(stream, &request.headers, request.body)!;
 	stream.write(request.body)!;
@@ -417,6 +420,7 @@ fn Request? parse_request_line(Allocator allocator, String line) @private
 		String[] parts = line.tsplit(" ", 3, true);
 		if (parts.len != 3) return INVALID_REQUEST_LINE~;
 		validate_version(parts[2])!;
+		validate_method(parts[0])!;
 
 		Request request;
 		request.init(allocator, parts[0], parts[1], "", parts[2]);
@@ -443,7 +447,7 @@ fn Response? parse_status_line(Allocator allocator, String line) @private
 	};
 }
 
-fn void? read_headers_and_body(Allocator allocator, Stream stream, HeaderList* headers, String* body) <Stream> @private
+fn void? read_headers_and_body(Allocator allocator, Stream stream, HeaderList* headers, String* body, bool require_host) <Stream> @private
 {
 	while (true)
 	{
@@ -453,6 +457,8 @@ fn void? read_headers_and_body(Allocator allocator, Stream stream, HeaderList* h
 		Header header = parse_header(allocator, line)!;
 		headers.push(header);
 	}
+
+	validate_headers(headers, require_host)!;
 
 	String? transfer_encoding = get_header(headers, "Transfer-Encoding");
 	if (try te = transfer_encoding)
@@ -469,6 +475,12 @@ fn void? read_headers_and_body(Allocator allocator, Stream stream, HeaderList* h
 	}
 
 	usz content_length = content_length_text.to_uint()!;
+	if (!content_length)
+	{
+		(*body).free(allocator);
+		*body = "".copy(allocator);
+		return;
+	}
 	char* buffer = allocator::alloc_array(allocator, char, content_length + 1);
 	usz read;
 	while (read < content_length)
@@ -542,6 +554,43 @@ fn String? get_header(HeaderList* headers, String name) @private
 	return header.value;
 }
 
+fn void? validate_headers(HeaderList* headers, bool require_host) @private
+{
+	bool seen_host = false;
+	bool seen_content_length = false;
+	bool seen_transfer_encoding = false;
+	bool seen_connection = false;
+
+	foreach (header : *headers)
+	{
+		if (header_name_eq(header.name, "Host"))
+		{
+			if (seen_host) return DUPLICATE_HEADER~;
+			seen_host = true;
+			continue;
+		}
+		if (header_name_eq(header.name, "Content-Length"))
+		{
+			if (seen_content_length) return DUPLICATE_HEADER~;
+			seen_content_length = true;
+			continue;
+		}
+		if (header_name_eq(header.name, "Transfer-Encoding"))
+		{
+			if (seen_transfer_encoding) return DUPLICATE_HEADER~;
+			seen_transfer_encoding = true;
+			continue;
+		}
+		if (header_name_eq(header.name, "Connection"))
+		{
+			if (seen_connection) return DUPLICATE_HEADER~;
+			seen_connection = true;
+		}
+	}
+
+	if (require_host && !seen_host) return MISSING_HOST~;
+}
+
 fn bool header_name_eq(String left, String right) @private
 {
 	if (left.len != right.len) return false;
@@ -555,4 +604,18 @@ fn bool header_name_eq(String left, String right) @private
 fn void? validate_version(String version) @private
 {
 	if (version != HTTP_11) return INVALID_VERSION~;
+}
+
+fn void? validate_method(String method) @private
+{
+	if (method == "GET") return;
+	if (method == "HEAD") return;
+	if (method == "POST") return;
+	if (method == "PUT") return;
+	if (method == "DELETE") return;
+	if (method == "OPTIONS") return;
+	if (method == "PATCH") return;
+	if (method == "TRACE") return;
+	if (method == "CONNECT") return;
+	return UNSUPPORTED_METHOD~;
 }

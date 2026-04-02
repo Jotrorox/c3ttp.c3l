@@ -50,6 +50,9 @@ Supported types:
 - `Request`
 - `Response`
 - `Client`
+- `ResourceLimits`
+- `ServerTimeouts`
+- `ServerOptions`
 - `Server`
 
 Supported faults:
@@ -58,6 +61,17 @@ Supported faults:
 - `INVALID_STATUS_LINE`
 - `INVALID_HEADER`
 - `INVALID_CHUNK`
+- `REQUEST_LINE_TOO_LARGE`
+- `HEADER_LINE_TOO_LARGE`
+- `TOO_MANY_HEADERS`
+- `HEADERS_TOO_LARGE`
+- `BUFFERED_BODY_TOO_LARGE`
+- `CHUNK_TOO_LARGE`
+- `CHUNKED_BODY_TOO_LARGE`
+- `READ_TIMEOUT`
+- `WRITE_TIMEOUT`
+- `IDLE_TIMEOUT`
+- `HEADER_TIMEOUT`
 - `INVALID_VERSION`
 - `INVALID_TARGET`
 - `INVALID_HOST`
@@ -74,11 +88,14 @@ Supported method-style API:
 - `Request.init/free/set_body/header/set_header/add_header`
 - `Response.init/free/set_body/header/set_header/add_header`
 - `Client.send/send_url`
-- `Server.init/listen/close/free/serve_once/serve`
+- `Server.init/set_limits/set_timeouts/listen/close/free/serve_once/serve`
 
 Supported top-level API:
 
 - `c3ttp::new_client`
+- `c3ttp::default_resource_limits`
+- `c3ttp::default_server_timeouts`
+- `c3ttp::default_server_options`
 - `c3ttp::read_request`
 - `c3ttp::read_request_to`
 - `c3ttp::read_response`
@@ -105,21 +122,21 @@ Not part of the intentional public API:
 ## Build Tests
 
 ```bash
-c3c compile-test c3ttp.c3i c3ttp.c3 c3ttp_test.c3 -O0
+c3c compile-test .
 ```
 
 ## Example Builds
 
 ```bash
-c3c compile examples/hello_server.c3 --libdir .. --lib c3ttp -O0 -o hello_server
-c3c compile examples/client_get.c3 --libdir .. --lib c3ttp -O0 -o client_get
+c3c compile c3ttp.c3i c3ttp.c3 examples/hello_server.c3 -O0 -o hello_server
+c3c compile c3ttp.c3i c3ttp.c3 examples/client_get.c3 -O0 -o client_get
 ```
 
 ## Example: Server
 
 ```c3
 module hello_server;
-import c3ttp, std::io;
+import c3ttp, std::io, std::time;
 
 fn void? hello(Request* request, Response* response, void* context)
 {
@@ -129,8 +146,14 @@ fn void? hello(Request* request, Response* response, void* context)
 
 fn int main()
 {
+	ServerOptions options = c3ttp::default_server_options();
+	options.limits.max_buffered_body_size = 256 * 1024;
+	options.limits.max_chunked_body_size = 512 * 1024;
+	options.timeouts.header_timeout = time::sec(5);
+	options.timeouts.idle_timeout = time::sec(10);
+
 	Server server;
-	server.init(tmem, "127.0.0.1", 8080);
+	server.init(tmem, "127.0.0.1", 8080, 64, options);
 	defer server.free();
 
 	io::printn("Serving one request on http://127.0.0.1:8080");
@@ -188,3 +211,37 @@ c3ttp::write_request_from(&socket, &request, &source, 7)!!;
 When `Transfer-Encoding: chunked` is set, `write_request_from` and
 `write_response_from` stream until EOF on the body source and emit any
 entries present in `request.trailers` or `response.trailers`.
+
+## Limits And Timeouts
+
+Buffered parsers and the built-in server now expose explicit hard limits.
+
+- `ResourceLimits.max_request_line_size`
+- `ResourceLimits.max_header_line_size`
+- `ResourceLimits.max_header_count`
+- `ResourceLimits.max_total_header_bytes`
+- `ResourceLimits.max_buffered_body_size`
+- `ResourceLimits.max_chunk_size`
+- `ResourceLimits.max_chunked_body_size`
+
+All `read_request`, `read_request_to`, `read_response`, and `read_response_to`
+entry points accept an optional `ResourceLimits` argument. If omitted, the
+library uses conservative defaults suitable for general HTTP/1.1 use.
+
+`ServerOptions.timeouts` controls socket-level server behavior:
+
+- `header_timeout`: maximum time to receive the request line and header block
+- `read_timeout`: maximum time to receive a request body after headers are complete
+- `idle_timeout`: maximum keep-alive idle time before the next request starts
+- `write_timeout`: maximum time allowed while sending the response
+
+Example parser hardening:
+
+```c3
+ResourceLimits limits = c3ttp::default_resource_limits();
+limits.max_buffered_body_size = 128 * 1024;
+limits.max_chunked_body_size = 256 * 1024;
+
+Request request = c3ttp::read_request(tmem, &socket, limits)!!;
+defer request.free();
+```

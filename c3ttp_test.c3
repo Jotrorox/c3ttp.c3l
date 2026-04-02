@@ -5,6 +5,7 @@ import std::io;
 import std::net::tcp;
 import std::net::os;
 import std::thread;
+import std::time;
 
 fn void? handle_ping(Request* request, Response* response, void* context)
 {
@@ -50,6 +51,41 @@ fn void? handle_echo_request_observation(Request* request, Response* response, v
 	response.set_body(request.target);
 	response.set_header("X-Observed-Method", request.method);
 	response.set_header("X-Observed-Host", request.header("Host")!!);
+}
+
+const usz LARGE_RESPONSE_BODY_SIZE = 16 * 1024 * 1024;
+
+fn void? handle_large_body(Request* request, Response* response, void* context)
+{
+	DString body = dstring::new_with_capacity(response.allocator, LARGE_RESPONSE_BODY_SIZE);
+	defer body.free();
+	body.append_repeat('x', LARGE_RESPONSE_BODY_SIZE);
+	response.status = 200;
+	response.set_body(body.str_view());
+	response.set_header("Content-Type", "text/plain");
+}
+
+fn ResourceLimits tiny_limits()
+{
+	ResourceLimits limits = default_resource_limits();
+	limits.max_request_line_size = 16;
+	limits.max_header_line_size = 16;
+	limits.max_header_count = 2;
+	limits.max_total_header_bytes = 24;
+	limits.max_buffered_body_size = 4;
+	limits.max_chunk_size = 3;
+	limits.max_chunked_body_size = 5;
+	return limits;
+}
+
+fn ServerOptions tiny_server_options()
+{
+	ServerOptions options = default_server_options();
+	options.timeouts.header_timeout = time::ms(20);
+	options.timeouts.read_timeout = time::ms(20);
+	options.timeouts.idle_timeout = time::ms(20);
+	options.timeouts.write_timeout = time::ms(20);
+	return options;
 }
 
 fn void? init_buffer(io::ByteBuffer* buffer, String contents = "")
@@ -685,6 +721,164 @@ fn void write_response_from_streams_chunked_body_and_trailers() @test
 	test::@check(encoded.contains("\r\ne\r\nstreaming body\r\n0\r\nX-Trailer: done\r\n\r\n"), "expected chunked streamed response with trailer");
 }
 
+fn void request_line_limit_is_enforced() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "GET /0123456789abcdef HTTP/1.1\r\nHost: example.com\r\n\r\n")!!;
+	defer buffer.free();
+
+	ResourceLimits limits = tiny_limits();
+	test::@error(read_request(tmem, &buffer, limits), REQUEST_LINE_TOO_LARGE);
+}
+
+fn void header_line_limit_is_enforced() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "GET / HTTP/1.1\r\nHost: example.com\r\nX-Long: abcdefghijklmnop\r\n\r\n")!!;
+	defer buffer.free();
+
+	ResourceLimits limits = tiny_limits();
+	test::@error(read_request(tmem, &buffer, limits), HEADER_LINE_TOO_LARGE);
+}
+
+fn void header_count_limit_is_enforced() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "GET / HTTP/1.1\r\nHost: a\r\nX-One: 1\r\nX-Two: 2\r\n\r\n")!!;
+	defer buffer.free();
+
+	ResourceLimits limits = tiny_limits();
+	test::@error(read_request(tmem, &buffer, limits), TOO_MANY_HEADERS);
+}
+
+fn void total_header_bytes_limit_is_enforced() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "GET / HTTP/1.1\r\nHost: example.com\r\nX-Test: 1234\r\n\r\n")!!;
+	defer buffer.free();
+
+	ResourceLimits limits = tiny_limits();
+	limits.max_header_line_size = 64;
+	limits.max_header_count = 8;
+	test::@error(read_request(tmem, &buffer, limits), HEADERS_TOO_LARGE);
+}
+
+fn void buffered_body_limit_is_enforced() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "POST / HTTP/1.1\r\nHost: example.com\r\nContent-Length: 5\r\n\r\nhello")!!;
+	defer buffer.free();
+
+	ResourceLimits limits = tiny_limits();
+	limits.max_header_line_size = 64;
+	limits.max_total_header_bytes = 128;
+	test::@error(read_request(tmem, &buffer, limits), BUFFERED_BODY_TOO_LARGE);
+}
+
+fn void chunk_size_limit_is_enforced() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "POST / HTTP/1.1\r\nHost: example.com\r\nTransfer-Encoding: chunked\r\n\r\n4\r\ntest\r\n0\r\n\r\n")!!;
+	defer buffer.free();
+
+	ResourceLimits limits = tiny_limits();
+	limits.max_header_line_size = 64;
+	limits.max_total_header_bytes = 128;
+	test::@error(read_request(tmem, &buffer, limits), CHUNK_TOO_LARGE);
+}
+
+fn void chunked_body_total_limit_is_enforced() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "POST / HTTP/1.1\r\nHost: example.com\r\nTransfer-Encoding: chunked\r\n\r\n3\r\nabc\r\n3\r\ndef\r\n0\r\n\r\n")!!;
+	defer buffer.free();
+
+	ResourceLimits limits = tiny_limits();
+	limits.max_header_line_size = 64;
+	limits.max_total_header_bytes = 128;
+	test::@error(read_request(tmem, &buffer, limits), CHUNKED_BODY_TOO_LARGE);
+}
+
+fn void respond_socket_header_timeout_is_enforced() @test
+{
+	tcp::TcpSocketPair pair;
+	pair.init()!!;
+	defer if (catch pair.destroy()) {}
+
+	TimedRespondArgs args = {
+		.socket = &pair.recv,
+		.options = tiny_server_options(),
+		.handler = &handle_ping,
+		.expected_fault = HEADER_TIMEOUT
+	};
+	thread::Thread worker;
+	worker.create(&timed_respond_thread, &args)!!;
+
+	test::eq(0, worker.join()!!);
+}
+
+fn void respond_socket_read_timeout_is_enforced() @test
+{
+	tcp::TcpSocketPair pair;
+	pair.init()!!;
+	defer if (catch pair.destroy()) {}
+
+	TimedRespondArgs args = {
+		.socket = &pair.recv,
+		.options = tiny_server_options(),
+		.handler = &handle_ping,
+		.expected_fault = READ_TIMEOUT
+	};
+	thread::Thread worker;
+	worker.create(&timed_respond_thread, &args)!!;
+
+	pair.send.write("POST /ping HTTP/1.1\r\nHost: example.com\r\nContent-Length: 5\r\n\r\nhe")!!;
+	test::eq(0, worker.join()!!);
+}
+
+fn void respond_socket_idle_timeout_is_enforced() @test
+{
+	tcp::TcpSocketPair pair;
+	pair.init()!!;
+	defer if (catch pair.destroy()) {}
+
+	TimedRespondArgs args = {
+		.socket = &pair.recv,
+		.options = tiny_server_options(),
+		.handler = &handle_ping_keep_alive,
+		.expected_fault = IDLE_TIMEOUT
+	};
+	thread::Thread worker;
+	worker.create(&timed_respond_thread, &args)!!;
+
+	pair.send.write("GET /ping HTTP/1.1\r\nHost: example.com\r\nConnection: keep-alive\r\n\r\n")!!;
+	Response response = read_response(tmem, &pair.send)!!;
+	defer response.free();
+	test::eq("pong", response.body);
+
+	test::eq(0, worker.join()!!);
+}
+
+fn void respond_socket_write_timeout_is_enforced() @test
+{
+	tcp::TcpSocketPair pair;
+	pair.init()!!;
+	defer if (catch pair.destroy()) {}
+
+	TimedRespondArgs args = {
+		.socket = &pair.recv,
+		.options = tiny_server_options(),
+		.handler = &handle_large_body,
+		.expected_fault = WRITE_TIMEOUT
+	};
+	thread::Thread worker;
+	worker.create(&timed_respond_thread, &args)!!;
+
+	pair.send.write("GET /ping HTTP/1.1\r\nHost: example.com\r\nConnection: close\r\n\r\n")!!;
+	thread::sleep(time::ms(80))!!;
+	test::eq(0, worker.join()!!);
+}
+
 fn void send_url_builds_origin_form_target_and_host_header() @test
 {
 	Server server;
@@ -786,6 +980,14 @@ struct RespondArgs
 	RequestCounter* counter;
 }
 
+struct TimedRespondArgs
+{
+	tcp::TcpSocket* socket;
+	ServerOptions options;
+	Handler handler;
+	fault expected_fault;
+}
+
 fn int respond_thread(void* arg)
 {
 	@pool_init(mem, 4096)
@@ -798,6 +1000,21 @@ fn int respond_thread(void* arg)
 		}
 		if (catch args.socket.close()) {}
 		return 0;
+	};
+}
+
+fn int timed_respond_thread(void* arg)
+{
+	@pool_init(mem, 4096)
+	{
+		TimedRespondArgs* args = arg;
+		if (catch err = respond_socket_impl(mem, args.socket, args.handler, 0, null, args.options))
+		{
+			if (err == args.expected_fault) return 0;
+			if (catch args.socket.close()) {}
+			return 1;
+		}
+		return 1;
 	};
 }
 

@@ -152,6 +152,85 @@ fn Client new_client_impl(Duration timeout = time::DURATION_ZERO) @private
 	return { .timeout = timeout };
 }
 
+fn ResourceLimits default_resource_limits_impl() @private
+{
+	return {
+		.max_request_line_size = 8 * 1024,
+		.max_header_line_size = 8 * 1024,
+		.max_header_count = 100,
+		.max_total_header_bytes = 64 * 1024,
+		.max_buffered_body_size = 1024 * 1024,
+		.max_chunk_size = 1024 * 1024,
+		.max_chunked_body_size = 8 * 1024 * 1024
+	};
+}
+
+fn ServerTimeouts default_server_timeouts_impl() @private
+{
+	return {
+		.read_timeout = time::sec(30),
+		.write_timeout = time::sec(30),
+		.idle_timeout = time::sec(15),
+		.header_timeout = time::sec(10)
+	};
+}
+
+fn ServerOptions default_server_options_impl() @private
+{
+	return {
+		.limits = default_resource_limits_impl(),
+		.timeouts = default_server_timeouts_impl()
+	};
+}
+
+struct TimedTcpStream (InStream, OutStream)
+{
+	tcp::TcpSocket* socket;
+	Duration read_timeout;
+	Duration body_read_timeout;
+	Duration write_timeout;
+	fault read_timeout_fault;
+}
+
+fn void? wait_for_socket_event(tcp::TcpSocket* socket, net::PollSubscribe events, Duration timeout, fault timeout_fault) @private
+{
+	if (timeout <= time::DURATION_ZERO) return;
+	net::Poll[1] polls = {{ .socket = socket.sock, .events = events }};
+	ulong ready = net::poll(polls[0:1], timeout)!;
+	if (!ready) return timeout_fault~;
+	if (polls[0].revents & (net::POLL_EVENT_ERROR | net::POLL_EVENT_INVALID | net::POLL_EVENT_DISCONNECT))
+	{
+		return io::UNEXPECTED_EOF~;
+	}
+}
+
+fn usz? TimedTcpStream.read(&self, char[] bytes) @dynamic
+{
+	wait_for_socket_event(self.socket, net::SUBSCRIBE_ANY_READ, self.read_timeout, self.read_timeout_fault)!;
+	return self.socket.read(bytes);
+}
+
+fn char? TimedTcpStream.read_byte(&self) @dynamic
+{
+	char[1] buffer = {};
+	usz read = self.read(buffer[..])!;
+	if (!read) return io::EOF~;
+	return buffer[0];
+}
+
+fn usz? TimedTcpStream.write(&self, char[] bytes) @dynamic
+{
+	wait_for_socket_event(self.socket, net::SUBSCRIBE_ANY_WRITE, self.write_timeout, WRITE_TIMEOUT)!;
+	return self.socket.write(bytes);
+}
+
+fn void? TimedTcpStream.write_byte(&self, char byte) @dynamic
+{
+	char[1] buffer = { byte };
+	usz written = self.write(buffer[..])!;
+	if (written != 1) return io::INCOMPLETE_WRITE~;
+}
+
 <*
  @require allocator != null : "allocator must be set"
  @require host.len > 0 : "host must not be empty"
@@ -187,15 +266,26 @@ fn Response? client_send_url_impl(Client* self, Allocator allocator, String meth
  @require host.len > 0 : "host must not be empty"
  @require backlog > 0 : "backlog must be greater than zero"
 *>
-fn Server* server_init_impl(Server* self, Allocator allocator, String host, uint port, uint backlog = 64) @private
+fn Server* server_init_impl(Server* self, Allocator allocator, String host, uint port, uint backlog = 64, ServerOptions options = default_server_options_impl()) @private
 {
 	*self = {
 		.allocator = allocator,
 		.host = host.copy(allocator),
 		.port = port,
-		.backlog = backlog
+		.backlog = backlog,
+		.options = options
 	};
 	return self;
+}
+
+fn void server_set_limits_impl(Server* self, ResourceLimits limits) @private
+{
+	self.options.limits = limits;
+}
+
+fn void server_set_timeouts_impl(Server* self, ServerTimeouts timeouts) @private
+{
+	self.options.timeouts = timeouts;
 }
 
 fn uint? server_bound_port(TcpServerSocket* listener) @private
@@ -251,7 +341,7 @@ fn void? server_serve_once_impl(Server* self, Handler handler, void* context = n
 	server_listen_impl(self)!;
 	tcp::TcpSocket socket = tcp::accept(&self.listener)!;
 	defer catch (void)socket.close();
-	respond_impl{tcp::TcpSocket*}(self.allocator, &socket, handler, 0, context)!;
+	respond_socket_impl(self.allocator, &socket, handler, 0, context, self.options)!;
 }
 
 <*
@@ -270,13 +360,13 @@ fn void? server_serve_impl(Server* self, Handler handler, uint max_requests = 0,
 <*
  @require allocator != null : "allocator must be set"
 *>
-fn Request? read_request_impl(Allocator allocator, Stream stream) <Stream> @private
+fn Request? read_request_impl(Allocator allocator, Stream stream, ResourceLimits limits = default_resource_limits_impl()) <Stream> @private
 {
-	String line = io::readline(allocator, stream)!;
+	String line = read_http_line{$typeof(stream)}(allocator, stream, limits.max_request_line_size, REQUEST_LINE_TOO_LARGE)!;
 	defer line.free(allocator);
 
 	Request request = parse_request_line(allocator, line)!;
-	if (catch err = read_headers_and_body(allocator, stream, &request.headers, &request.trailers, &request.body, true))
+	if (catch err = read_headers_and_body{$typeof(stream)}(allocator, stream, &request.headers, &request.trailers, &request.body, true, limits))
 	{
 		request_free_impl(&request);
 		return err~;
@@ -287,13 +377,13 @@ fn Request? read_request_impl(Allocator allocator, Stream stream) <Stream> @priv
 <*
  @require allocator != null : "allocator must be set"
 *>
-fn Request? read_request_to_impl(Allocator allocator, InStream in_stream, OutStream body_stream) @private
+fn Request? read_request_to_impl(Allocator allocator, InStream in_stream, OutStream body_stream, ResourceLimits limits = default_resource_limits_impl()) @private
 {
-	String line = io::readline(allocator, in_stream)!;
+	String line = read_http_line{$typeof(in_stream)}(allocator, in_stream, limits.max_request_line_size, REQUEST_LINE_TOO_LARGE)!;
 	defer line.free(allocator);
 
 	Request request = parse_request_line(allocator, line)!;
-	if (catch err = read_headers_and_body_to(allocator, in_stream, body_stream, &request.headers, &request.trailers, true))
+	if (catch err = read_headers_and_body_to(allocator, in_stream, body_stream, &request.headers, &request.trailers, true, limits))
 	{
 		request_free_impl(&request);
 		return err~;
@@ -305,13 +395,13 @@ fn Request? read_request_to_impl(Allocator allocator, InStream in_stream, OutStr
 <*
  @require allocator != null : "allocator must be set"
 *>
-fn Response? read_response_impl(Allocator allocator, Stream stream, String request_method = "") <Stream> @private
+fn Response? read_response_impl(Allocator allocator, Stream stream, String request_method = "", ResourceLimits limits = default_resource_limits_impl()) <Stream> @private
 {
-	String line = io::readline(allocator, stream)!;
+	String line = read_http_line{$typeof(stream)}(allocator, stream, limits.max_request_line_size, REQUEST_LINE_TOO_LARGE)!;
 	defer line.free(allocator);
 
 	Response response = parse_status_line(allocator, line)!;
-	if (catch err = read_headers_and_body(allocator, stream, &response.headers, &response.trailers, &response.body, false, !response_has_no_message_body(response.status, request_method)))
+	if (catch err = read_headers_and_body{$typeof(stream)}(allocator, stream, &response.headers, &response.trailers, &response.body, false, limits, !response_has_no_message_body(response.status, request_method)))
 	{
 		response_free_impl(&response);
 		return err~;
@@ -322,13 +412,13 @@ fn Response? read_response_impl(Allocator allocator, Stream stream, String reque
 <*
  @require allocator != null : "allocator must be set"
 *>
-fn Response? read_response_to_impl(Allocator allocator, InStream in_stream, OutStream body_stream, String request_method = "") @private
+fn Response? read_response_to_impl(Allocator allocator, InStream in_stream, OutStream body_stream, String request_method = "", ResourceLimits limits = default_resource_limits_impl()) @private
 {
-	String line = io::readline(allocator, in_stream)!;
+	String line = read_http_line{$typeof(in_stream)}(allocator, in_stream, limits.max_request_line_size, REQUEST_LINE_TOO_LARGE)!;
 	defer line.free(allocator);
 
 	Response response = parse_status_line(allocator, line)!;
-	if (catch err = read_headers_and_body_to(allocator, in_stream, body_stream, &response.headers, &response.trailers, false, !response_has_no_message_body(response.status, request_method)))
+	if (catch err = read_headers_and_body_to(allocator, in_stream, body_stream, &response.headers, &response.trailers, false, limits, !response_has_no_message_body(response.status, request_method)))
 	{
 		response_free_impl(&response);
 		return err~;
@@ -339,15 +429,16 @@ fn Response? read_response_to_impl(Allocator allocator, InStream in_stream, OutS
 
 fn void? write_request_impl(Stream stream, Request* request) <Stream> @private
 {
+	OutStream out_stream = (OutStream)stream;
 	validate_version(request.version)!;
 	validate_method(request.method)!;
 	validate_request_target(request.method, request.target)!;
 	validate_headers(&request.headers, true)!;
 	validate_body_headers(&request.headers)!;
 	validate_trailers(&request.trailers, uses_chunked_transfer_encoding(&request.headers)!)!;
-	io::fprintf(stream, "%s %s %s\r\n", request.method, request.target, request.version)!;
-	write_headers(stream, &request.headers, request.body)!;
-	write_body(stream, &request.headers, &request.trailers, request.body)!;
+	io::fprintf(out_stream, "%s %s %s\r\n", request.method, request.target, request.version)!;
+	write_headers(out_stream, &request.headers, request.body)!;
+	write_body(out_stream, &request.headers, &request.trailers, request.body)!;
 }
 
 fn void? write_request_from_impl(OutStream out_stream, Request* request, InStream body_stream, usz content_length = 0) @private
@@ -367,14 +458,15 @@ fn void? write_request_from_impl(OutStream out_stream, Request* request, InStrea
 
 fn void? write_response_impl(Stream stream, Response* response, String request_method = "") <Stream> @private
 {
+	OutStream out_stream = (OutStream)stream;
 	validate_version(response.version)!;
 	bool use_chunked = uses_chunked_transfer_encoding(&response.headers)!;
 	validate_trailers(&response.trailers, use_chunked)!;
-	io::fprintf(stream, "%s %d %s\r\n", response.version, response.status, response.reason)!;
-	write_headers(stream, &response.headers, response.body, response_should_emit_implicit_content_length(response.status, request_method))!;
+	io::fprintf(out_stream, "%s %d %s\r\n", response.version, response.status, response.reason)!;
+	write_headers(out_stream, &response.headers, response.body, response_should_emit_implicit_content_length(response.status, request_method))!;
 	if (!response_has_no_message_body(response.status, request_method))
 	{
-		write_body(stream, &response.headers, &response.trailers, response.body)!;
+		write_body(out_stream, &response.headers, &response.trailers, response.body)!;
 	}
 }
 
@@ -422,6 +514,36 @@ fn void? respond_impl(Allocator allocator, Stream stream, Handler handler, uint 
 	}
 }
 
+fn void? respond_socket_impl(Allocator allocator, tcp::TcpSocket* socket, Handler handler, uint max_requests, void* context, ServerOptions options) @private
+{
+	TimedTcpStream stream = {
+		.socket = socket,
+		.body_read_timeout = options.timeouts.read_timeout,
+		.write_timeout = options.timeouts.write_timeout,
+		.read_timeout_fault = HEADER_TIMEOUT
+	};
+
+	uint handled;
+	while (!max_requests || handled < max_requests)
+	{
+		stream.read_timeout = handled ? options.timeouts.idle_timeout : options.timeouts.header_timeout;
+		stream.read_timeout_fault = handled ? IDLE_TIMEOUT : HEADER_TIMEOUT;
+
+		Request request = read_request_impl{TimedTcpStream*}(allocator, &stream, options.limits)!;
+		defer request_free_impl(&request);
+
+		Response response;
+		response_init_impl(&response, allocator, 200, "OK");
+		defer response_free_impl(&response);
+
+		handler(&request, &response, context)!;
+		apply_default_connection_policy(allocator, &request.headers, &response.headers);
+		write_response_impl{TimedTcpStream*}(&stream, &response, request.method)!;
+		handled++;
+		if (should_close_connection(&request.headers) || should_close_connection(&response.headers)) return;
+	}
+}
+
 fn Request? parse_request_line(Allocator allocator, String line) @private
 {
 	@pool()
@@ -457,9 +579,10 @@ fn Response? parse_status_line(Allocator allocator, String line) @private
 	};
 }
 
-fn void? read_headers_and_body(Allocator allocator, Stream stream, HeaderList* headers, HeaderList* trailers, String* body, bool require_host, bool read_body = true) <Stream> @private
+fn void? read_headers_and_body(Allocator allocator, Stream stream, HeaderList* headers, HeaderList* trailers, String* body, bool require_host, ResourceLimits limits = default_resource_limits_impl(), bool read_body = true) <Stream> @private
 {
-	read_header_block(allocator, stream, headers)!;
+	set_stream_read_timeout{$typeof(stream)}(stream, get_stream_header_timeout{$typeof(stream)}(stream), HEADER_TIMEOUT);
+	read_header_block(allocator, stream, headers, limits)!;
 
 	validate_headers(headers, require_host)!;
 	validate_body_headers(headers)!;
@@ -475,7 +598,8 @@ fn void? read_headers_and_body(Allocator allocator, Stream stream, HeaderList* h
 	String? content_length_text = get_header(headers, "Content-Length");
 	if (use_chunked)
 	{
-		read_chunked_body{$typeof(stream)}(allocator, stream, body, trailers)!;
+		set_stream_read_timeout{$typeof(stream)}(stream, get_stream_body_timeout{$typeof(stream)}(stream), READ_TIMEOUT);
+		read_chunked_body{$typeof(stream)}(allocator, stream, body, trailers, limits)!;
 		return;
 	}
 	clear_headers(trailers);
@@ -487,11 +611,13 @@ fn void? read_headers_and_body(Allocator allocator, Stream stream, HeaderList* h
 	}
 
 	usz content_length = content_length_text.to_uint()!;
+	if (content_length > limits.max_buffered_body_size) return BUFFERED_BODY_TOO_LARGE~;
 	if (!content_length)
 	{
 		set_empty_body(allocator, body);
 		return;
 	}
+	set_stream_read_timeout{$typeof(stream)}(stream, get_stream_body_timeout{$typeof(stream)}(stream), READ_TIMEOUT);
 	char* buffer = allocator::alloc_array(allocator, char, content_length + 1);
 	usz read;
 	while (read < content_length)
@@ -514,9 +640,10 @@ fn void? read_headers_and_body(Allocator allocator, Stream stream, HeaderList* h
 	*body = (String)buffer[:content_length];
 }
 
-fn void? read_headers_and_body_to(Allocator allocator, InStream in_stream, OutStream body_stream, HeaderList* headers, HeaderList* trailers, bool require_host, bool read_body = true) @private
+fn void? read_headers_and_body_to(Allocator allocator, InStream in_stream, OutStream body_stream, HeaderList* headers, HeaderList* trailers, bool require_host, ResourceLimits limits = default_resource_limits_impl(), bool read_body = true) @private
 {
-	read_header_block(allocator, in_stream, headers)!;
+	set_stream_read_timeout{$typeof(in_stream)}(in_stream, get_stream_header_timeout{$typeof(in_stream)}(in_stream), HEADER_TIMEOUT);
+	read_header_block(allocator, in_stream, headers, limits)!;
 
 	validate_headers(headers, require_host)!;
 	validate_body_headers(headers)!;
@@ -530,7 +657,8 @@ fn void? read_headers_and_body_to(Allocator allocator, InStream in_stream, OutSt
 	String? content_length_text = get_header(headers, "Content-Length");
 	if (use_chunked)
 	{
-		read_chunked_body_to(allocator, in_stream, body_stream, trailers)!;
+		set_stream_read_timeout{$typeof(in_stream)}(in_stream, get_stream_body_timeout{$typeof(in_stream)}(in_stream), READ_TIMEOUT);
+		read_chunked_body_to(allocator, in_stream, body_stream, trailers, limits)!;
 		return;
 	}
 	clear_headers(trailers);
@@ -538,17 +666,19 @@ fn void? read_headers_and_body_to(Allocator allocator, InStream in_stream, OutSt
 	if (catch err = content_length_text) return;
 	usz content_length = content_length_text.to_uint()!;
 	if (!content_length) return;
+	set_stream_read_timeout{$typeof(in_stream)}(in_stream, get_stream_body_timeout{$typeof(in_stream)}(in_stream), READ_TIMEOUT);
 	copy_exact_to_stream(in_stream, body_stream, content_length)!;
 }
 
-fn void? read_chunked_body(Allocator allocator, Stream stream, String* body, HeaderList* trailers) <Stream> @private
+fn void? read_chunked_body(Allocator allocator, Stream stream, String* body, HeaderList* trailers, ResourceLimits limits = default_resource_limits_impl()) <Stream> @private
 {
 	DString chunks = dstring::new_with_capacity(allocator, 32);
 	defer chunks.free();
+	usz total_size;
 
 	while (true)
 	{
-		String line = io::readline(allocator, stream)!;
+		String line = read_http_line{$typeof(stream)}(allocator, stream, limits.max_header_line_size, HEADER_LINE_TOO_LARGE)!;
 		defer line.free(allocator);
 
 		usz extension = line.index_of_char(';') ?? line.len;
@@ -557,14 +687,17 @@ fn void? read_chunked_body(Allocator allocator, Stream stream, String* body, Hea
 		usz? chunk_size_value = size_text.to_uint(16);
 		if (catch err = chunk_size_value) return INVALID_CHUNK~;
 		usz chunk_size = chunk_size_value;
+		if (chunk_size > limits.max_chunk_size) return CHUNK_TOO_LARGE~;
 		if (!chunk_size)
 		{
-			read_trailers(allocator, stream, trailers)!;
+			read_trailers(allocator, stream, trailers, limits)!;
 			(*body).free(allocator);
 			*body = chunks.copy_str(allocator);
 			chunks.free();
 			return;
 		}
+		if (total_size + chunk_size > limits.max_chunked_body_size) return CHUNKED_BODY_TOO_LARGE~;
+		if (total_size + chunk_size > limits.max_buffered_body_size) return BUFFERED_BODY_TOO_LARGE~;
 
 		char[] chunk = allocator::alloc_array(allocator, char, chunk_size);
 		defer allocator::free(allocator, chunk);
@@ -582,16 +715,18 @@ fn void? read_chunked_body(Allocator allocator, Stream stream, String* body, Hea
 		if ((String)chunk_crlf[..] != "\r\n") return INVALID_CHUNK~;
 
 		chunks.append_bytes(chunk);
+		total_size += chunk_size;
 	}
 }
 
-fn void? read_chunked_body_to(Allocator allocator, InStream in_stream, OutStream body_stream, HeaderList* trailers) @private
+fn void? read_chunked_body_to(Allocator allocator, InStream in_stream, OutStream body_stream, HeaderList* trailers, ResourceLimits limits = default_resource_limits_impl()) @private
 {
 	char[4096] buffer = {};
+	usz total_size;
 
 	while (true)
 	{
-		String line = io::readline(allocator, in_stream)!;
+		String line = read_http_line{$typeof(in_stream)}(allocator, in_stream, limits.max_header_line_size, HEADER_LINE_TOO_LARGE)!;
 		defer line.free(allocator);
 
 		usz extension = line.index_of_char(';') ?? line.len;
@@ -600,16 +735,19 @@ fn void? read_chunked_body_to(Allocator allocator, InStream in_stream, OutStream
 		usz? chunk_size_value = size_text.to_uint(16);
 		if (catch err = chunk_size_value) return INVALID_CHUNK~;
 		usz chunk_size = chunk_size_value;
+		if (chunk_size > limits.max_chunk_size) return CHUNK_TOO_LARGE~;
 		if (!chunk_size)
 		{
-			read_trailers(allocator, in_stream, trailers)!;
+			read_trailers(allocator, in_stream, trailers, limits)!;
 			return;
 		}
+		if (total_size + chunk_size > limits.max_chunked_body_size) return CHUNKED_BODY_TOO_LARGE~;
 
 		copy_exact_chunk_to_stream(in_stream, body_stream, buffer[..], chunk_size)!;
 		char[2] chunk_crlf = {};
 		read_exact(in_stream, chunk_crlf[..])!;
 		if ((String)chunk_crlf[..] != "\r\n") return INVALID_CHUNK~;
+		total_size += chunk_size;
 	}
 }
 
@@ -627,15 +765,19 @@ fn Header? parse_header(Allocator allocator, String line) @private
 	};
 }
 
-fn void? read_header_block(Allocator allocator, InStream stream, HeaderList* headers) @private
+fn void? read_header_block(Allocator allocator, InStream stream, HeaderList* headers, ResourceLimits limits = default_resource_limits_impl()) @private
 {
 	clear_headers(headers);
+	usz total_bytes;
 	while (true)
 	{
-		String line = io::readline(allocator, stream)!;
+		String line = read_http_line{$typeof(stream)}(allocator, stream, limits.max_header_line_size, HEADER_LINE_TOO_LARGE)!;
 		defer line.free(allocator);
 		if (!line) break;
+		if (headers.len() >= limits.max_header_count) return TOO_MANY_HEADERS~;
+		if (total_bytes + line.len > limits.max_total_header_bytes) return HEADERS_TOO_LARGE~;
 		headers.push(parse_header(allocator, line)!);
+		total_bytes += line.len;
 	}
 }
 
@@ -760,10 +902,63 @@ fn void set_empty_body(Allocator allocator, String* body) @private
 	*body = "".copy(allocator);
 }
 
-fn void? read_trailers(Allocator allocator, InStream stream, HeaderList* trailers) @private
+fn void? read_trailers(Allocator allocator, InStream stream, HeaderList* trailers, ResourceLimits limits = default_resource_limits_impl()) @private
 {
-	read_header_block(allocator, stream, trailers)!;
+	read_header_block(allocator, stream, trailers, limits)!;
 	validate_trailers(trailers, true)!;
+}
+
+fn String? read_http_line(Allocator allocator, Stream stream, usz limit, fault too_long_fault) <Stream> @private
+{
+	@pool()
+	{
+		DString line = dstring::temp_with_capacity(min(limit ? limit : 256, 256));
+		while (true)
+		{
+			char? c_value = stream.read_byte();
+			if (catch err = c_value)
+			{
+				if (err == io::EOF)
+				{
+					if (!line.len()) return io::EOF~;
+					return io::UNEXPECTED_EOF~;
+				}
+				return err~;
+			}
+
+			char c = c_value;
+			if (c == '\n') return line.copy_str(allocator);
+			if (c == '\r') continue;
+			if (limit && line.len() >= limit) return too_long_fault~;
+			line.append_char(c);
+		}
+	};
+}
+
+fn Duration get_stream_header_timeout(Stream stream) <Stream> @private
+{
+	$if Stream == TimedTcpStream*:
+		return stream.read_timeout;
+	$else
+		return time::DURATION_ZERO;
+	$endif
+}
+
+fn Duration get_stream_body_timeout(Stream stream) <Stream> @private
+{
+	$if Stream == TimedTcpStream*:
+		return stream.body_read_timeout;
+	$else
+		return time::DURATION_ZERO;
+	$endif
+}
+
+fn void set_stream_read_timeout(Stream stream, Duration timeout, fault timeout_fault) <Stream> @private
+{
+	$if Stream == TimedTcpStream*:
+		stream.read_timeout = timeout;
+		stream.read_timeout_fault = timeout_fault;
+	$endif
 }
 
 fn void? validate_trailers(HeaderList* trailers, bool allow_trailers) @private

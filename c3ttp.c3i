@@ -65,6 +65,7 @@ struct Response
 struct Client
 {
 	Duration timeout;
+	bool tcp_no_delay;
 }
 
 struct ResourceLimits
@@ -160,6 +161,10 @@ macro void? Server.serve_once(&self, Handler handler, void* context = null)
 	=> server_serve_once_impl(self, handler, context);
 macro void? Server.serve(&self, Handler handler, uint max_requests = 0, void* context = null)
 	=> server_serve_impl(self, handler, max_requests, context);
+macro void? Server.serve_evented(&self, Handler handler, uint max_requests = 0, void* context = null)
+	=> server_serve_evented_impl(self, handler, max_requests, context);
+macro void? Server.serve_prefork(&self, Handler handler, uint workers = 0, void* context = null)
+	=> server_serve_prefork_impl(self, handler, workers, context);
 
 macro Request? read_request(Allocator allocator, stream, ResourceLimits limits = default_resource_limits())
 {

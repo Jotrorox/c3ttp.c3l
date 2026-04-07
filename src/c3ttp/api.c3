@@ -141,7 +141,7 @@ fn void response_add_header_impl(Response* self, String name, String value) @pri
 
 fn Client new_client_impl(Duration timeout = time::DURATION_ZERO) @private
 {
-	return { .timeout = timeout };
+	return { .timeout = timeout, .tcp_no_delay = true };
 }
 
 fn ResourceLimits default_resource_limits_impl() @private

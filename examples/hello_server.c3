@@ -1,6 +1,6 @@
 module hello_server;
 
-import c3ttp, std::io, std::time;
+import c3ttp, std::io, std::thread::cpu, std::time;
 
 fn void? hello(Request* request, Response* response, void* context)
 {
@@ -20,7 +20,7 @@ fn int main()
 	server.init(tmem, "127.0.0.1", 8080, 64, options);
 	defer server.free();
 
-	io::printn("Serving one request on http://127.0.0.1:8080");
-	server.serve(&hello, 1)!!;
+	io::printfn("Serving on http://127.0.0.1:8080 with %d prefork workers", cpu::native_cpu());
+	server.serve_prefork(&hello)!!;
 	return 0;
 }

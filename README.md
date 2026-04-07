@@ -12,6 +12,9 @@ Small HTTP/1.1 client and server library for C3, built on `std::net::tcp`.
 - buffered and streaming body APIs
 - basic TCP client and server helpers
 - keep-alive support for HTTP/1.1
+- Linux `epoll` event loop for server workloads
+- Linux prefork serving with `SO_REUSEPORT`
+- `TCP_NODELAY` enabled for client connections and accepted server sockets
 
 ```bash
 c3c compile-test .
@@ -24,5 +27,6 @@ See [`c3ttp.c3i`](/home/johannes/projects/c3ttp.c3l/c3ttp.c3i) for the supported
 - `Request` / `Response`
 - `Client.send` / `Client.send_url`
 - `Server.listen` / `Server.serve_once` / `Server.serve`
+- `Server.serve_evented` / `Server.serve_prefork`
 - `read_request` / `read_response`
 - `write_request` / `write_response`

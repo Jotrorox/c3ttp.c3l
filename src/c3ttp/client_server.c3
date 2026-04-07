@@ -2,12 +2,39 @@ module c3ttp @private;
 
 import std::core::env;
 import std::io;
+import std::thread::cpu;
 import std::net;
 import std::net::os;
 import std::net::tcp;
+import std::os::linux;
 import std::time;
+import libc;
 
 extern fn CInt getsockname(os::NativeSocket socket, os::SockAddrPtr address, os::Socklen_t* address_len) @if(env::POSIX);
+extern fn CInt fork() @if(env::POSIX);
+
+const CInt TCP_NODELAY = 1;
+const CInt IPPROTO_TCP = 6;
+const int EPOLL_MAX_EVENTS = 256;
+
+fn void? set_tcp_no_delay(tcp::TcpSocket* socket, bool enabled) @private
+{
+	if (!enabled || socket.ai_addrlen < 2) return;
+	CInt flag = 1;
+	if (os::setsockopt(socket.sock, IPPROTO_TCP, TCP_NODELAY, &flag, CInt.sizeof) != 0)
+	{
+		return os::socket_error()~;
+	}
+}
+
+fn tcp::TcpServerSocket? server_make_listener(Server* self, bool reuse_port) @private
+{
+	if (reuse_port)
+	{
+		return tcp::listen(self.host, self.port, (int)self.backlog, REUSEADDR, REUSEPORT)!;
+	}
+	return tcp::listen(self.host, self.port, (int)self.backlog, REUSEADDR)!;
+}
 
 struct TimedTcpStream (InStream, OutStream)
 {
@@ -65,6 +92,7 @@ fn Response? client_send_impl(Client* self, Allocator allocator, String host, ui
 {
 	tcp::TcpSocket socket = tcp::connect(host, port, self.timeout)!;
 	defer catch (void)socket.close();
+	set_tcp_no_delay(&socket, self.tcp_no_delay)!!;
 	return exchange_impl{tcp::TcpSocket*}(allocator, &socket, request);
 }
 
@@ -137,7 +165,7 @@ fn uint? server_bound_port(TcpServerSocket* listener) @private
 fn void? server_listen_impl(Server* self) @private
 {
 	if (self.is_listening) return;
-	self.listener = tcp::listen(self.host, self.port, self.backlog, REUSEADDR)!;
+	self.listener = server_make_listener(self, false)!;
 	self.port = server_bound_port(&self.listener)!;
 	self.is_listening = true;
 }
@@ -167,6 +195,7 @@ fn void? server_serve_once_impl(Server* self, Handler handler, void* context = n
 	server_listen_impl(self)!;
 	tcp::TcpSocket socket = tcp::accept(&self.listener)!;
 	defer catch (void)socket.close();
+	set_tcp_no_delay(&socket, true)!!;
 	respond_socket_impl(self.allocator, &socket, handler, 0, context, self.options)!;
 }
 
@@ -185,6 +214,11 @@ fn void? server_serve_impl(Server* self, Handler handler, uint max_requests = 0,
 
 fn void? respond_socket_impl(Allocator allocator, tcp::TcpSocket* socket, Handler handler, uint max_requests, void* context, ServerOptions options) @private
 {
+	respond_socket_keepalive_impl(allocator, socket, handler, max_requests, context, options, null)!;
+}
+
+fn void? respond_socket_keepalive_impl(Allocator allocator, tcp::TcpSocket* socket, Handler handler, uint max_requests, void* context, ServerOptions options, bool* keep_open) @private
+{
 	TimedTcpStream stream = {
 		.socket = socket,
 		.read_timeout = options.timeouts.header_timeout,
@@ -192,6 +226,8 @@ fn void? respond_socket_impl(Allocator allocator, tcp::TcpSocket* socket, Handle
 		.write_timeout = options.timeouts.write_timeout,
 		.read_timeout_fault = HEADER_TIMEOUT
 	};
+
+	if (keep_open) *keep_open = true;
 
 	uint handled;
 	while (!max_requests || handled < max_requests)
@@ -210,6 +246,143 @@ fn void? respond_socket_impl(Allocator allocator, tcp::TcpSocket* socket, Handle
 		apply_default_connection_policy(allocator, &request.headers, &response.headers);
 		write_response_impl{TimedTcpStream*}(&stream, &response, request.method)!;
 		handled++;
-		if (should_close_connection(&request.headers) || should_close_connection(&response.headers)) return;
+		bool close_connection = should_close_connection(&request.headers) || should_close_connection(&response.headers);
+		if (keep_open) *keep_open = !close_connection;
+		if (close_connection) return;
 	}
+}
+
+fn void close_epoll_socket(int epfd, int fd) @private @if(env::LINUX)
+{
+	linux::epoll_ctl(epfd, (int)linux::EPOLL_CTL_DEL, fd, null);
+	(void)libc::close(fd);
+}
+
+fn void? register_epoll_socket(int epfd, int fd, uint events) @private @if(env::LINUX)
+{
+	linux::EpollEvent event = { .events = events };
+	event.data.fd = fd;
+	if (linux::epoll_ctl(epfd, (int)linux::EPOLL_CTL_ADD, fd, &event) != 0) return io::GENERAL_ERROR~;
+}
+
+fn void? server_accept_new_clients(Server* self, tcp::TcpServerSocket* listener, int epfd) @private @if(env::LINUX)
+{
+	while (true)
+	{
+		tcp::TcpSocket socket;
+		socket.ai_addrlen = socket.ai_addr_storage.len;
+		socket.sock = os::accept(listener.sock, (os::SockAddrPtr)&socket.ai_addr_storage, &socket.ai_addrlen);
+		if (!socket.sock.is_valid())
+		{
+			fault err = os::socket_error();
+			if (err == io::WOULD_BLOCK || err == io::INTERRUPTED) return;
+			return err~;
+		}
+
+		if (catch err = set_tcp_no_delay(&socket, true))
+		{
+			if (catch socket.close()) {}
+			return err~;
+		}
+		if (catch err = register_epoll_socket(epfd, socket.sock, linux::EPOLLIN | linux::EPOLLERR | linux::EPOLLHUP | linux::EPOLLRDHUP))
+		{
+			if (catch socket.close()) {}
+			return err~;
+		}
+	}
+}
+
+fn void? server_run_event_loop(Server* self, tcp::TcpServerSocket* listener, Handler handler, uint max_requests, void* context) @private @if(env::LINUX)
+{
+	listener.sock.set_non_blocking(true)!;
+
+	int epfd = linux::epoll_create1(0);
+	if (epfd < 0) return io::GENERAL_ERROR~;
+	defer (void)libc::close(epfd);
+
+	register_epoll_socket(epfd, listener.sock, linux::EPOLLIN | linux::EPOLLERR | linux::EPOLLHUP)!;
+
+	linux::EpollEvent[EPOLL_MAX_EVENTS] events;
+	uint served;
+	bool stop;
+
+	while (!stop && (!max_requests || served < max_requests))
+	{
+		int ready = linux::epoll_wait(epfd, &events[0], EPOLL_MAX_EVENTS, -1);
+		if (ready < 0)
+		{
+			if (libc::errno() == EINTR) continue;
+			return io::GENERAL_ERROR~;
+		}
+
+		for (int i = 0; i < ready; i++)
+		{
+			int fd = events[i].data.fd;
+			uint event_mask = events[i].events;
+
+			if (fd == listener.sock)
+			{
+				server_accept_new_clients(self, listener, epfd)!;
+				continue;
+			}
+
+			if (event_mask & (linux::EPOLLERR | linux::EPOLLHUP | linux::EPOLLRDHUP))
+			{
+				close_epoll_socket(epfd, fd);
+				continue;
+			}
+
+			if (!(event_mask & linux::EPOLLIN)) continue;
+
+			tcp::TcpSocket socket = { .sock = (os::NativeSocket)fd };
+			bool keep_open = true;
+			if (catch err = respond_socket_keepalive_impl(self.allocator, &socket, handler, 1, context, self.options, &keep_open))
+			{
+				close_epoll_socket(epfd, fd);
+				continue;
+			}
+
+			served++;
+			if (!keep_open) close_epoll_socket(epfd, fd);
+			if (max_requests && served >= max_requests)
+			{
+				stop = true;
+				break;
+			}
+		}
+	}
+}
+
+fn void? server_serve_evented_impl(Server* self, Handler handler, uint max_requests = 0, void* context = null) @private
+{
+	$if env::LINUX:
+		server_listen_impl(self)!;
+		return server_run_event_loop(self, &self.listener, handler, max_requests, context);
+	$else
+		return server_serve_impl(self, handler, max_requests, context);
+	$endif
+}
+
+fn void? server_serve_prefork_impl(Server* self, Handler handler, uint workers = 0, void* context = null) @private
+{
+	$if env::LINUX:
+		if (!workers) workers = (uint)cpu::native_cpu();
+		if (workers <= 1 || !self.port || self.is_listening)
+		{
+			return server_serve_evented_impl(self, handler, 0, context);
+		}
+
+		for (uint i = 1; i < workers; i++)
+		{
+			CInt pid = fork();
+			if (pid < 0) return io::GENERAL_ERROR~;
+			if (!pid) break;
+		}
+
+		tcp::TcpServerSocket listener = server_make_listener(self, true)!;
+		defer catch (void)listener.close();
+		return server_run_event_loop(self, &listener, handler, 0, context);
+	$else
+		return server_serve_impl(self, handler, 0, context);
+	$endif
 }

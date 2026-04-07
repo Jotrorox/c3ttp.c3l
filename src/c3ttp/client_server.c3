@@ -16,6 +16,7 @@ extern fn CInt fork() @if(env::POSIX);
 const CInt TCP_NODELAY = 1;
 const CInt IPPROTO_TCP = 6;
 const int EPOLL_MAX_EVENTS = 256;
+const usz TIMED_TCP_STREAM_BUFFER_SIZE = 8192;
 
 fn void? set_tcp_no_delay(tcp::TcpSocket* socket, bool enabled) @private
 {
@@ -43,6 +44,9 @@ struct TimedTcpStream (InStream, OutStream)
 	Duration body_read_timeout;
 	Duration write_timeout;
 	fault read_timeout_fault;
+	char[TIMED_TCP_STREAM_BUFFER_SIZE] read_buffer_storage;
+	usz read_buffer_start;
+	usz read_buffer_end;
 }
 
 fn void? wait_for_socket_event(tcp::TcpSocket* socket, net::PollSubscribe events, Duration timeout, fault timeout_fault) @private
@@ -57,18 +61,99 @@ fn void? wait_for_socket_event(tcp::TcpSocket* socket, net::PollSubscribe events
 	}
 }
 
+fn usz timed_tcp_stream_buffered_bytes(TimedTcpStream* stream) @private
+{
+	return stream.read_buffer_end - stream.read_buffer_start;
+}
+
+fn void timed_tcp_stream_reset_buffer(TimedTcpStream* stream) @private
+{
+	stream.read_buffer_start = 0;
+	stream.read_buffer_end = 0;
+}
+
+fn void timed_tcp_stream_compact_buffer(TimedTcpStream* stream) @private
+{
+	if (!stream.read_buffer_start) return;
+	usz buffered = timed_tcp_stream_buffered_bytes(stream);
+	for (usz i = 0; i < buffered; i++)
+	{
+		stream.read_buffer_storage[i] = stream.read_buffer_storage[stream.read_buffer_start + i];
+	}
+	stream.read_buffer_start = 0;
+	stream.read_buffer_end = buffered;
+}
+
+fn sz? timed_tcp_stream_fill_buffer(TimedTcpStream* stream) @private
+{
+	if (timed_tcp_stream_buffered_bytes(stream)) return (sz)timed_tcp_stream_buffered_bytes(stream);
+	timed_tcp_stream_reset_buffer(stream);
+	wait_for_socket_event(stream.socket, net::SUBSCRIBE_ANY_READ, stream.read_timeout, stream.read_timeout_fault)!;
+	sz read = (sz)stream.socket.read(stream.read_buffer_storage[..])!;
+	if (read > 0)
+	{
+		stream.read_buffer_end = (usz)read;
+	}
+	return read;
+}
+
 fn sz? TimedTcpStream.read(&self, char[] bytes) @dynamic
 {
-	wait_for_socket_event(self.socket, net::SUBSCRIBE_ANY_READ, self.read_timeout, self.read_timeout_fault)!;
-	return (sz)self.socket.read(bytes)!;
+	if (!bytes.len) return 0;
+
+	usz copied;
+	usz buffered = timed_tcp_stream_buffered_bytes(self);
+	if (buffered)
+	{
+		usz to_copy = min(bytes.len, buffered);
+		for (usz i = 0; i < to_copy; i++)
+		{
+			bytes[i] = self.read_buffer_storage[self.read_buffer_start + i];
+		}
+		self.read_buffer_start += to_copy;
+		if (self.read_buffer_start == self.read_buffer_end)
+		{
+			timed_tcp_stream_reset_buffer(self);
+		}
+		copied = to_copy;
+	}
+	if (copied) return (sz)copied;
+	if (bytes.len >= TIMED_TCP_STREAM_BUFFER_SIZE)
+	{
+		wait_for_socket_event(self.socket, net::SUBSCRIBE_ANY_READ, self.read_timeout, self.read_timeout_fault)!;
+		return (sz)self.socket.read(bytes)!;
+	}
+
+	sz read = timed_tcp_stream_fill_buffer(self)!;
+	if (read <= 0) return read;
+
+	usz to_copy = min(bytes.len, timed_tcp_stream_buffered_bytes(self));
+	for (usz i = 0; i < to_copy; i++)
+	{
+		bytes[i] = self.read_buffer_storage[self.read_buffer_start + i];
+	}
+	self.read_buffer_start += to_copy;
+	if (self.read_buffer_start == self.read_buffer_end)
+	{
+		timed_tcp_stream_reset_buffer(self);
+	}
+	return (sz)to_copy;
 }
 
 fn char? TimedTcpStream.read_byte(&self) @dynamic
 {
-	char[1] buffer = {};
-	sz read = self.read(buffer[..])!;
-	if (!read) return io::EOF~;
-	return buffer[0];
+	if (!timed_tcp_stream_buffered_bytes(self))
+	{
+		sz read = timed_tcp_stream_fill_buffer(self)!;
+		if (!read) return io::EOF~;
+	}
+	char byte = self.read_buffer_storage[self.read_buffer_start];
+	self.read_buffer_start++;
+	if (self.read_buffer_start == self.read_buffer_end)
+	{
+		timed_tcp_stream_reset_buffer(self);
+	}
+	return byte;
 }
 
 fn sz? TimedTcpStream.write(&self, char[] bytes) @dynamic

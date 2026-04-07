@@ -1,5 +1,14 @@
 module c3ttp @private;
 
+struct HeaderInfo
+{
+	bool has_host;
+	bool has_content_length;
+	String content_length_text;
+	bool chunked;
+	bool connection_close;
+}
+
 fn void upsert_header(HeaderList* headers, Allocator allocator, String name, String value) @private
 {
 	if (try header = find_header_ref(headers, name))
@@ -24,6 +33,54 @@ fn String? get_header(HeaderList* headers, String name) @private
 {
 	Header* header = find_header_ref(headers, name)!;
 	return header.value;
+}
+
+fn void? analyze_headers(HeaderList* headers, bool require_host, HeaderInfo* info_out) @private
+{
+	HeaderInfo info = {};
+	bool seen_transfer_encoding = false;
+	bool seen_connection = false;
+
+	foreach (header : *headers)
+	{
+		if (header_name_eq(header.name, "Host"))
+		{
+			if (info.has_host) return DUPLICATE_HEADER~;
+			validate_host_header_value(header.value)!;
+			info.has_host = true;
+			continue;
+		}
+		if (header_name_eq(header.name, "Content-Length"))
+		{
+			if (info.has_content_length) return DUPLICATE_HEADER~;
+			info.has_content_length = true;
+			info.content_length_text = header.value;
+			continue;
+		}
+		if (header_name_eq(header.name, "Transfer-Encoding"))
+		{
+			if (seen_transfer_encoding) return DUPLICATE_HEADER~;
+			seen_transfer_encoding = true;
+			String te = header.value;
+			if (te.to_lower_tcopy() == "identity") continue;
+			if (te.trim().to_lower_tcopy() == "chunked")
+			{
+				info.chunked = true;
+				continue;
+			}
+			return UNSUPPORTED_TRANSFER_ENCODING~;
+		}
+		if (header_name_eq(header.name, "Connection"))
+		{
+			if (seen_connection) return DUPLICATE_HEADER~;
+			seen_connection = true;
+			info.connection_close = header_contains_token(header.value, "close");
+		}
+	}
+
+	if (require_host && !info.has_host) return MISSING_HOST~;
+	if (info.chunked && info.has_content_length) return CONFLICTING_BODY_HEADERS~;
+	*info_out = info;
 }
 
 fn void? validate_trailers(HeaderList* trailers, bool allow_trailers) @private

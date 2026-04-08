@@ -35,6 +35,57 @@ fn String? get_header(HeaderList* headers, String name) @private
 	return header.value;
 }
 
+fn bool ascii_eq_ignore_case(String left, String right) @private
+{
+	if (left.len != right.len) return false;
+	foreach (i, c : left)
+	{
+		char left_char = c;
+		char right_char = right[i];
+		if (left_char >= 'A' && left_char <= 'Z') left_char += 'a' - 'A';
+		if (right_char >= 'A' && right_char <= 'Z') right_char += 'a' - 'A';
+		if (left_char != right_char) return false;
+	}
+	return true;
+}
+
+fn void? analyze_header(Header header, HeaderInfo* info, bool* seen_transfer_encoding, bool* seen_connection) @private
+{
+	if (header_name_eq(header.name, "Host"))
+	{
+		if (info.has_host) return DUPLICATE_HEADER~;
+		validate_host_header_value(header.value)!;
+		info.has_host = true;
+		return;
+	}
+	if (header_name_eq(header.name, "Content-Length"))
+	{
+		if (info.has_content_length) return DUPLICATE_HEADER~;
+		info.has_content_length = true;
+		info.content_length_text = header.value;
+		return;
+	}
+	if (header_name_eq(header.name, "Transfer-Encoding"))
+	{
+		if (*seen_transfer_encoding) return DUPLICATE_HEADER~;
+		*seen_transfer_encoding = true;
+		String te = header.value;
+		if (ascii_eq_ignore_case(te, "identity")) return;
+		if (ascii_eq_ignore_case(te.trim(), "chunked"))
+		{
+			info.chunked = true;
+			return;
+		}
+		return UNSUPPORTED_TRANSFER_ENCODING~;
+	}
+	if (header_name_eq(header.name, "Connection"))
+	{
+		if (*seen_connection) return DUPLICATE_HEADER~;
+		*seen_connection = true;
+		info.connection_close = header_contains_token(header.value, "close");
+	}
+}
+
 fn void? analyze_headers(HeaderList* headers, bool require_host, HeaderInfo* info_out) @private
 {
 	HeaderInfo info = {};
@@ -43,39 +94,7 @@ fn void? analyze_headers(HeaderList* headers, bool require_host, HeaderInfo* inf
 
 	foreach (header : *headers)
 	{
-		if (header_name_eq(header.name, "Host"))
-		{
-			if (info.has_host) return DUPLICATE_HEADER~;
-			validate_host_header_value(header.value)!;
-			info.has_host = true;
-			continue;
-		}
-		if (header_name_eq(header.name, "Content-Length"))
-		{
-			if (info.has_content_length) return DUPLICATE_HEADER~;
-			info.has_content_length = true;
-			info.content_length_text = header.value;
-			continue;
-		}
-		if (header_name_eq(header.name, "Transfer-Encoding"))
-		{
-			if (seen_transfer_encoding) return DUPLICATE_HEADER~;
-			seen_transfer_encoding = true;
-			String te = header.value;
-			if (te.to_lower_tcopy() == "identity") continue;
-			if (te.trim().to_lower_tcopy() == "chunked")
-			{
-				info.chunked = true;
-				continue;
-			}
-			return UNSUPPORTED_TRANSFER_ENCODING~;
-		}
-		if (header_name_eq(header.name, "Connection"))
-		{
-			if (seen_connection) return DUPLICATE_HEADER~;
-			seen_connection = true;
-			info.connection_close = header_contains_token(header.value, "close");
-		}
+		analyze_header(header, &info, &seen_transfer_encoding, &seen_connection)!;
 	}
 
 	if (require_host && !info.has_host) return MISSING_HOST~;
@@ -94,54 +113,6 @@ fn void? validate_trailers(HeaderList* trailers, bool allow_trailers) @private
 		if (header_name_eq(header.name, "Connection")) return INVALID_TRAILER~;
 		if (header_name_eq(header.name, "Trailer")) return INVALID_TRAILER~;
 	}
-}
-
-fn void? validate_body_headers(HeaderList* headers) @private
-{
-	bool use_chunked = uses_chunked_transfer_encoding(headers)!;
-	String? content_length_text = get_header(headers, "Content-Length");
-	if (use_chunked)
-	{
-		if (try content_length_text) return CONFLICTING_BODY_HEADERS~;
-	}
-}
-
-fn void? validate_headers(HeaderList* headers, bool require_host) @private
-{
-	bool seen_host = false;
-	bool seen_content_length = false;
-	bool seen_transfer_encoding = false;
-	bool seen_connection = false;
-
-	foreach (header : *headers)
-	{
-		if (header_name_eq(header.name, "Host"))
-		{
-			if (seen_host) return DUPLICATE_HEADER~;
-			validate_host_header_value(header.value)!;
-			seen_host = true;
-			continue;
-		}
-		if (header_name_eq(header.name, "Content-Length"))
-		{
-			if (seen_content_length) return DUPLICATE_HEADER~;
-			seen_content_length = true;
-			continue;
-		}
-		if (header_name_eq(header.name, "Transfer-Encoding"))
-		{
-			if (seen_transfer_encoding) return DUPLICATE_HEADER~;
-			seen_transfer_encoding = true;
-			continue;
-		}
-		if (header_name_eq(header.name, "Connection"))
-		{
-			if (seen_connection) return DUPLICATE_HEADER~;
-			seen_connection = true;
-		}
-	}
-
-	if (require_host && !seen_host) return MISSING_HOST~;
 }
 
 struct HttpUrlParts
@@ -337,22 +308,12 @@ fn void apply_default_connection_policy(Allocator allocator, HeaderList* request
 	}
 }
 
-fn bool? uses_chunked_transfer_encoding(HeaderList* headers) @private
-{
-	String? transfer_encoding = get_header(headers, "Transfer-Encoding");
-	if (catch err = transfer_encoding) return false;
-	String te = transfer_encoding;
-	if (te.to_lower_tcopy() == "identity") return false;
-	if (te.trim().to_lower_tcopy() == "chunked") return true;
-	return UNSUPPORTED_TRANSFER_ENCODING~;
-}
-
 fn bool header_contains_token(String header_value, String token) @private
 {
 	Splitter splitter = header_value.tokenize(",");
 	while (try part = splitter.next())
 	{
-		if (part.trim().to_lower_tcopy() == token) return true;
+		if (ascii_eq_ignore_case(part.trim(), token)) return true;
 	}
 	return false;
 }

@@ -4,6 +4,8 @@ import std::core::mem::alloc;
 import std::io;
 import std::time;
 
+const usz HTTP_WRITE_BUFFER_SIZE = 8192;
+
 <*
  @require allocator != null : "allocator must be set"
 *>
@@ -83,9 +85,13 @@ fn void? write_request_impl(Stream stream, Request* request) <Stream> @private
 	HeaderInfo info;
 	analyze_headers(&request.headers, true, &info)!;
 	validate_trailers(&request.trailers, info.chunked)!;
-	io::fprintf(out_stream, "%s %s %s\r\n", request.method, request.target, request.version)!;
-	write_headers(out_stream, &request.headers, info.chunked, request.body)!;
-	write_body(out_stream, info.chunked, &request.trailers, request.body)!;
+	char[HTTP_WRITE_BUFFER_SIZE] scratch = {};
+	io::WriteBuffer buffered;
+	buffered.init(out_stream, scratch[..]);
+	io::fprintf(&buffered, "%s %s %s\r\n", request.method, request.target, request.version)!;
+	write_headers(&buffered, &request.headers, info.chunked, request.body)!;
+	write_body(&buffered, info.chunked, &request.trailers, request.body)!;
+	buffered.flush()!;
 }
 
 fn void? write_request_from_impl(OutStream out_stream, Request* request, InStream body_stream, usz content_length = 0) @private
@@ -96,9 +102,13 @@ fn void? write_request_from_impl(OutStream out_stream, Request* request, InStrea
 	HeaderInfo info;
 	analyze_headers(&request.headers, true, &info)!;
 	validate_trailers(&request.trailers, info.chunked)!;
-	io::fprintf(out_stream, "%s %s %s\r\n", request.method, request.target, request.version)!;
-	write_headers(out_stream, &request.headers, info.chunked, "", !info.chunked, content_length)!;
-	write_stream_body(out_stream, body_stream, info.chunked, &request.trailers, content_length)!;
+	char[HTTP_WRITE_BUFFER_SIZE] scratch = {};
+	io::WriteBuffer buffered;
+	buffered.init(out_stream, scratch[..]);
+	io::fprintf(&buffered, "%s %s %s\r\n", request.method, request.target, request.version)!;
+	write_headers(&buffered, &request.headers, info.chunked, "", !info.chunked, content_length)!;
+	write_stream_body(&buffered, body_stream, info.chunked, &request.trailers, content_length)!;
+	buffered.flush()!;
 }
 
 fn void? write_response_impl(Stream stream, Response* response, String request_method = "") <Stream> @private
@@ -108,12 +118,16 @@ fn void? write_response_impl(Stream stream, Response* response, String request_m
 	HeaderInfo info;
 	analyze_headers(&response.headers, false, &info)!;
 	validate_trailers(&response.trailers, info.chunked)!;
-	io::fprintf(out_stream, "%s %d %s\r\n", response.version, response.status, response.reason)!;
-	write_headers(out_stream, &response.headers, info.chunked, response.body, response_should_emit_implicit_content_length(response.status, request_method))!;
+	char[HTTP_WRITE_BUFFER_SIZE] scratch = {};
+	io::WriteBuffer buffered;
+	buffered.init(out_stream, scratch[..]);
+	io::fprintf(&buffered, "%s %d %s\r\n", response.version, response.status, response.reason)!;
+	write_headers(&buffered, &response.headers, info.chunked, response.body, response_should_emit_implicit_content_length(response.status, request_method))!;
 	if (!response_has_no_message_body(response.status, request_method))
 	{
-		write_body(out_stream, info.chunked, &response.trailers, response.body)!;
+		write_body(&buffered, info.chunked, &response.trailers, response.body)!;
 	}
+	buffered.flush()!;
 }
 
 fn void? write_response_from_impl(OutStream out_stream, Response* response, InStream body_stream, usz content_length = 0, String request_method = "") @private
@@ -122,12 +136,16 @@ fn void? write_response_from_impl(OutStream out_stream, Response* response, InSt
 	HeaderInfo info;
 	analyze_headers(&response.headers, false, &info)!;
 	validate_trailers(&response.trailers, info.chunked)!;
-	io::fprintf(out_stream, "%s %d %s\r\n", response.version, response.status, response.reason)!;
-	write_headers(out_stream, &response.headers, info.chunked, "", response_should_emit_implicit_content_length(response.status, request_method), content_length)!;
+	char[HTTP_WRITE_BUFFER_SIZE] scratch = {};
+	io::WriteBuffer buffered;
+	buffered.init(out_stream, scratch[..]);
+	io::fprintf(&buffered, "%s %d %s\r\n", response.version, response.status, response.reason)!;
+	write_headers(&buffered, &response.headers, info.chunked, "", response_should_emit_implicit_content_length(response.status, request_method), content_length)!;
 	if (!response_has_no_message_body(response.status, request_method))
 	{
-		write_stream_body(out_stream, body_stream, info.chunked, &response.trailers, content_length)!;
+		write_stream_body(&buffered, body_stream, info.chunked, &response.trailers, content_length)!;
 	}
+	buffered.flush()!;
 }
 
 fn Response? exchange_impl(Allocator allocator, Stream stream, Request* request) <Stream> @private
@@ -427,7 +445,7 @@ fn void? write_body(OutStream stream, bool use_chunked, HeaderList* trailers, St
 {
 	if (!use_chunked)
 	{
-		stream.write(body)!;
+		write_exact(stream, body)!;
 		return;
 	}
 	write_chunked_body(stream, body, trailers)!;
@@ -448,7 +466,7 @@ fn void? write_chunked_body(OutStream stream, String body, HeaderList* trailers)
 	if (body)
 	{
 		io::fprintf(stream, "%x\r\n", body.len)!;
-		stream.write(body)!;
+		write_exact(stream, body)!;
 		io::fprintf(stream, "\r\n")!;
 	}
 	io::fprintf(stream, "0\r\n")!;
@@ -469,7 +487,7 @@ fn void? write_chunked_stream(OutStream out_stream, InStream body_stream, Header
 		usz read = read_value;
 		if (!read) break;
 		io::fprintf(out_stream, "%x\r\n", read)!;
-		out_stream.write(buffer[:read])!;
+		write_exact(out_stream, buffer[:read])!;
 		io::fprintf(out_stream, "\r\n")!;
 	}
 	io::fprintf(out_stream, "0\r\n")!;
@@ -537,14 +555,14 @@ fn String? read_http_line(Allocator allocator, Stream stream, usz limit, fault t
 					if (limit && line.len() >= limit) return too_long_fault~;
 					line.append_char(c);
 				}
+				if (!has_newline)
+				{
+					stream.read_buffer_start = segment_end;
+				}
 
 				if (stream.read_buffer_start == stream.read_buffer_end)
 				{
 					timed_tcp_stream_reset_buffer(stream);
-				}
-				else if (!has_newline && stream.read_buffer_end == stream.read_buffer_storage.len)
-				{
-					timed_tcp_stream_compact_buffer(stream);
 				}
 
 				if (has_newline) return line.copy_str(allocator);
@@ -634,7 +652,11 @@ fn void? write_exact(OutStream stream, char[] bytes) @private
 	usz written = 0;
 	while (written < bytes.len)
 	{
-		sz? n_value = stream.write(bytes[written:bytes.len - written]);
+		// Keep slices comfortably smaller than the HTTP write buffer so WriteBuffer
+		// batches body bytes together with any buffered framing instead of bypassing
+		// the buffer with a direct large write.
+		usz chunk = min(bytes.len - written, HTTP_WRITE_BUFFER_SIZE / 2);
+		sz? n_value = stream.write(bytes[written:chunk]);
 		if (catch err = n_value) return err~;
 		sz n = n_value;
 		if (n <= 0) return io::INCOMPLETE_WRITE~;

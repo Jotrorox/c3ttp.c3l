@@ -72,18 +72,6 @@ fn void timed_tcp_stream_reset_buffer(TimedTcpStream* stream) @private
 	stream.read_buffer_end = 0;
 }
 
-fn void timed_tcp_stream_compact_buffer(TimedTcpStream* stream) @private
-{
-	if (!stream.read_buffer_start) return;
-	usz buffered = timed_tcp_stream_buffered_bytes(stream);
-	for (usz i = 0; i < buffered; i++)
-	{
-		stream.read_buffer_storage[i] = stream.read_buffer_storage[stream.read_buffer_start + i];
-	}
-	stream.read_buffer_start = 0;
-	stream.read_buffer_end = buffered;
-}
-
 fn sz? timed_tcp_stream_fill_buffer(TimedTcpStream* stream) @private
 {
 	if (timed_tcp_stream_buffered_bytes(stream)) return (sz)timed_tcp_stream_buffered_bytes(stream);

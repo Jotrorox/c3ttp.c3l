@@ -54,6 +54,7 @@ fn void? handle_echo_request_observation(Request* request, Response* response, v
 }
 
 const usz LARGE_RESPONSE_BODY_SIZE = 16 * 1024 * 1024;
+const usz LARGE_BATCH_TEST_BODY_SIZE = 9000;
 
 fn void? handle_large_body(Request* request, Response* response, void* context)
 {
@@ -107,6 +108,47 @@ fn usz count_headers(HeaderList* headers, String name)
 fn void init_reader(io::ByteReader* reader, String contents)
 {
 	reader.init((char[])contents);
+}
+
+struct CountingBuffer (InStream, OutStream)
+{
+	io::ByteBuffer buffer;
+	usz write_calls;
+}
+
+fn CountingBuffer* init_counting_buffer(CountingBuffer* self, usz capacity = 128)
+{
+	self.buffer.tinit(capacity);
+	self.write_calls = 0;
+	return self;
+}
+
+fn void free_counting_buffer(CountingBuffer* self)
+{
+	self.buffer.free();
+	*self = {};
+}
+
+fn sz? CountingBuffer.write(&self, char[] bytes) @dynamic
+{
+	self.write_calls++;
+	return self.buffer.write(bytes)!;
+}
+
+fn void? CountingBuffer.write_byte(&self, char c) @dynamic
+{
+	self.write_calls++;
+	self.buffer.write_byte(c)!;
+}
+
+fn sz? CountingBuffer.read(&self, char[] bytes) @dynamic
+{
+	return self.buffer.read(bytes)!;
+}
+
+fn char? CountingBuffer.read_byte(&self) @dynamic
+{
+	return self.buffer.read_byte()!;
 }
 
 fn void request_roundtrip() @test
@@ -719,6 +761,91 @@ fn void write_response_from_streams_chunked_body_and_trailers() @test
 
 	String encoded = (String)buffer.bytes[:buffer.write_idx];
 	test::@check(encoded.contains("\r\ne\r\nstreaming body\r\n0\r\nX-Trailer: done\r\n\r\n"), "expected chunked streamed response with trailer");
+}
+
+fn void write_request_batches_small_message() @test
+{
+	Request request;
+	request.init(tmem, "POST", "/batched", "hello");
+	defer request.free();
+	request.set_header("Host", "example.com");
+	request.set_header("Content-Type", "text/plain");
+	request.set_header("X-Test", "1");
+
+	CountingBuffer buffer;
+	init_counting_buffer(&buffer, 128);
+	defer free_counting_buffer(&buffer);
+
+	write_request(&buffer, &request)!!;
+
+	String encoded = (String)buffer.buffer.bytes[:buffer.buffer.write_idx];
+	test::eq("POST /batched HTTP/1.1\r\nHost: example.com\r\nContent-Type: text/plain\r\nX-Test: 1\r\nContent-Length: 5\r\n\r\nhello", encoded);
+	test::eq(1, buffer.write_calls);
+}
+
+fn void write_response_batches_small_chunked_message() @test
+{
+	Response response;
+	response.init(tmem, 200, "OK", "data");
+	defer response.free();
+	response.set_header("Transfer-Encoding", "chunked");
+	response.trailers.push({ .name = "Expires".copy(tmem), .value = "soon".copy(tmem) });
+
+	CountingBuffer buffer;
+	init_counting_buffer(&buffer, 128);
+	defer free_counting_buffer(&buffer);
+
+	write_response(&buffer, &response)!!;
+
+	String encoded = (String)buffer.buffer.bytes[:buffer.buffer.write_idx];
+	test::eq("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n4\r\ndata\r\n0\r\nExpires: soon\r\n\r\n", encoded);
+	test::eq(1, buffer.write_calls);
+}
+
+fn void write_response_from_batches_small_chunked_stream() @test
+{
+	Response response;
+	response.init(tmem, 200, "OK");
+	defer response.free();
+	response.set_header("Transfer-Encoding", "chunked");
+	response.trailers.push({ .name = "X-Trailer".copy(tmem), .value = "done".copy(tmem) });
+
+	io::ByteReader reader;
+	init_reader(&reader, "streaming body");
+
+	CountingBuffer buffer;
+	init_counting_buffer(&buffer, 128);
+	defer free_counting_buffer(&buffer);
+
+	write_response_from(&buffer, &response, &reader)!!;
+
+	String encoded = (String)buffer.buffer.bytes[:buffer.buffer.write_idx];
+	test::eq("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\ne\r\nstreaming body\r\n0\r\nX-Trailer: done\r\n\r\n", encoded);
+	test::eq(1, buffer.write_calls);
+}
+
+fn void write_request_large_body_uses_header_flush_and_direct_write() @test
+{
+	DString body = dstring::temp_with_capacity(LARGE_BATCH_TEST_BODY_SIZE);
+	body.append_repeat('x', LARGE_BATCH_TEST_BODY_SIZE);
+
+	Request request;
+	request.init(tmem, "POST", "/large", body.str_view());
+	defer request.free();
+	request.set_header("Host", "example.com");
+
+	CountingBuffer buffer;
+	init_counting_buffer(&buffer, LARGE_BATCH_TEST_BODY_SIZE + 128);
+	defer free_counting_buffer(&buffer);
+
+	write_request(&buffer, &request)!!;
+
+	String encoded = (String)buffer.buffer.bytes[:buffer.buffer.write_idx];
+	String expected_header = string::tformat("POST /large HTTP/1.1\r\nHost: example.com\r\nContent-Length: %d\r\n\r\n", LARGE_BATCH_TEST_BODY_SIZE);
+	test::@check(encoded.starts_with(expected_header), "expected large request header");
+	test::eq(expected_header.len + LARGE_BATCH_TEST_BODY_SIZE, encoded.len);
+	test::eq(body.str_view(), encoded[expected_header.len:LARGE_BATCH_TEST_BODY_SIZE]);
+	test::eq(2, buffer.write_calls);
 }
 
 fn void request_line_limit_is_enforced() @test

@@ -82,14 +82,13 @@ fn void? write_request_impl(Stream stream, Request* request) <Stream> @private
 	validate_version(request.version)!;
 	validate_method(request.method)!;
 	validate_request_target(request.method, request.target)!;
-	HeaderInfo info;
-	analyze_headers(&request.headers, true, &info)!;
-	validate_trailers(&request.trailers, info.chunked)!;
 	char[HTTP_WRITE_BUFFER_SIZE] scratch = {};
 	io::WriteBuffer buffered;
 	buffered.init(out_stream, scratch[..]);
 	io::fprintf(&buffered, "%s %s %s\r\n", request.method, request.target, request.version)!;
-	write_headers(&buffered, &request.headers, info.chunked, request.body)!;
+	HeaderInfo info;
+	write_headers(&buffered, &request.headers, true, request.body, &info)!;
+	validate_trailers(&request.trailers, info.chunked)!;
 	write_body(&buffered, info.chunked, &request.trailers, request.body)!;
 	buffered.flush()!;
 }
@@ -99,14 +98,13 @@ fn void? write_request_from_impl(OutStream out_stream, Request* request, InStrea
 	validate_version(request.version)!;
 	validate_method(request.method)!;
 	validate_request_target(request.method, request.target)!;
-	HeaderInfo info;
-	analyze_headers(&request.headers, true, &info)!;
-	validate_trailers(&request.trailers, info.chunked)!;
 	char[HTTP_WRITE_BUFFER_SIZE] scratch = {};
 	io::WriteBuffer buffered;
 	buffered.init(out_stream, scratch[..]);
 	io::fprintf(&buffered, "%s %s %s\r\n", request.method, request.target, request.version)!;
-	write_headers(&buffered, &request.headers, info.chunked, "", !info.chunked, content_length)!;
+	HeaderInfo info;
+	write_headers(&buffered, &request.headers, true, "", &info, true, content_length)!;
+	validate_trailers(&request.trailers, info.chunked)!;
 	write_stream_body(&buffered, body_stream, info.chunked, &request.trailers, content_length)!;
 	buffered.flush()!;
 }
@@ -115,14 +113,13 @@ fn void? write_response_impl(Stream stream, Response* response, String request_m
 {
 	OutStream out_stream = (OutStream)stream;
 	validate_version(response.version)!;
-	HeaderInfo info;
-	analyze_headers(&response.headers, false, &info)!;
-	validate_trailers(&response.trailers, info.chunked)!;
 	char[HTTP_WRITE_BUFFER_SIZE] scratch = {};
 	io::WriteBuffer buffered;
 	buffered.init(out_stream, scratch[..]);
 	io::fprintf(&buffered, "%s %d %s\r\n", response.version, response.status, response.reason)!;
-	write_headers(&buffered, &response.headers, info.chunked, response.body, response_should_emit_implicit_content_length(response.status, request_method))!;
+	HeaderInfo info;
+	write_headers(&buffered, &response.headers, false, response.body, &info, response_should_emit_implicit_content_length(response.status, request_method))!;
+	validate_trailers(&response.trailers, info.chunked)!;
 	if (!response_has_no_message_body(response.status, request_method))
 	{
 		write_body(&buffered, info.chunked, &response.trailers, response.body)!;
@@ -133,14 +130,13 @@ fn void? write_response_impl(Stream stream, Response* response, String request_m
 fn void? write_response_from_impl(OutStream out_stream, Response* response, InStream body_stream, usz content_length = 0, String request_method = "") @private
 {
 	validate_version(response.version)!;
-	HeaderInfo info;
-	analyze_headers(&response.headers, false, &info)!;
-	validate_trailers(&response.trailers, info.chunked)!;
 	char[HTTP_WRITE_BUFFER_SIZE] scratch = {};
 	io::WriteBuffer buffered;
 	buffered.init(out_stream, scratch[..]);
 	io::fprintf(&buffered, "%s %d %s\r\n", response.version, response.status, response.reason)!;
-	write_headers(&buffered, &response.headers, info.chunked, "", response_should_emit_implicit_content_length(response.status, request_method), content_length)!;
+	HeaderInfo info;
+	write_headers(&buffered, &response.headers, false, "", &info, response_should_emit_implicit_content_length(response.status, request_method), content_length)!;
+	validate_trailers(&response.trailers, info.chunked)!;
 	if (!response_has_no_message_body(response.status, request_method))
 	{
 		write_stream_body(&buffered, body_stream, info.chunked, &response.trailers, content_length)!;
@@ -219,8 +215,8 @@ fn void? read_headers_and_body(Allocator allocator, Stream stream, HeaderList* h
 	set_stream_read_timeout{$typeof(stream)}(stream, get_stream_header_timeout{$typeof(stream)}(stream), HEADER_TIMEOUT);
 	read_header_block(allocator, stream, headers, limits)!;
 
-	validate_headers(headers, require_host)!;
-	validate_body_headers(headers)!;
+	HeaderInfo info;
+	analyze_headers(headers, require_host, &info)!;
 	if (!read_body)
 	{
 		set_empty_body(allocator, body);
@@ -228,9 +224,7 @@ fn void? read_headers_and_body(Allocator allocator, Stream stream, HeaderList* h
 		return;
 	}
 
-	bool use_chunked = uses_chunked_transfer_encoding(headers)!;
-	String? content_length_text = get_header(headers, "Content-Length");
-	if (use_chunked)
+	if (info.chunked)
 	{
 		set_stream_read_timeout{$typeof(stream)}(stream, get_stream_body_timeout{$typeof(stream)}(stream), READ_TIMEOUT);
 		read_chunked_body{$typeof(stream)}(allocator, stream, body, trailers, limits)!;
@@ -238,13 +232,13 @@ fn void? read_headers_and_body(Allocator allocator, Stream stream, HeaderList* h
 	}
 	clear_headers(trailers);
 
-	if (catch err = content_length_text)
+	if (!info.has_content_length)
 	{
 		set_empty_body(allocator, body);
 		return;
 	}
 
-	usz content_length = content_length_text.to_uint()!;
+	usz content_length = info.content_length_text.to_uint()!;
 	if (content_length > limits.max_buffered_body_size) return BUFFERED_BODY_TOO_LARGE~;
 	if (!content_length)
 	{
@@ -279,17 +273,15 @@ fn void? read_headers_and_body_to(Allocator allocator, InStream in_stream, OutSt
 	set_stream_read_timeout{$typeof(in_stream)}(in_stream, get_stream_header_timeout{$typeof(in_stream)}(in_stream), HEADER_TIMEOUT);
 	read_header_block(allocator, in_stream, headers, limits)!;
 
-	validate_headers(headers, require_host)!;
-	validate_body_headers(headers)!;
+	HeaderInfo info;
+	analyze_headers(headers, require_host, &info)!;
 	if (!read_body)
 	{
 		clear_headers(trailers);
 		return;
 	}
 
-	bool use_chunked = uses_chunked_transfer_encoding(headers)!;
-	String? content_length_text = get_header(headers, "Content-Length");
-	if (use_chunked)
+	if (info.chunked)
 	{
 		set_stream_read_timeout{$typeof(in_stream)}(in_stream, get_stream_body_timeout{$typeof(in_stream)}(in_stream), READ_TIMEOUT);
 		read_chunked_body_to(allocator, in_stream, body_stream, trailers, limits)!;
@@ -297,8 +289,8 @@ fn void? read_headers_and_body_to(Allocator allocator, InStream in_stream, OutSt
 	}
 	clear_headers(trailers);
 
-	if (catch err = content_length_text) return;
-	usz content_length = content_length_text.to_uint()!;
+	if (!info.has_content_length) return;
+	usz content_length = info.content_length_text.to_uint()!;
 	if (!content_length) return;
 	set_stream_read_timeout{$typeof(in_stream)}(in_stream, get_stream_body_timeout{$typeof(in_stream)}(in_stream), READ_TIMEOUT);
 	copy_exact_to_stream(in_stream, body_stream, content_length)!;
@@ -425,20 +417,34 @@ fn void clear_headers(HeaderList* headers) @private
 	headers.clear();
 }
 
-fn void? write_headers(OutStream stream, HeaderList* headers, bool use_chunked, String body, bool include_implicit_content_length = true, usz explicit_content_length = 0) @private
+fn void? write_headers(OutStream stream, HeaderList* headers, bool require_host, String body, HeaderInfo* info_out, bool include_implicit_content_length = true, usz explicit_content_length = 0) @private
 {
+	io::ByteWriter header_block;
+	header_block.tinit();
+	defer header_block.destroy()!!;
+
+	HeaderInfo info = {};
+	bool seen_transfer_encoding = false;
+	bool seen_connection = false;
+
 	foreach (header : *headers)
 	{
+		analyze_header(header, &info, &seen_transfer_encoding, &seen_connection)!;
 		if (header_name_eq(header.name, "Content-Length")) continue;
-		io::fprintf(stream, "%s: %s\r\n", header.name, header.value)!;
+		io::fprintf(&header_block, "%s: %s\r\n", header.name, header.value)!;
 	}
-	if (include_implicit_content_length && !use_chunked)
+	if (require_host && !info.has_host) return MISSING_HOST~;
+	if (info.chunked && info.has_content_length) return CONFLICTING_BODY_HEADERS~;
+
+	if (include_implicit_content_length && !info.chunked)
 	{
 		usz body_length = explicit_content_length;
 		if (!explicit_content_length && body) body_length = body.len;
-		io::fprintf(stream, "Content-Length: %d\r\n", body_length)!;
+		io::fprintf(&header_block, "Content-Length: %d\r\n", body_length)!;
 	}
-	io::fprintf(stream, "\r\n")!;
+	io::fprintf(&header_block, "\r\n")!;
+	write_exact(stream, header_block.array_view())!;
+	*info_out = info;
 }
 
 fn void? write_body(OutStream stream, bool use_chunked, HeaderList* trailers, String body) @private

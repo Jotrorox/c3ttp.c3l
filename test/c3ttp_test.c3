@@ -565,6 +565,45 @@ fn void transfer_encoding_with_extra_tokens_is_rejected() @test
 	test::@error(read_response(tmem, &buffer), UNSUPPORTED_TRANSFER_ENCODING);
 }
 
+fn void mixed_case_chunked_transfer_encoding_is_accepted() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "HTTP/1.1 200 OK\r\nTransfer-Encoding: ChUnKeD\r\n\r\n4\r\ntest\r\n0\r\n\r\n")!!;
+	defer buffer.free();
+
+	Response response = read_response(tmem, &buffer)!!;
+	defer response.free();
+
+	test::eq("test", response.body);
+	test::eq("ChUnKeD", response.header("Transfer-Encoding")!!);
+}
+
+fn void padded_mixed_case_chunked_transfer_encoding_is_accepted() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "HTTP/1.1 200 OK\r\nTransfer-Encoding:   ChUnKeD   \r\n\r\n4\r\ntest\r\n0\r\n\r\n")!!;
+	defer buffer.free();
+
+	Response response = read_response(tmem, &buffer)!!;
+	defer response.free();
+
+	test::eq("test", response.body);
+	test::eq("ChUnKeD", response.header("Transfer-Encoding")!!);
+}
+
+fn void mixed_case_identity_transfer_encoding_is_accepted() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "HTTP/1.1 200 OK\r\nTransfer-Encoding: IdEnTiTy\r\n\r\n")!!;
+	defer buffer.free();
+
+	Response response = read_response(tmem, &buffer)!!;
+	defer response.free();
+
+	test::eq("", response.body);
+	test::eq("IdEnTiTy", response.header("Transfer-Encoding")!!);
+}
+
 fn void forbidden_chunked_trailer_is_rejected() @test
 {
 	io::ByteBuffer buffer;
@@ -675,6 +714,78 @@ fn void write_request_rejects_unsupported_method() @test
 	defer buffer.free();
 
 	test::@error(write_request(&buffer, &request), UNSUPPORTED_METHOD);
+}
+
+fn void write_request_rejects_duplicate_host() @test
+{
+	Request request;
+	request.init(tmem, "GET", "/");
+	defer request.free();
+	request.headers.push({ .name = "Host".copy(tmem), .value = "a".copy(tmem) });
+	request.headers.push({ .name = "Host".copy(tmem), .value = "b".copy(tmem) });
+
+	io::ByteBuffer buffer;
+	buffer.tinit(64);
+	defer buffer.free();
+
+	test::@error(write_request(&buffer, &request), DUPLICATE_HEADER);
+}
+
+fn void write_request_requires_host() @test
+{
+	Request request;
+	request.init(tmem, "GET", "/");
+	defer request.free();
+
+	io::ByteBuffer buffer;
+	buffer.tinit(64);
+	defer buffer.free();
+
+	test::@error(write_request(&buffer, &request), MISSING_HOST);
+}
+
+fn void write_response_rejects_duplicate_transfer_encoding() @test
+{
+	Response response;
+	response.init(tmem, 200, "OK");
+	defer response.free();
+	response.headers.push({ .name = "Transfer-Encoding".copy(tmem), .value = "chunked".copy(tmem) });
+	response.headers.push({ .name = "Transfer-Encoding".copy(tmem), .value = "identity".copy(tmem) });
+
+	io::ByteBuffer buffer;
+	buffer.tinit(64);
+	defer buffer.free();
+
+	test::@error(write_response(&buffer, &response), DUPLICATE_HEADER);
+}
+
+fn void write_response_rejects_unsupported_transfer_encoding_tokens() @test
+{
+	Response response;
+	response.init(tmem, 200, "OK");
+	defer response.free();
+	response.set_header("Transfer-Encoding", "gzip, chunked");
+
+	io::ByteBuffer buffer;
+	buffer.tinit(64);
+	defer buffer.free();
+
+	test::@error(write_response(&buffer, &response), UNSUPPORTED_TRANSFER_ENCODING);
+}
+
+fn void write_response_rejects_conflicting_chunked_and_content_length() @test
+{
+	Response response;
+	response.init(tmem, 200, "OK");
+	defer response.free();
+	response.set_header("Transfer-Encoding", "chunked");
+	response.set_header("Content-Length", "4");
+
+	io::ByteBuffer buffer;
+	buffer.tinit(64);
+	defer buffer.free();
+
+	test::@error(write_response(&buffer, &response), CONFLICTING_BODY_HEADERS);
 }
 
 fn void send_url_rejects_unsupported_scheme() @test
@@ -1003,6 +1114,61 @@ fn void respond_socket_write_timeout_is_enforced() @test
 
 	pair.send.write("GET /ping HTTP/1.1\r\nHost: example.com\r\nConnection: close\r\n\r\n")!!;
 	thread::sleep(time::ms(80))!!;
+	test::eq(0, worker.join()!!);
+}
+
+fn void mixed_case_connection_close_is_honored() @test
+{
+	tcp::TcpSocketPair pair;
+	pair.init()!!;
+	defer if (catch pair.destroy()) {}
+
+	RespondOnceArgs args = { .socket = &pair.recv };
+	thread::Thread worker;
+	worker.create(&respond_keep_alive_thread, &args)!!;
+
+	pair.send.write("GET /ping HTTP/1.1\r\nHost: example.com\r\nConnection: ClOsE\r\n\r\n")!!;
+	Response response = read_response(tmem, &pair.send)!!;
+	defer response.free();
+
+	test::eq("close", response.header("Connection")!!);
+	test::eq(0, worker.join()!!);
+}
+
+fn void connection_close_token_in_list_is_honored_case_insensitively() @test
+{
+	tcp::TcpSocketPair pair;
+	pair.init()!!;
+	defer if (catch pair.destroy()) {}
+
+	RespondOnceArgs args = { .socket = &pair.recv };
+	thread::Thread worker;
+	worker.create(&respond_keep_alive_thread, &args)!!;
+
+	pair.send.write("GET /ping HTTP/1.1\r\nHost: example.com\r\nConnection: keep-alive, ClOsE\r\n\r\n")!!;
+	Response response = read_response(tmem, &pair.send)!!;
+	defer response.free();
+
+	test::eq("close", response.header("Connection")!!);
+	test::eq(0, worker.join()!!);
+}
+
+fn void connection_closed_does_not_match_close_token() @test
+{
+	tcp::TcpSocketPair pair;
+	pair.init()!!;
+	defer if (catch pair.destroy()) {}
+
+	RespondOnceArgs args = { .socket = &pair.recv };
+	thread::Thread worker;
+	worker.create(&respond_keep_alive_thread, &args)!!;
+
+	pair.send.write("GET /ping HTTP/1.1\r\nHost: example.com\r\nConnection: closed\r\n\r\n")!!;
+	Response response = read_response(tmem, &pair.send)!!;
+	defer response.free();
+
+	test::eq("pong", response.body);
+	test::eq("keep-alive", response.header("Connection")!!);
 	test::eq(0, worker.join()!!);
 }
 

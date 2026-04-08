@@ -300,6 +300,7 @@ fn void? read_chunked_body(Allocator allocator, Stream stream, String* body, Hea
 {
 	DString chunks = dstring::new_with_capacity(allocator, 32);
 	defer chunks.free();
+	char[4096] buffer = {};
 	usz total_size;
 
 	while (true)
@@ -325,22 +326,21 @@ fn void? read_chunked_body(Allocator allocator, Stream stream, String* body, Hea
 		if (total_size + chunk_size > limits.max_chunked_body_size) return CHUNKED_BODY_TOO_LARGE~;
 		if (total_size + chunk_size > limits.max_buffered_body_size) return BUFFERED_BODY_TOO_LARGE~;
 
-		char[] chunk = alloc::alloc_array(allocator, char, chunk_size);
-		defer alloc::free(allocator, chunk);
-
-		usz read;
-		while (read < chunk_size)
+		chunks.reserve(chunk_size);
+		usz remaining = chunk_size;
+		while (remaining)
 		{
-			usz n = stream.read(chunk[read:chunk_size - read])!;
+			usz slice_len = min(buffer.len, remaining);
+			usz n = stream.read(buffer[:slice_len])!;
 			if (!n) return io::UNEXPECTED_EOF~;
-			read += n;
+			chunks.append_bytes(buffer[:n]);
+			remaining -= n;
 		}
 
 		char[2] chunk_crlf = {};
 		read_exact(stream, chunk_crlf[..])!;
 		if ((String)chunk_crlf[..] != "\r\n") return INVALID_CHUNK~;
 
-		chunks.append_bytes(chunk);
 		total_size += chunk_size;
 	}
 }

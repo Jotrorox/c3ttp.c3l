@@ -1,6 +1,7 @@
 module c3ttp @private;
 
 import std::core::env;
+import std::core::mem;
 import std::io;
 import std::thread::cpu;
 import std::net;
@@ -17,6 +18,7 @@ const CInt TCP_NODELAY = 1;
 const CInt IPPROTO_TCP = 6;
 const int EPOLL_MAX_EVENTS = 256;
 const usz TIMED_TCP_STREAM_BUFFER_SIZE = 8192;
+const CInt MSG_NOSIGNAL @private @if(env::LINUX) = 0x4000;
 
 fn void? set_tcp_no_delay(tcp::TcpSocket* socket, bool enabled) @private
 {
@@ -147,7 +149,13 @@ fn char? TimedTcpStream.read_byte(&self) @dynamic
 fn sz? TimedTcpStream.write(&self, char[] bytes) @dynamic
 {
 	wait_for_socket_event(self.socket, net::SUBSCRIBE_ANY_WRITE, self.write_timeout, WRITE_TIMEOUT)!;
-	return (sz)self.socket.write(bytes)!;
+	$if env::LINUX:
+		sz n = libc::send(self.socket.sock, bytes.ptr, bytes.len, MSG_NOSIGNAL);
+		if (n < 0) return os::socket_error()~;
+		return n;
+	$else
+		return (sz)self.socket.write(bytes)!;
+	$endif
 }
 
 fn void? TimedTcpStream.write_byte(&self, char byte) @dynamic
@@ -190,6 +198,7 @@ fn Response? client_send_url_impl(Client* self, Allocator allocator, String meth
 
 <*
  @require allocator != null : "allocator must be set"
+ @require allocator.type != TempAllocator.typeid : "server allocator must outlive requests; use mem or another non-temp allocator"
  @require host.len > 0 : "host must not be empty"
  @require backlog > 0 : "backlog must be greater than zero"
 *>

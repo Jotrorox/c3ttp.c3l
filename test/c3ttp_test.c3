@@ -380,6 +380,34 @@ fn void chunked_request_trailers_are_preserved() @test
 	test::eq("done", get_header(&request.trailers, "X-Trailer")!!);
 }
 
+fn void buffered_chunked_request_reads_large_chunk_with_fixed_scratch_buffer() @test
+{
+	DString chunk_body = dstring::new_with_capacity(tmem, 5000);
+	defer chunk_body.free();
+	chunk_body.append_repeat('x', 5000);
+
+	DString expected_body = dstring::new_with_capacity(tmem, 5005);
+	defer expected_body.free();
+	expected_body.append_string(chunk_body.str_view());
+	expected_body.append_string("trail");
+
+	DString encoded = dstring::new_with_capacity(tmem, 5200);
+	defer encoded.free();
+	encoded.append_string("POST /large HTTP/1.1\r\nHost: example.com\r\nTransfer-Encoding: chunked\r\n\r\n1388\r\n");
+	encoded.append_string(chunk_body.str_view());
+	encoded.append_string("\r\n5\r\ntrail\r\n0\r\nX-Trailer: done\r\n\r\n");
+
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, encoded.str_view())!!;
+	defer buffer.free();
+
+	Request request = read_request(tmem, &buffer)!!;
+	defer request.free();
+
+	test::eq(expected_body.str_view(), request.body);
+	test::eq("done", get_header(&request.trailers, "X-Trailer")!!);
+}
+
 fn void chunked_response_roundtrip() @test
 {
 	Response response;

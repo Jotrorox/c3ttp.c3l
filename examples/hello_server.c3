@@ -17,7 +17,7 @@ fn int main()
 	options.timeouts.idle_timeout = time::sec(10);
 
 	Server server;
-	server.init(tmem, "127.0.0.1", 8080, 64, options);
+	server.init(mem, "127.0.0.1", 8080, 64, options);
 	defer server.free();
 
 	io::printfn("Serving on http://127.0.0.1:8080 with %d prefork workers", cpu::native_cpu());

@@ -22,6 +22,8 @@ c3c compile c3ttp.c3i src/c3ttp/api.c3 src/c3ttp/client_server.c3 src/c3ttp/http
 c3c compile c3ttp.c3i src/c3ttp/api.c3 src/c3ttp/client_server.c3 src/c3ttp/http.c3 src/c3ttp/io.c3 examples/client_get.c3 -O0 -o client_get
 ```
 
+For long-lived servers, do not initialize `Server` with `tmem`. Use `mem` or another non-temp allocator so per-request allocations can be reclaimed normally across many requests.
+
 See [`c3ttp.c3i`](/home/johannes/projects/c3ttp.c3l/c3ttp.c3i) for the supported public surface.
 
 - `Request` / `Response`

@@ -380,6 +380,18 @@ fn void chunked_request_trailers_are_preserved() @test
 	test::eq("done", get_header(&request.trailers, "X-Trailer")!!);
 }
 
+fn void chunked_request_with_extension_is_accepted() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "POST /ext HTTP/1.1\r\nHost: example.com\r\nTransfer-Encoding: chunked\r\n\r\n5;foo=bar\r\nhello\r\n0\r\n\r\n")!!;
+	defer buffer.free();
+
+	Request request = read_request(tmem, &buffer)!!;
+	defer request.free();
+
+	test::eq("hello", request.body);
+}
+
 fn void buffered_chunked_request_reads_large_chunk_with_fixed_scratch_buffer() @test
 {
 	DString chunk_body = dstring::new_with_capacity(tmem, 5000);
@@ -493,6 +505,19 @@ fn void invalid_status_line_without_reason() @test
 	test::@error(read_response(tmem, &buffer), INVALID_STATUS_LINE);
 }
 
+fn void status_line_reason_phrase_with_spaces_is_preserved() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "HTTP/1.1 404 Not Found Here\r\nContent-Length: 0\r\n\r\n")!!;
+	defer buffer.free();
+
+	Response response = read_response(tmem, &buffer)!!;
+	defer response.free();
+
+	test::eq(404, response.status);
+	test::eq("Not Found Here", response.reason);
+}
+
 fn void invalid_request_header_without_separator() @test
 {
 	io::ByteBuffer buffer;
@@ -500,6 +525,33 @@ fn void invalid_request_header_without_separator() @test
 	defer buffer.free();
 
 	test::@error(read_request(tmem, &buffer), INVALID_HEADER);
+}
+
+fn void request_line_with_repeated_spaces_is_accepted() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "GET   /space   HTTP/1.1\r\nHost: example.com\r\n\r\n")!!;
+	defer buffer.free();
+
+	Request request = read_request(tmem, &buffer)!!;
+	defer request.free();
+
+	test::eq("GET", request.method);
+	test::eq("/space", request.target);
+	test::eq("HTTP/1.1", request.version);
+}
+
+fn void request_headers_trim_surrounding_whitespace() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "GET / HTTP/1.1\r\nHost:  example.com \r\nX-Test:\t spaced value \t\r\n\r\n")!!;
+	defer buffer.free();
+
+	Request request = read_request(tmem, &buffer)!!;
+	defer request.free();
+
+	test::eq("example.com", request.header("Host")!!);
+	test::eq("spaced value", request.header("X-Test")!!);
 }
 
 fn void get_asterisk_request_is_rejected() @test

@@ -3,7 +3,7 @@
 Small HTTP/1.1 client and server library for C3, built on `std::net::tcp`.
 
 - `c3ttp.c3i`: public API
-- `src/c3ttp/`: implementation
+- `src/`: implementation
 - `test/`: package tests
 - `examples/`: usage examples
 

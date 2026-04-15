@@ -29,12 +29,55 @@ faultdef
 	UNSUPPORTED_SCHEME,
 	UNSUPPORTED_TRANSFER_ENCODING,
 	UNSUPPORTED_METHOD,
-	DUPLICATE_HEADER;
+	DUPLICATE_HEADER,
+	ROUTE_NOT_FOUND,
+	METHOD_NOT_ALLOWED,
+	INVALID_PATTERN;
 
 struct Header
 {
 	String name;
 	String value;
+}
+
+struct ParamInfo
+{
+	String name;
+	String value;
+}
+
+struct RouteContext
+{
+	String pattern;
+	Request* request;
+	Response* response;
+	void* handler_context;
+	ParamInfo[16] params;
+	usz param_count;
+	void*[8] context_keys;
+	void*[8] context_values;
+	usz context_count;
+}
+
+alias RouterHandler = fn void?(Request* request, Response* response, RouteContext* ctx);
+alias Middleware = fn RouterHandler?(RouterHandler next, RouteContext* ctx);
+alias RouterGroupCallback = fn void(Router* router);
+
+struct Route
+{
+	String method;
+	String pattern;
+	String path_pattern;
+	RouterHandler handler;
+	bool has_wildcard;
+}
+
+struct Router
+{
+	Route[64] routes;
+	usz route_count;
+	Middleware[16] middlewares;
+	usz middleware_count;
 }
 
 alias HeaderList = List { Header };
@@ -220,3 +263,74 @@ macro void? respond(Allocator allocator, stream, Handler handler, uint max_reque
 {
 	return respond_impl{$typeof(stream)}(allocator, stream, handler, max_requests, context);
 }
+
+macro void RouteContext.free(&self)
+	=> route_context_free_impl(self);
+macro void RouteContext.set_param(&self, String name, String value)
+	=> route_context_set_param_impl(self, name, value);
+macro String RouteContext.param(&self, String name)
+	=> route_context_param_impl(self, name);
+macro void RouteContext.set(&self, String key, void* value)
+	=> route_context_set_impl(self, key, value);
+macro void* RouteContext.get(&self, String key)
+	=> route_context_get_impl(self, key);
+
+macro Router* Router.init(&self, Allocator allocator)
+	=> router_init_impl(self, allocator);
+macro void Router.free(&self)
+	=> router_free_impl(self);
+macro void Router.get(&self, String pattern, RouterHandler handler)
+	=> router_get_impl(self, pattern, handler);
+macro void Router.post(&self, String pattern, RouterHandler handler)
+	=> router_post_impl(self, pattern, handler);
+macro void Router.put(&self, String pattern, RouterHandler handler)
+	=> router_put_impl(self, pattern, handler);
+macro void Router.delete(&self, String pattern, RouterHandler handler)
+	=> router_delete_impl(self, pattern, handler);
+macro void Router.patch(&self, String pattern, RouterHandler handler)
+	=> router_patch_impl(self, pattern, handler);
+macro void Router.head(&self, String pattern, RouterHandler handler)
+	=> router_head_impl(self, pattern, handler);
+macro void Router.options(&self, String pattern, RouterHandler handler)
+	=> router_options_impl(self, pattern, handler);
+macro void Router.all(&self, String pattern, RouterHandler handler)
+	=> router_any_impl(self, pattern, handler);
+macro void Router.use(&self, Middleware middleware)
+	=> router_use_impl(self, middleware);
+macro void Router.group(&self, String prefix, RouterGroupCallback group_cb)
+	=> router_group_impl(self, prefix, group_cb);
+macro Handler Router.as_handler(&self)
+	=> router_as_handler_impl(self);
+macro void? Router.serve(&self, Server* server, uint max_requests = 0, void* context = null)
+	=> router_serve_impl(self, server, max_requests, context);
+macro void? Router.serve_evented(&self, Server* server, uint max_requests = 0, void* context = null)
+	=> router_serve_evented_impl(self, server, max_requests, context);
+
+macro void? Response.ok(&self, String body = "")
+	=> response_ok_impl(self, body);
+macro void? Response.created(&self, String body = "")
+	=> response_created_impl(self, body);
+macro void? Response.no_content(&self)
+	=> response_no_content_impl(self);
+macro void? Response.moved_permanently(&self, String location)
+	=> response_moved_permanently_impl(self, location);
+macro void? Response.found(&self, String location)
+	=> response_found_impl(self, location);
+macro void? Response.not_modified(&self)
+	=> response_not_modified_impl(self);
+macro void? Response.bad_request(&self, String message = "")
+	=> response_bad_request_impl(self, message);
+macro void? Response.unauthorized(&self, String message = "")
+	=> response_unauthorized_impl(self, message);
+macro void? Response.forbidden(&self, String message = "")
+	=> response_forbidden_impl(self, message);
+macro void? Response.not_found(&self, String message = "")
+	=> response_not_found_impl(self, message);
+macro void? Response.method_not_allowed(&self)
+	=> response_method_not_allowed_impl(self);
+macro void? Response.conflict(&self, String message = "")
+	=> response_conflict_impl(self, message);
+macro void? Response.internal_server_error(&self, String message = "")
+	=> response_internal_server_error_impl(self, message);
+macro void? Response.not_implemented(&self, String message = "")
+	=> response_not_implemented_impl(self, message);

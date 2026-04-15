@@ -18,8 +18,8 @@ Small HTTP/1.1 client and server library for C3, built on `std::net::tcp`.
 
 ```bash
 c3c compile-test .
-c3c compile c3ttp.c3i src/c3ttp/api.c3 src/c3ttp/client_server.c3 src/c3ttp/http.c3 src/c3ttp/io.c3 examples/hello_server.c3 -O0 -o hello_server
-c3c compile c3ttp.c3i src/c3ttp/api.c3 src/c3ttp/client_server.c3 src/c3ttp/http.c3 src/c3ttp/io.c3 examples/client_get.c3 -O0 -o client_get
+c3c compile c3ttp.c3i src/api.c3 src/client_server.c3 src/http.c3 src/io.c3 examples/hello_server.c3 src/router.c3 -Oz -o hello_server
+c3c compile c3ttp.c3i src/api.c3 src/client_server.c3 src/http.c3 src/io.c3 examples/client_get.c3 src/router.c3 -Oz -o client_get
 ```
 
 For long-lived servers, do not initialize `Server` with `tmem`. Use `mem` or another non-temp allocator so per-request allocations can be reclaimed normally across many requests.

@@ -196,6 +196,38 @@ fn Response? client_send_url_impl(Client* self, Allocator allocator, String meth
 	return client_send_impl(self, allocator, parsed.connect_host, parsed.port, &request);
 }
 
+fn Connection? client_connect_impl(Client* self, String host, uint port) @private
+{
+	tcp::TcpSocket socket = tcp::connect(host, port, self.timeout)!;
+	set_tcp_no_delay(&socket, self.tcp_no_delay)!!;
+	return { .socket = socket, .alive = true };
+}
+
+fn Response? connection_send_impl(Connection* self, Allocator allocator, Request* request) @private
+{
+	if (!self.alive) return CONNECTION_CLOSED~;
+
+	write_request_impl{tcp::TcpSocket*}(&self.socket, request)!;
+	Response response = read_response_impl{tcp::TcpSocket*}(allocator, &self.socket, request.method)!;
+
+	if (should_close_connection(&request.headers) || should_close_connection(&response.headers))
+	{
+		(void)self.socket.close();
+		self.alive = false;
+	}
+
+	return response;
+}
+
+fn void connection_close_impl(Connection* self) @private
+{
+	if (self.alive)
+	{
+		(void)self.socket.close();
+		self.alive = false;
+	}
+}
+
 <*
  @require allocator != null : "allocator must be set"
  @require allocator.type != TempAllocator.typeid : "server allocator must outlive requests; use mem or another non-temp allocator"

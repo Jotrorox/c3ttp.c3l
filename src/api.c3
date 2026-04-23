@@ -50,6 +50,12 @@ fn void request_set_body_impl(Request* self, String body) @private
 	self.body = body.copy(self.allocator);
 }
 
+fn String request_query_impl(Request* self) @private
+{
+	if (try idx = self.target.index_of_char('?')) return self.target[idx + 1..];
+	return "";
+}
+
 fn String? request_header_impl(Request* self, String name) @private
 {
 	Header* h = find_header_ref(&self.headers, name)!;

@@ -185,7 +185,10 @@ fn void router_method_not_allowed() @test
 	defer response.free();
 
 	Handler h = router.as_handler();
-	test::@error(h(&request, &response, &router), ROUTE_NOT_FOUND);
+	h(&request, &response, &router)!!;
+
+	test::eq(405, response.status);
+	test::eq("Method Not Allowed", response.reason);
 }
 
 fn void router_not_found() @test
@@ -204,7 +207,10 @@ fn void router_not_found() @test
 	defer response.free();
 
 	Handler h = router.as_handler();
-	test::@error(h(&request, &response, &router), ROUTE_NOT_FOUND);
+	h(&request, &response, &router)!!;
+
+	test::eq(404, response.status);
+	test::eq("Not Found", response.reason);
 }
 
 fn void router_middleware_chain() @test

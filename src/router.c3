@@ -209,6 +209,55 @@ fn bool match_pattern(String pattern, String path, RouteContext* ctx)
 	return remaining_pattern.len == 0 && remaining_path.len == 0;
 }
 
+fn bool match_pattern_check(String pattern, String path) @private
+{
+	if (pattern == path) return true;
+	if (pattern == "{*}") return true;
+	if (pattern.len >= 3 && pattern[0] == '{' && pattern[1] == '*' && pattern[2] == '}') return true;
+
+	usz wildcard_idx = pattern.index_of("{*}") ?? pattern.len;
+	if (wildcard_idx != pattern.len)
+	{
+		String prefix = pattern[:wildcard_idx];
+		if (!path.starts_with(prefix)) return false;
+		String suffix = pattern[wildcard_idx + 3..];
+		if (suffix.len > 0 && !path.ends_with(suffix)) return false;
+		return true;
+	}
+
+	usz param_start = pattern.index_of_char('{') ?? pattern.len;
+	if (param_start == pattern.len) return pattern == path;
+
+	String prefix = pattern[:param_start];
+	if (!path.starts_with(prefix)) return false;
+
+	String remaining_pattern = pattern[param_start..];
+	String remaining_path = path[param_start..];
+
+	while (remaining_pattern.len > 0 && remaining_path.len > 0)
+	{
+		if (remaining_pattern.len >= 3 && remaining_pattern[0] == '{' && remaining_pattern[1] == '*' && remaining_pattern[2] == '}') return true;
+
+		if (remaining_pattern.len >= 4 && remaining_pattern[0] == '{' && remaining_pattern[1] == '*')
+		{
+			usz name_end = remaining_pattern.index_of_char('}') ?? 0;
+			if (name_end == 0) return false;
+			return true;
+		}
+
+		if (remaining_pattern.len == 0 || remaining_pattern[0] != '{') return false;
+
+		usz close_brace = remaining_pattern.index_of_char('}') ?? 0;
+		if (close_brace == 0) return false;
+
+		remaining_pattern = remaining_pattern[close_brace + 1..];
+		usz seg_end = remaining_path.index_of_char('/') ?? remaining_path.len;
+		remaining_path = remaining_path[seg_end..];
+	}
+
+	return remaining_pattern.len == 0 && remaining_path.len == 0;
+}
+
 fn Route*? router_find_route(Router* self, String method, String path, RouteContext* ctx)
 {
 	for (usz i = 0; i < self.routes.len(); i++)
@@ -218,12 +267,19 @@ fn Route*? router_find_route(Router* self, String method, String path, RouteCont
 		RouteContext temp_ctx;
 		route_context_init_impl(&temp_ctx, tmem, ctx.request, ctx.response, ctx.handler_context);
 		defer route_context_free_impl(&temp_ctx);
-		if (match_pattern(route.pattern, path, &temp_ctx)) 
+		if (match_pattern(route.pattern, path, &temp_ctx))
 		{
 			ctx.pattern = route.pattern;
 			return route;
 		}
 	}
+
+	for (usz i = 0; i < self.routes.len(); i++)
+	{
+		Route* route = &self.routes[i];
+		if (match_pattern_check(route.pattern, path)) return METHOD_NOT_ALLOWED~;
+	}
+
 	return ROUTE_NOT_FOUND~;
 }
 
@@ -234,8 +290,21 @@ fn void? router_route_internal(Router* self, Request* request, Response* respons
 	defer route_context_free_impl(&ctx);
 
 	Route*? route = router_find_route(self, request.method, request.target, &ctx);
-	if (catch err = route) return err~;
-	
+	if (catch err = route)
+	{
+		if (err == ROUTE_NOT_FOUND)
+		{
+			(void)response.not_found();
+			return;
+		}
+		if (err == METHOD_NOT_ALLOWED)
+		{
+			(void)response.method_not_allowed();
+			return;
+		}
+		return err~;
+	}
+
 	match_pattern(route.pattern, request.target, &ctx);
 	
 	if (self.middlewares.len() > 0)

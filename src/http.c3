@@ -366,3 +366,170 @@ fn void? validate_method(String method) @private
 	if (method == "CONNECT") return;
 	return UNSUPPORTED_METHOD~;
 }
+
+fn char to_hex_char(char nibble) @private
+{
+	if (nibble < 10) return '0' + nibble;
+	return 'a' + (nibble - 10);
+}
+
+fn char? from_hex_char(char c) @private
+{
+	if (c >= '0' && c <= '9') return c - '0';
+	if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+	if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+	return INVALID_ENCODING~;
+}
+
+fn String url_encode_impl(Allocator allocator, String text) @private
+{
+	DString result = dstring::new_with_capacity(allocator, text.len);
+	defer result.free();
+	foreach (c : text)
+	{
+		if (char_is_alpha_num(c) || c == '-' || c == '_' || c == '.' || c == '~')
+		{
+			result.append_char(c);
+		}
+		else
+		{
+			result.append_char('%');
+			result.append_char(to_hex_char((c >> 4) & 0xF));
+			result.append_char(to_hex_char(c & 0xF));
+		}
+	}
+	return result.copy_str(allocator);
+}
+
+fn String? url_decode_impl(Allocator allocator, String text) @private
+{
+	DString result = dstring::new_with_capacity(allocator, text.len);
+	defer result.free();
+	for (usz i = 0; i < text.len; i++)
+	{
+		char c = text[i];
+		if (c == '%')
+		{
+			if (i + 2 >= text.len) return INVALID_ENCODING~;
+			char? hi = from_hex_char(text[i + 1]);
+			char? lo = from_hex_char(text[i + 2]);
+			if (catch err = hi) return INVALID_ENCODING~;
+			if (catch err = lo) return INVALID_ENCODING~;
+			result.append_char((hi << 4) | lo);
+			i += 2;
+		}
+		else if (c == '+')
+		{
+			result.append_char(' ');
+		}
+		else
+		{
+			result.append_char(c);
+		}
+	}
+	return result.copy_str(allocator);
+}
+
+fn FormFieldList? parse_query_string_impl(Allocator allocator, String query) @private
+{
+	FormFieldList list;
+	list.init(allocator);
+	if (!query) return list;
+
+	Splitter splitter = query.tokenize("&");
+	while (try part = splitter.next())
+	{
+		String name;
+		String value;
+		if (try eq = part.index_of_char('='))
+		{
+			name = part[:eq];
+			value = part[eq + 1..];
+		}
+		else
+		{
+			name = part;
+			value = "";
+		}
+		list.push({ .name = url_decode_impl(allocator, name)!!, .value = url_decode_impl(allocator, value)!! });
+	}
+	return list;
+}
+
+fn FormFieldList? parse_form_urlencoded_impl(Allocator allocator, String body) @private
+{
+	return parse_query_string_impl(allocator, body);
+}
+
+fn String? get_form_field_impl(FormFieldList* fields, String name) @private
+{
+	foreach (&field : *fields)
+	{
+		if (field.name == name) return field.value;
+	}
+	return INVALID_HEADER~;
+}
+
+fn String get_form_field_or_impl(FormFieldList* fields, String name, String default_value) @private
+{
+	foreach (&field : *fields)
+	{
+		if (field.name == name) return field.value;
+	}
+	return default_value;
+}
+
+fn ParamList? parse_cookie_header_impl(Allocator allocator, String header_value) @private
+{
+	ParamList list;
+	list.init(allocator);
+	if (!header_value) return list;
+
+	Splitter splitter = header_value.tokenize(";");
+	while (try part = splitter.next())
+	{
+		String trimmed = part.trim();
+		if (!trimmed) continue;
+		if (try eq = trimmed.index_of_char('='))
+		{
+			list.push({
+				.name = trimmed[:eq].trim().copy(allocator),
+				.value = trimmed[eq + 1..].trim().copy(allocator)
+			});
+		}
+		else
+		{
+			list.push({ .name = trimmed.copy(allocator), .value = "".copy(allocator) });
+		}
+	}
+	return list;
+}
+
+fn void response_set_cookie_impl(Response* self, String name, String value, String path, long max_age, bool http_only, bool secure, String same_site) @private
+{
+	@pool()
+	{
+		DString cookie = dstring::temp();
+		cookie.append_string(name);
+		cookie.append_char('=');
+		cookie.append_string(value);
+		if (path.len > 0)
+		{
+			cookie.append_string("; Path=");
+			cookie.append_string(path);
+		}
+		if (max_age >= 0)
+		{
+			cookie.append_string("; Max-Age=");
+			cookie.append_string(string::tformat("%d", max_age));
+		}
+		if (http_only) cookie.append_string("; HttpOnly");
+		if (secure) cookie.append_string("; Secure");
+		if (same_site.len > 0)
+		{
+			cookie.append_string("; SameSite=");
+			cookie.append_string(same_site);
+		}
+		response_add_header_impl(self, "Set-Cookie", cookie.str_view());
+	};
+}

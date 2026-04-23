@@ -32,7 +32,9 @@ faultdef
 	DUPLICATE_HEADER,
 	ROUTE_NOT_FOUND,
 	METHOD_NOT_ALLOWED,
-	INVALID_PATTERN;
+	INVALID_PATTERN,
+	CONNECTION_CLOSED,
+	INVALID_ENCODING;
 
 struct Header
 {
@@ -41,6 +43,12 @@ struct Header
 }
 
 struct ParamInfo
+{
+	String name;
+	String value;
+}
+
+struct FormField
 {
 	String name;
 	String value;
@@ -87,6 +95,7 @@ alias HeaderList = List { Header };
 alias RouteList = List { Route };
 alias MiddlewareList = List { Middleware };
 alias ParamList = List { ParamInfo };
+alias FormFieldList = List { FormField };
 alias ContextEntryList = List { ContextEntry };
 alias Handler = fn void?(Request* request, Response* response, void* context);
 
@@ -116,6 +125,12 @@ struct Client
 {
 	Duration timeout;
 	bool tcp_no_delay;
+}
+
+struct Connection
+{
+	tcp::TcpSocket socket;
+	bool alive;
 }
 
 struct ResourceLimits
@@ -173,6 +188,8 @@ macro void Request.set_header(&self, String name, String value)
 	=> request_set_header_impl(self, name, value);
 macro void Request.add_header(&self, String name, String value)
 	=> request_add_header_impl(self, name, value);
+macro String Request.query(&self)
+	=> request_query_impl(self);
 
 macro Response* Response.init(&self, Allocator allocator, ushort status, String reason, String body = "", String version = "HTTP/1.1")
 	=> response_init_impl(self, allocator, status, reason, body, version);
@@ -194,6 +211,12 @@ macro Response? Client.send(&self, Allocator allocator, String host, uint port, 
 	=> client_send_impl(self, allocator, host, port, request);
 macro Response? Client.send_url(&self, Allocator allocator, String method, String url_string, String body = "")
 	=> client_send_url_impl(self, allocator, method, url_string, body);
+macro Connection? Client.connect(&self, String host, uint port)
+	=> client_connect_impl(self, host, port);
+macro Response? Connection.send(&self, Allocator allocator, Request* request)
+	=> connection_send_impl(self, allocator, request);
+macro void Connection.close(&self)
+	=> connection_close_impl(self);
 
 macro Server* Server.init(&self, Allocator allocator, String host, uint port, uint backlog = 64, ServerOptions options = default_server_options())
 	=> server_init_impl(self, allocator, host, port, backlog, options);
@@ -270,6 +293,26 @@ macro void? respond(Allocator allocator, stream, Handler handler, uint max_reque
 {
 	return respond_impl{$typeof(stream)}(allocator, stream, handler, max_requests, context);
 }
+
+macro String url_encode(Allocator allocator, String text)
+	=> url_encode_impl(allocator, text);
+macro String? url_decode(Allocator allocator, String text)
+	=> url_decode_impl(allocator, text);
+
+macro FormFieldList? parse_query_string(Allocator allocator, String query)
+	=> parse_query_string_impl(allocator, query);
+macro FormFieldList? parse_form_urlencoded(Allocator allocator, String body)
+	=> parse_form_urlencoded_impl(allocator, body);
+macro String? get_form_field(FormFieldList* fields, String name)
+	=> get_form_field_impl(fields, name);
+macro String get_form_field_or(FormFieldList* fields, String name, String default_value)
+	=> get_form_field_or_impl(fields, name, default_value);
+
+macro ParamList? parse_cookie_header(Allocator allocator, String header_value)
+	=> parse_cookie_header_impl(allocator, header_value);
+
+macro void Response.set_cookie(&self, String name, String value, String path = "", long max_age = -1, bool http_only = false, bool secure = false, String same_site = "")
+	=> response_set_cookie_impl(self, name, value, path, max_age, http_only, secure, same_site);
 
 macro void RouteContext.free(&self)
 	=> route_context_free_impl(self);

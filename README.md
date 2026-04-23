@@ -24,7 +24,7 @@ c3c compile c3ttp.c3i src/api.c3 src/client_server.c3 src/http.c3 src/io.c3 exam
 
 For long-lived servers, do not initialize `Server` with `tmem`. Use `mem` or another non-temp allocator so per-request allocations can be reclaimed normally across many requests.
 
-See [`c3ttp.c3i`](/home/johannes/projects/c3ttp.c3l/c3ttp.c3i) for the supported public surface.
+See [`c3ttp.c3i`](https://github.com/Jotrorox/c3ttp.c3l/blob/main/c3ttp.c3i) for the supported public surface.
 
 - `Request` / `Response`
 - `Client.send` / `Client.send_url`

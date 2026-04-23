@@ -46,17 +46,21 @@ struct ParamInfo
 	String value;
 }
 
+struct ContextEntry
+{
+	String key;
+	void* value;
+}
+
 struct RouteContext
 {
 	String pattern;
 	Request* request;
 	Response* response;
 	void* handler_context;
-	ParamInfo[16] params;
-	usz param_count;
-	void*[8] context_keys;
-	void*[8] context_values;
-	usz context_count;
+	Allocator allocator;
+	List { ParamInfo } params;
+	List { ContextEntry } context;
 }
 
 alias RouterHandler = fn void?(Request* request, Response* response, RouteContext* ctx);
@@ -74,13 +78,16 @@ struct Route
 
 struct Router
 {
-	Route[64] routes;
-	usz route_count;
-	Middleware[16] middlewares;
-	usz middleware_count;
+	Allocator allocator;
+	List { Route } routes;
+	List { Middleware } middlewares;
 }
 
 alias HeaderList = List { Header };
+alias RouteList = List { Route };
+alias MiddlewareList = List { Middleware };
+alias ParamList = List { ParamInfo };
+alias ContextEntryList = List { ContextEntry };
 alias Handler = fn void?(Request* request, Response* response, void* context);
 
 struct Request

@@ -1,95 +1,90 @@
 module c3ttp;
 
-const usz MAX_ROUTES = 64;
-const usz MAX_MIDDLEWARES = 16;
-const usz MAX_PARAMS = 16;
-
-fn RouteContext* route_context_init_impl(RouteContext* self, Request* req, Response* res, void* handler_context)
+fn RouteContext* route_context_init_impl(RouteContext* self, Allocator allocator, Request* req, Response* res, void* handler_context)
 {
+	self.allocator = allocator;
 	self.request = req;
 	self.response = res;
 	self.handler_context = handler_context;
 	self.pattern = "";
-	self.param_count = 0;
-	self.context_count = 0;
+	self.params.init(allocator);
+	self.context.init(allocator);
 	return self;
 }
 
 fn void route_context_free_impl(RouteContext* self)
 {
+	self.params.free();
+	self.context.free();
 	*self = {};
 }
 
 fn void route_context_set_param_impl(RouteContext* self, String name, String value)
 {
-	if (self.param_count < 16)
-	{
-		self.params[self.param_count].name = name;
-		self.params[self.param_count].value = value;
-		self.param_count++;
-	}
+	self.params.push({ .name = name, .value = value });
 }
 
 fn String route_context_param_impl(RouteContext* self, String name)
 {
-	for (usz i = 0; i < self.param_count; i++)
+	foreach (&param : self.params)
 	{
-		if (self.params[i].name == name) return self.params[i].value;
+		if (param.name == name) return param.value;
 	}
 	return "";
 }
 
 fn void route_context_set_impl(RouteContext* self, String key, void* value)
 {
-	if (self.context_count >= 8) return;
-	for (usz i = 0; i < self.context_count; i++)
+	foreach (&entry : self.context)
 	{
-		if (self.context_keys[i] == key.ptr)
+		if (entry.key == key)
 		{
-			self.context_values[i] = value;
+			entry.value = value;
 			return;
 		}
 	}
-	self.context_keys[self.context_count] = key.ptr;
-	self.context_values[self.context_count] = value;
-	self.context_count++;
+	self.context.push({ .key = key, .value = value });
 }
 
 fn void* route_context_get_impl(RouteContext* self, String key)
 {
-	for (usz i = 0; i < self.context_count; i++)
+	foreach (&entry : self.context)
 	{
-		if (self.context_keys[i] == key.ptr) return self.context_values[i];
+		if (entry.key == key) return entry.value;
 	}
 	return null;
 }
 
 fn Router* router_init_impl(Router* self, Allocator allocator)
 {
-	self.route_count = 0;
-	self.middleware_count = 0;
+	self.allocator = allocator;
+	self.routes.init(allocator);
+	self.middlewares.init(allocator);
 	return self;
 }
 
 fn void router_free_impl(Router* self)
 {
-	for (usz i = 0; i < self.route_count; i++)
+	foreach (&route : self.routes)
 	{
-		self.routes[i].method = "";
-		self.routes[i].pattern = "";
+		route.method.free(self.allocator);
+		route.pattern.free(self.allocator);
+		route.path_pattern.free(self.allocator);
 	}
-	self.route_count = 0;
+	self.routes.free();
+	self.middlewares.free();
 }
 
 fn void router_register_impl(Router* self, String method, String pattern, RouterHandler handler)
 {
-	if (self.route_count >= MAX_ROUTES) return;
-	self.routes[self.route_count].method = method;
-	self.routes[self.route_count].pattern = pattern;
-	self.routes[self.route_count].path_pattern = pattern;
-	self.routes[self.route_count].handler = handler;
-	self.routes[self.route_count].has_wildcard = pattern.contains("{*");
-	self.route_count++;
+	Route route = {
+		.method = method.copy(self.allocator),
+		.pattern = pattern.copy(self.allocator),
+		.path_pattern = pattern.copy(self.allocator),
+		.handler = handler,
+		.has_wildcard = pattern.contains("{*")
+	};
+	self.routes.push(route);
 }
 
 fn void router_get_impl(Router* self, String pattern, RouterHandler handler)
@@ -140,11 +135,7 @@ fn void router_any_impl(Router* self, String pattern, RouterHandler handler)
 
 fn void router_use_impl(Router* self, Middleware middleware)
 {
-	if (self.middleware_count < MAX_MIDDLEWARES)
-	{
-		self.middlewares[self.middleware_count] = middleware;
-		self.middleware_count++;
-	}
+	self.middlewares.push(middleware);
 }
 
 fn bool match_pattern(String pattern, String path, RouteContext* ctx)
@@ -220,11 +211,13 @@ fn bool match_pattern(String pattern, String path, RouteContext* ctx)
 
 fn Route*? router_find_route(Router* self, String method, String path, RouteContext* ctx)
 {
-	for (usz i = 0; i < self.route_count; i++)
+	for (usz i = 0; i < self.routes.len(); i++)
 	{
 		Route* route = &self.routes[i];
 		if (route.method != method) continue;
-		RouteContext temp_ctx = { .pattern = "" };
+		RouteContext temp_ctx;
+		route_context_init_impl(&temp_ctx, tmem, ctx.request, ctx.response, ctx.handler_context);
+		defer route_context_free_impl(&temp_ctx);
 		if (match_pattern(route.pattern, path, &temp_ctx)) 
 		{
 			ctx.pattern = route.pattern;
@@ -237,7 +230,7 @@ fn Route*? router_find_route(Router* self, String method, String path, RouteCont
 fn void? router_route_internal(Router* self, Request* request, Response* response, void* handler_context)
 {
 	RouteContext ctx;
-	route_context_init_impl(&ctx, request, response, handler_context);
+	route_context_init_impl(&ctx, request.allocator, request, response, handler_context);
 	defer route_context_free_impl(&ctx);
 
 	Route*? route = router_find_route(self, request.method, request.target, &ctx);
@@ -245,10 +238,10 @@ fn void? router_route_internal(Router* self, Request* request, Response* respons
 	
 	match_pattern(route.pattern, request.target, &ctx);
 	
-	if (self.middleware_count > 0)
+	if (self.middlewares.len() > 0)
 	{
 		RouterHandler handler = route.handler;
-		for (usz i = self.middleware_count; i > 0; i--)
+		for (usz i = self.middlewares.len(); i > 0; i--)
 		{
 			Middleware mw = self.middlewares[i - 1];
 			handler = mw(handler, &ctx)!;
@@ -289,9 +282,9 @@ fn void? router_serve_evented_impl(Router* self, Server* server, uint max_reques
 fn void router_group_impl(Router* self, String prefix, RouterGroupCallback group_cb)
 {
 	Router sub;
-	router_init_impl(&sub, mem);
+	router_init_impl(&sub, tmem);
 	group_cb(&sub);
-	for (usz i = 0; i < sub.route_count; i++)
+	for (usz i = 0; i < sub.routes.len(); i++)
 	{
 		DString combined = dstring::temp_with_capacity(prefix.len + sub.routes[i].pattern.len + 2);
 		combined.append_string(prefix);

@@ -129,6 +129,18 @@ fn String? response_header_impl(Response* self, String name) @private
 	return h.value;
 }
 
+fn String request_header_or_impl(Request* self, String name, String default_value) @private
+{
+	if (try value = request_header_impl(self, name)) return value;
+	return default_value;
+}
+
+fn String response_header_or_impl(Response* self, String name, String default_value) @private
+{
+	if (try value = response_header_impl(self, name)) return value;
+	return default_value;
+}
+
 <*
  @require name.len > 0 : "header name must not be empty"
 *>
@@ -148,6 +160,38 @@ fn void response_add_header_impl(Response* self, String name, String value) @pri
 fn Client new_client_impl(Duration timeout = time::DURATION_ZERO) @private
 {
 	return { .timeout = timeout, .tcp_no_delay = true };
+}
+
+fn Response? client_get_impl(Client* self, Allocator allocator, String url_string) @private
+{
+	return client_send_url_impl(self, allocator, "GET", url_string);
+}
+
+fn Response? client_post_impl(Client* self, Allocator allocator, String url_string, String body) @private
+{
+	return client_send_url_impl(self, allocator, "POST", url_string, body);
+}
+
+fn Response? client_put_impl(Client* self, Allocator allocator, String url_string, String body) @private
+{
+	return client_send_url_impl(self, allocator, "PUT", url_string, body);
+}
+
+fn Response? client_delete_impl(Client* self, Allocator allocator, String url_string) @private
+{
+	return client_send_url_impl(self, allocator, "DELETE", url_string);
+}
+
+fn void request_set_json_body_impl(Request* self, String body) @private
+{
+	request_set_body_impl(self, body);
+	request_set_header_impl(self, "Content-Type", "application/json");
+}
+
+fn void request_set_form_body_impl(Request* self, String body) @private
+{
+	request_set_body_impl(self, body);
+	request_set_header_impl(self, "Content-Type", "application/x-www-form-urlencoded");
 }
 
 fn ResourceLimits default_resource_limits_impl() @private

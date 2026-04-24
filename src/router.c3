@@ -476,3 +476,21 @@ fn void response_not_implemented_impl(Response* self, String message)
 	self.reason = "Not Implemented".copy(self.allocator);
 	if (message.len > 0) self.set_body(message);
 }
+
+fn void response_json_impl(Response* self, String body)
+{
+	self.set_body(body);
+	self.set_header("Content-Type", "application/json");
+}
+
+fn void response_html_impl(Response* self, String body)
+{
+	self.set_body(body);
+	self.set_header("Content-Type", "text/html");
+}
+
+fn void response_text_impl(Response* self, String body)
+{
+	self.set_body(body);
+	self.set_header("Content-Type", "text/plain");
+}

@@ -53,6 +53,13 @@ fn void? handle_echo_request_observation(Request* request, Response* response, v
 	response.set_header("X-Observed-Host", request.header("Host")!!);
 }
 
+fn void? handle_echo_body(Request* request, Response* response, void* context)
+{
+	response.status = 200;
+	response.set_body(request.body);
+	response.set_header("X-Observed-Method", request.method);
+}
+
 const usz LARGE_RESPONSE_BODY_SIZE = 16 * 1024 * 1024;
 
 fn void? handle_large_body(Request* request, Response* response, void* context)
@@ -115,6 +122,16 @@ fn int serve_once_echo_thread(void* arg)
 	{
 		ServeOnceArgs* args = arg;
 		if (catch args.server.serve_once(&handle_echo_request_observation)) return 1;
+		return 0;
+	};
+}
+
+fn int serve_once_echo_body_thread(void* arg)
+{
+	@pool_init(mem, 4096)
+	{
+		ServeOnceArgs* args = arg;
+		if (catch args.server.serve_once(&handle_echo_body)) return 1;
 		return 0;
 	};
 }
@@ -564,4 +581,82 @@ fn void server_serve_once_reuses_connection_until_close() @test
 	test::eq("close", second.header("Connection")!!);
 
 	test::eq(0, worker.join()!!);
+}
+
+fn void client_get_sends_get_request() @test
+{
+	Server server;
+	server.init(mem, "127.0.0.1", 0);
+	defer server.free();
+	server.listen()!!;
+
+	ServeOnceArgs args = { .server = &server };
+	thread::Thread worker;
+	worker.create(&serve_once_echo_body_thread, &args)!!;
+
+	Client client = new_client();
+	Response response = client.get(tmem, string::tformat("http://127.0.0.1:%d/test", server.port))!!;
+	defer response.free();
+
+	test::eq(0, worker.join()!!);
+	test::eq("GET", response.header("X-Observed-Method")!!);
+}
+
+fn void client_post_sends_post_request_with_body() @test
+{
+	Server server;
+	server.init(mem, "127.0.0.1", 0);
+	defer server.free();
+	server.listen()!!;
+
+	ServeOnceArgs args = { .server = &server };
+	thread::Thread worker;
+	worker.create(&serve_once_echo_body_thread, &args)!!;
+
+	Client client = new_client();
+	Response response = client.post(tmem, string::tformat("http://127.0.0.1:%d/test", server.port), "post-body")!!;
+	defer response.free();
+
+	test::eq(0, worker.join()!!);
+	test::eq("POST", response.header("X-Observed-Method")!!);
+	test::eq("post-body", response.body);
+}
+
+fn void client_put_sends_put_request_with_body() @test
+{
+	Server server;
+	server.init(mem, "127.0.0.1", 0);
+	defer server.free();
+	server.listen()!!;
+
+	ServeOnceArgs args = { .server = &server };
+	thread::Thread worker;
+	worker.create(&serve_once_echo_body_thread, &args)!!;
+
+	Client client = new_client();
+	Response response = client.put(tmem, string::tformat("http://127.0.0.1:%d/test", server.port), "put-body")!!;
+	defer response.free();
+
+	test::eq(0, worker.join()!!);
+	test::eq("PUT", response.header("X-Observed-Method")!!);
+	test::eq("put-body", response.body);
+}
+
+fn void client_delete_sends_delete_request() @test
+{
+	Server server;
+	server.init(mem, "127.0.0.1", 0);
+	defer server.free();
+	server.listen()!!;
+
+	ServeOnceArgs args = { .server = &server };
+	thread::Thread worker;
+	worker.create(&serve_once_echo_body_thread, &args)!!;
+
+	Client client = new_client();
+	Response response = client.delete(tmem, string::tformat("http://127.0.0.1:%d/test", server.port))!!;
+	defer response.free();
+
+	test::eq(0, worker.join()!!);
+	test::eq("DELETE", response.header("X-Observed-Method")!!);
 }

@@ -1012,3 +1012,101 @@ fn void chunked_body_total_limit_is_enforced() @test
 	limits.max_total_header_bytes = 128;
 	test::@error(read_request(tmem, &buffer, limits), CHUNKED_BODY_TOO_LARGE);
 }
+
+fn void request_header_or_returns_value() @test
+{
+	Request request;
+	request.init(tmem, "GET", "/");
+	defer request.free();
+	request.set_header("Host", "example.com");
+	request.set_header("X-Custom", "value");
+
+	test::eq("value", request.header_or("X-Custom", "default"));
+	test::eq("example.com", request.header_or("host", "default"));
+}
+
+fn void request_header_or_returns_default() @test
+{
+	Request request;
+	request.init(tmem, "GET", "/");
+	defer request.free();
+	request.set_header("Host", "example.com");
+
+	test::eq("default", request.header_or("X-Missing", "default"));
+}
+
+fn void response_header_or_returns_value() @test
+{
+	Response response;
+	response.init(tmem, 200, "OK");
+	defer response.free();
+	response.set_header("Content-Type", "text/plain");
+
+	test::eq("text/plain", response.header_or("Content-Type", "default"));
+}
+
+fn void response_header_or_returns_default() @test
+{
+	Response response;
+	response.init(tmem, 200, "OK");
+	defer response.free();
+
+	test::eq("default", response.header_or("X-Missing", "default"));
+}
+
+fn void request_set_json_body_sets_content_type() @test
+{
+	Request request;
+	request.init(tmem, "POST", "/api");
+	defer request.free();
+	request.set_header("Host", "example.com");
+	request.set_json_body("{\"ok\":true}");
+
+	test::eq("{\"ok\":true}", request.body);
+	test::eq("application/json", request.header("Content-Type")!!);
+}
+
+fn void request_set_form_body_sets_content_type() @test
+{
+	Request request;
+	request.init(tmem, "POST", "/form");
+	defer request.free();
+	request.set_header("Host", "example.com");
+	request.set_form_body("name=value");
+
+	test::eq("name=value", request.body);
+	test::eq("application/x-www-form-urlencoded", request.header("Content-Type")!!);
+}
+
+fn void response_json_sets_content_type() @test
+{
+	Response response;
+	response.init(tmem, 200, "OK");
+	defer response.free();
+	response.json("{\"data\":1}");
+
+	test::eq("{\"data\":1}", response.body);
+	test::eq("application/json", response.header("Content-Type")!!);
+}
+
+fn void response_html_sets_content_type() @test
+{
+	Response response;
+	response.init(tmem, 200, "OK");
+	defer response.free();
+	response.html("<h1>Hello</h1>");
+
+	test::eq("<h1>Hello</h1>", response.body);
+	test::eq("text/html", response.header("Content-Type")!!);
+}
+
+fn void response_text_sets_content_type() @test
+{
+	Response response;
+	response.init(tmem, 200, "OK");
+	defer response.free();
+	response.text("plain text");
+
+	test::eq("plain text", response.body);
+	test::eq("text/plain", response.header("Content-Type")!!);
+}

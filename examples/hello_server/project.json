@@ -1,0 +1,12 @@
+{
+  "langrev": "1",
+  "dependency-search-paths": [ "../../.." ],
+  "dependencies": [ "c3ttp" ],
+  "sources": [ "src/**" ],
+  "targets": {
+    "hello_server": {
+      "type": "executable"
+    }
+  },
+  "opt": "O0"
+}

@@ -488,7 +488,7 @@ fn void respond_once_sets_connection_close_and_closes_socket() @test
 	defer catch (void)pair.send.sock.set_non_blocking(false);
 
 	char[1] extra = {};
-	usz? n = pair.send.read(extra[..]);
+	sz? n = pair.send.read(extra[..]);
 	if (catch err = n)
 	{
 		test::@check(false, "expected peer close, got %s", err);
@@ -556,7 +556,7 @@ fn void server_serve_once_reuses_connection_until_close() @test
 	thread::Thread worker;
 	worker.create(&serve_once_thread, &args)!!;
 
-	tcp::TcpSocket socket = tcp::connect("127.0.0.1", port)!!;
+	tcp::TcpSocket socket = tcp::connect("127.0.0.1", (int)port)!!;
 	defer catch (void)socket.close();
 
 	Request first_request;

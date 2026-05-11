@@ -1,4 +1,4 @@
-module c3ttp;
+module c3ttp @private;
 
 fn RouteContext* route_context_init_impl(RouteContext* self, Allocator allocator, Request* req, Response* res, void* handler_context)
 {
@@ -150,7 +150,7 @@ fn bool match_pattern(String pattern, String path, RouteContext* ctx)
 		return true;
 	}
 	
-	usz wildcard_idx = pattern.index_of("{*}") ?? pattern.len;
+	usz wildcard_idx = (usz)(pattern.index_of("{*}") ?? (sz)pattern.len);
 	if (wildcard_idx != pattern.len)
 	{
 		String prefix = pattern[:wildcard_idx];
@@ -166,7 +166,7 @@ fn bool match_pattern(String pattern, String path, RouteContext* ctx)
 		return true;
 	}
 	
-	usz param_start = pattern.index_of_char('{') ?? pattern.len;
+	usz param_start = (usz)(pattern.index_of_char('{') ?? (sz)pattern.len);
 	if (param_start == pattern.len) return pattern == path;
 	
 	String prefix = pattern[:param_start];
@@ -185,7 +185,7 @@ fn bool match_pattern(String pattern, String path, RouteContext* ctx)
 		
 		if (remaining_pattern.len >= 4 && remaining_pattern[0] == '{' && remaining_pattern[1] == '*')
 		{
-			usz name_end = remaining_pattern.index_of_char('}') ?? 0;
+			usz name_end = (usz)(remaining_pattern.index_of_char('}') ?? 0);
 			if (name_end == 0) return false;
 			String wildcard_name = remaining_pattern[2..name_end - 1];
 			route_context_set_param_impl(ctx, wildcard_name, remaining_path);
@@ -194,13 +194,13 @@ fn bool match_pattern(String pattern, String path, RouteContext* ctx)
 		
 		if (remaining_pattern.len == 0 || remaining_pattern[0] != '{') return false;
 		
-		usz close_brace = remaining_pattern.index_of_char('}') ?? 0;
+		usz close_brace = (usz)(remaining_pattern.index_of_char('}') ?? 0);
 		if (close_brace == 0) return false;
 		
 		String param_name = remaining_pattern[1..close_brace - 1];
 		remaining_pattern = remaining_pattern[close_brace + 1..];
 		
-		usz seg_end = remaining_path.index_of_char('/') ?? remaining_path.len;
+		usz seg_end = (usz)(remaining_path.index_of_char('/') ?? (sz)remaining_path.len);
 		String param_value = remaining_path[:seg_end];
 		route_context_set_param_impl(ctx, param_name, param_value);
 		remaining_path = remaining_path[seg_end..];
@@ -215,7 +215,7 @@ fn bool match_pattern_check(String pattern, String path) @private
 	if (pattern == "{*}") return true;
 	if (pattern.len >= 3 && pattern[0] == '{' && pattern[1] == '*' && pattern[2] == '}') return true;
 
-	usz wildcard_idx = pattern.index_of("{*}") ?? pattern.len;
+	usz wildcard_idx = (usz)(pattern.index_of("{*}") ?? (sz)pattern.len);
 	if (wildcard_idx != pattern.len)
 	{
 		String prefix = pattern[:wildcard_idx];
@@ -225,7 +225,7 @@ fn bool match_pattern_check(String pattern, String path) @private
 		return true;
 	}
 
-	usz param_start = pattern.index_of_char('{') ?? pattern.len;
+	usz param_start = (usz)(pattern.index_of_char('{') ?? (sz)pattern.len);
 	if (param_start == pattern.len) return pattern == path;
 
 	String prefix = pattern[:param_start];
@@ -240,18 +240,18 @@ fn bool match_pattern_check(String pattern, String path) @private
 
 		if (remaining_pattern.len >= 4 && remaining_pattern[0] == '{' && remaining_pattern[1] == '*')
 		{
-			usz name_end = remaining_pattern.index_of_char('}') ?? 0;
+			usz name_end = (usz)(remaining_pattern.index_of_char('}') ?? 0);
 			if (name_end == 0) return false;
 			return true;
 		}
 
 		if (remaining_pattern.len == 0 || remaining_pattern[0] != '{') return false;
 
-		usz close_brace = remaining_pattern.index_of_char('}') ?? 0;
+		usz close_brace = (usz)(remaining_pattern.index_of_char('}') ?? 0);
 		if (close_brace == 0) return false;
 
 		remaining_pattern = remaining_pattern[close_brace + 1..];
-		usz seg_end = remaining_path.index_of_char('/') ?? remaining_path.len;
+		usz seg_end = (usz)(remaining_path.index_of_char('/') ?? (sz)remaining_path.len);
 		remaining_path = remaining_path[seg_end..];
 	}
 
@@ -260,7 +260,7 @@ fn bool match_pattern_check(String pattern, String path) @private
 
 fn Route*? router_find_route(Router* self, String method, String path, RouteContext* ctx)
 {
-	for (usz i = 0; i < self.routes.len(); i++)
+	for (sz i = 0; i < self.routes.len(); i++)
 	{
 		Route* route = &self.routes[i];
 		if (route.method != method) continue;
@@ -274,7 +274,7 @@ fn Route*? router_find_route(Router* self, String method, String path, RouteCont
 		}
 	}
 
-	for (usz i = 0; i < self.routes.len(); i++)
+	for (sz i = 0; i < self.routes.len(); i++)
 	{
 		Route* route = &self.routes[i];
 		if (match_pattern_check(route.pattern, path)) return METHOD_NOT_ALLOWED~;
@@ -310,7 +310,7 @@ fn void? router_route_internal(Router* self, Request* request, Response* respons
 	if (self.middlewares.len() > 0)
 	{
 		RouterHandler handler = route.handler;
-		for (usz i = self.middlewares.len(); i > 0; i--)
+		for (sz i = self.middlewares.len(); i > 0; i--)
 		{
 			Middleware mw = self.middlewares[i - 1];
 			handler = mw(handler, &ctx)!;
@@ -353,7 +353,7 @@ fn void router_group_impl(Router* self, String prefix, RouterGroupCallback group
 	Router sub;
 	router_init_impl(&sub, tmem);
 	group_cb(&sub);
-	for (usz i = 0; i < sub.routes.len(); i++)
+	for (sz i = 0; i < sub.routes.len(); i++)
 	{
 		DString combined = dstring::temp_with_capacity(prefix.len + sub.routes[i].pattern.len + 2);
 		combined.append_string(prefix);

@@ -32,7 +32,7 @@ struct CountingBuffer (InStream, OutStream)
 
 fn CountingBuffer* init_counting_buffer(CountingBuffer* self, usz capacity = 128)
 {
-	self.buffer.tinit(capacity);
+	self.buffer.tinit((sz)capacity);
 	self.write_calls = 0;
 	return self;
 }
@@ -643,7 +643,7 @@ fn void duplicate_request_non_singleton_headers_are_preserved() @test
 	defer request.free();
 
 	test::eq("first", request.header("X-Test")!!);
-	test::eq(2, count_headers(&request.headers, "x-test"));
+	test::eq((usz)2, count_headers(&request.headers, "x-test"));
 }
 
 fn void duplicate_response_non_singleton_headers_are_preserved() @test
@@ -656,7 +656,7 @@ fn void duplicate_response_non_singleton_headers_are_preserved() @test
 	defer response.free();
 
 	test::eq("first", response.header("X-Test")!!);
-	test::eq(2, count_headers(&response.headers, "x-test"));
+	test::eq((usz)2, count_headers(&response.headers, "x-test"));
 }
 
 fn void request_without_host_is_rejected() @test
@@ -867,7 +867,7 @@ fn void write_request_batches_small_message() @test
 
 	String encoded = (String)buffer.buffer.bytes[:buffer.buffer.write_idx];
 	test::eq("POST /batched HTTP/1.1\r\nHost: example.com\r\nContent-Type: text/plain\r\nX-Test: 1\r\nContent-Length: 5\r\n\r\nhello", encoded);
-	test::eq(1, buffer.write_calls);
+	test::eq((usz)1, buffer.write_calls);
 }
 
 fn void write_response_batches_small_chunked_message() @test
@@ -886,7 +886,7 @@ fn void write_response_batches_small_chunked_message() @test
 
 	String encoded = (String)buffer.buffer.bytes[:buffer.buffer.write_idx];
 	test::eq("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n4\r\ndata\r\n0\r\nExpires: soon\r\n\r\n", encoded);
-	test::eq(1, buffer.write_calls);
+	test::eq((usz)1, buffer.write_calls);
 }
 
 fn void write_response_from_batches_small_chunked_stream() @test
@@ -908,7 +908,7 @@ fn void write_response_from_batches_small_chunked_stream() @test
 
 	String encoded = (String)buffer.buffer.bytes[:buffer.buffer.write_idx];
 	test::eq("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\ne\r\nstreaming body\r\n0\r\nX-Trailer: done\r\n\r\n", encoded);
-	test::eq(1, buffer.write_calls);
+	test::eq((usz)1, buffer.write_calls);
 }
 
 fn void write_request_large_body_uses_header_flush_and_direct_write() @test
@@ -930,9 +930,9 @@ fn void write_request_large_body_uses_header_flush_and_direct_write() @test
 	String encoded = (String)buffer.buffer.bytes[:buffer.buffer.write_idx];
 	String expected_header = string::tformat("POST /large HTTP/1.1\r\nHost: example.com\r\nContent-Length: %d\r\n\r\n", LARGE_BATCH_TEST_BODY_SIZE);
 	test::@check(encoded.starts_with(expected_header), "expected large request header");
-	test::eq(expected_header.len + LARGE_BATCH_TEST_BODY_SIZE, encoded.len);
+	test::eq((usz)(expected_header.len + (usz)LARGE_BATCH_TEST_BODY_SIZE), (usz)encoded.len);
 	test::eq(body.str_view(), encoded[expected_header.len:LARGE_BATCH_TEST_BODY_SIZE]);
-	test::eq(2, buffer.write_calls);
+	test::eq((usz)2, buffer.write_calls);
 }
 
 fn void request_line_limit_is_enforced() @test

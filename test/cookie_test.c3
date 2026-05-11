@@ -74,7 +74,7 @@ fn void response_set_cookie_multiple_cookies() @test
 	defer response.free();
 	response.set_cookie("a", "1");
 	response.set_cookie("b", "2");
-	test::eq(2, count_headers(&response.headers, "Set-Cookie"));
+	test::eq((usz)2, count_headers(&response.headers, "Set-Cookie"));
 }
 
 fn void response_set_cookie_no_optional_attributes() @test

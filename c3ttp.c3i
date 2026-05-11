@@ -257,7 +257,7 @@ macro void? Server.serve_prefork(&self, Handler handler, uint workers = 0, void*
 
 macro Request? read_request(Allocator allocator, stream, ResourceLimits limits = default_resource_limits())
 {
-	return read_request_impl{$typeof(stream)}(allocator, stream, limits);
+	return read_request_impl{$Typeof(stream)}(allocator, stream, limits);
 }
 
 macro Request? read_request_to(Allocator allocator, stream, body_stream, ResourceLimits limits = default_resource_limits())
@@ -267,7 +267,7 @@ macro Request? read_request_to(Allocator allocator, stream, body_stream, Resourc
 
 macro Response? read_response(Allocator allocator, stream, String request_method = "", ResourceLimits limits = default_resource_limits())
 {
-	return read_response_impl{$typeof(stream)}(allocator, stream, request_method, limits);
+	return read_response_impl{$Typeof(stream)}(allocator, stream, request_method, limits);
 }
 
 macro Response? read_response_to(Allocator allocator, stream, body_stream, String request_method = "", ResourceLimits limits = default_resource_limits())
@@ -277,7 +277,7 @@ macro Response? read_response_to(Allocator allocator, stream, body_stream, Strin
 
 macro void? write_request(stream, Request* request)
 {
-	return write_request_impl{$typeof(stream)}(stream, request);
+	return write_request_impl{$Typeof(stream)}(stream, request);
 }
 
 macro void? write_request_from(stream, Request* request, body_stream, usz content_length = 0)
@@ -287,7 +287,7 @@ macro void? write_request_from(stream, Request* request, body_stream, usz conten
 
 macro void? write_response(stream, Response* response)
 {
-	return write_response_impl{$typeof(stream)}(stream, response);
+	return write_response_impl{$Typeof(stream)}(stream, response);
 }
 
 macro void? write_response_from(stream, Response* response, body_stream, usz content_length = 0, String request_method = "")
@@ -297,17 +297,17 @@ macro void? write_response_from(stream, Response* response, body_stream, usz con
 
 macro Response? exchange(Allocator allocator, stream, Request* request)
 {
-	return exchange_impl{$typeof(stream)}(allocator, stream, request);
+	return exchange_impl{$Typeof(stream)}(allocator, stream, request);
 }
 
 macro void? respond_once(Allocator allocator, stream, Handler handler, void* context = null)
 {
-	return respond_once_impl{$typeof(stream)}(allocator, stream, handler, context);
+	return respond_once_impl{$Typeof(stream)}(allocator, stream, handler, context);
 }
 
 macro void? respond(Allocator allocator, stream, Handler handler, uint max_requests = 0, void* context = null)
 {
-	return respond_impl{$typeof(stream)}(allocator, stream, handler, max_requests, context);
+	return respond_impl{$Typeof(stream)}(allocator, stream, handler, max_requests, context);
 }
 
 macro String url_encode(Allocator allocator, String text)

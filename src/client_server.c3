@@ -3,11 +3,13 @@ module c3ttp @private;
 import std::core::env;
 import std::core::mem;
 import std::io;
+import std::thread;
 import std::thread::cpu;
 import std::net;
 import std::net::os;
 import std::net::tcp;
 import std::os::linux;
+import std::os::posix;
 import std::time;
 import libc;
 
@@ -19,12 +21,20 @@ const CInt IPPROTO_TCP = 6;
 const int EPOLL_MAX_EVENTS = 256;
 const usz TIMED_TCP_STREAM_BUFFER_SIZE = 8192;
 const CInt MSG_NOSIGNAL @private @if(env::LINUX) = 0x4000;
+const uint PREFORK_MAX_WORKERS @private @if(env::LINUX) = 1024;
+
+bool prefork_shutdown_requested @private @if(env::LINUX);
+
+fn void prefork_signal_handler(CInt signal) @private @if(env::LINUX)
+{
+	prefork_shutdown_requested = true;
+}
 
 fn void? set_tcp_no_delay(tcp::TcpSocket* socket, bool enabled) @private
 {
-	if (!enabled || socket.ai_addrlen < 2) return;
+	if (!enabled || socket.addrlen < 2) return;
 	CInt flag = 1;
-	if (os::setsockopt(socket.sock, IPPROTO_TCP, TCP_NODELAY, &flag, CInt.sizeof) != 0)
+	if (os::setsockopt(socket.sock, IPPROTO_TCP, TCP_NODELAY, &flag, CInt::size) != 0)
 	{
 		return os::socket_error()~;
 	}
@@ -34,9 +44,9 @@ fn tcp::TcpServerSocket? server_make_listener(Server* self, bool reuse_port) @pr
 {
 	if (reuse_port)
 	{
-		return tcp::listen(self.host, self.port, (int)self.backlog, REUSEADDR, REUSEPORT)!;
+		return tcp::listen(self.host, (int)self.port, (int)self.backlog, REUSEADDR, REUSEPORT)!;
 	}
-	return tcp::listen(self.host, self.port, (int)self.backlog, REUSEADDR)!;
+	return tcp::listen(self.host, (int)self.port, (int)self.backlog, REUSEADDR)!;
 }
 
 struct TimedTcpStream (InStream, OutStream)
@@ -57,7 +67,7 @@ fn void? wait_for_socket_event(tcp::TcpSocket* socket, net::PollSubscribe events
 	net::Poll[1] polls = {{ .socket = socket.sock, .events = events }};
 	ulong ready = net::poll(polls[0:1], timeout)!;
 	if (!ready) return timeout_fault~;
-	if (polls[0].revents & (net::POLL_EVENT_ERROR | net::POLL_EVENT_INVALID | net::POLL_EVENT_DISCONNECT))
+	if (polls[0].revents & (ERROR | INVALID | DISCONNECT))
 	{
 		return io::UNEXPECTED_EOF~;
 	}
@@ -78,7 +88,7 @@ fn sz? timed_tcp_stream_fill_buffer(TimedTcpStream* stream) @private
 {
 	if (timed_tcp_stream_buffered_bytes(stream)) return (sz)timed_tcp_stream_buffered_bytes(stream);
 	timed_tcp_stream_reset_buffer(stream);
-	wait_for_socket_event(stream.socket, net::SUBSCRIBE_ANY_READ, stream.read_timeout, stream.read_timeout_fault)!;
+	wait_for_socket_event(stream.socket, ANY_READ, stream.read_timeout, stream.read_timeout_fault)!;
 	sz read = (sz)stream.socket.read(stream.read_buffer_storage[..])!;
 	if (read > 0)
 	{
@@ -95,7 +105,7 @@ fn sz? TimedTcpStream.read(&self, char[] bytes) @dynamic
 	usz buffered = timed_tcp_stream_buffered_bytes(self);
 	if (buffered)
 	{
-		usz to_copy = min(bytes.len, buffered);
+		usz to_copy = min((usz)bytes.len, buffered);
 		for (usz i = 0; i < to_copy; i++)
 		{
 			bytes[i] = self.read_buffer_storage[self.read_buffer_start + i];
@@ -110,14 +120,14 @@ fn sz? TimedTcpStream.read(&self, char[] bytes) @dynamic
 	if (copied) return (sz)copied;
 	if (bytes.len >= TIMED_TCP_STREAM_BUFFER_SIZE)
 	{
-		wait_for_socket_event(self.socket, net::SUBSCRIBE_ANY_READ, self.read_timeout, self.read_timeout_fault)!;
+		wait_for_socket_event(self.socket, ANY_READ, self.read_timeout, self.read_timeout_fault)!;
 		return (sz)self.socket.read(bytes)!;
 	}
 
 	sz read = timed_tcp_stream_fill_buffer(self)!;
 	if (read <= 0) return read;
 
-	usz to_copy = min(bytes.len, timed_tcp_stream_buffered_bytes(self));
+	usz to_copy = min((usz)bytes.len, timed_tcp_stream_buffered_bytes(self));
 	for (usz i = 0; i < to_copy; i++)
 	{
 		bytes[i] = self.read_buffer_storage[self.read_buffer_start + i];
@@ -148,7 +158,7 @@ fn char? TimedTcpStream.read_byte(&self) @dynamic
 
 fn sz? TimedTcpStream.write(&self, char[] bytes) @dynamic
 {
-	wait_for_socket_event(self.socket, net::SUBSCRIBE_ANY_WRITE, self.write_timeout, WRITE_TIMEOUT)!;
+	wait_for_socket_event(self.socket, ANY_WRITE, self.write_timeout, WRITE_TIMEOUT)!;
 	$if env::LINUX:
 		sz n = libc::send(self.socket.sock, bytes.ptr, bytes.len, MSG_NOSIGNAL);
 		if (n < 0) return os::socket_error()~;
@@ -171,7 +181,7 @@ fn void? TimedTcpStream.write_byte(&self, char byte) @dynamic
 *>
 fn Response? client_send_impl(Client* self, Allocator allocator, String host, uint port, Request* request) @private
 {
-	tcp::TcpSocket socket = tcp::connect(host, port, self.timeout)!;
+	tcp::TcpSocket socket = tcp::connect(host, (int)port, self.timeout)!;
 	defer catch (void)socket.close();
 	set_tcp_no_delay(&socket, self.tcp_no_delay)!!;
 	return exchange_impl{tcp::TcpSocket*}(allocator, &socket, request);
@@ -198,7 +208,7 @@ fn Response? client_send_url_impl(Client* self, Allocator allocator, String meth
 
 fn Connection? client_connect_impl(Client* self, String host, uint port) @private
 {
-	tcp::TcpSocket socket = tcp::connect(host, port, self.timeout)!;
+	tcp::TcpSocket socket = tcp::connect(host, (int)port, self.timeout)!;
 	set_tcp_no_delay(&socket, self.tcp_no_delay)!!;
 	return { .socket = socket, .alive = true };
 }
@@ -230,7 +240,6 @@ fn void connection_close_impl(Connection* self) @private
 
 <*
  @require allocator != null : "allocator must be set"
- @require allocator.type != TempAllocator.typeid : "server allocator must outlive requests; use mem or another non-temp allocator"
  @require host.len > 0 : "host must not be empty"
  @require backlog > 0 : "backlog must be greater than zero"
 *>
@@ -259,18 +268,18 @@ fn void server_set_timeouts_impl(Server* self, ServerTimeouts timeouts) @private
 fn uint? server_bound_port(TcpServerSocket* listener) @private
 {
 	tcp::TcpSocket socket_info;
-	socket_info.ai_addrlen = socket_info.ai_addr_storage.len;
+	socket_info.addrlen = socket_info.addr_storage.len;
 	$if env::WIN32:
-		int result = os::getsockname(listener.sock, (os::SockAddrPtr)&socket_info.ai_addr_storage, &socket_info.ai_addrlen);
+		int result = os::getsockname(listener.sock, (os::SockAddrPtr)&socket_info.addr_storage, &socket_info.addrlen);
 	$else
-		int result = getsockname(listener.sock, (os::SockAddrPtr)&socket_info.ai_addr_storage, &socket_info.ai_addrlen);
+		int result = getsockname(listener.sock, (os::SockAddrPtr)&socket_info.addr_storage, &socket_info.addrlen);
 	$endif
 	if (result < 0)
 	{
 		return os::socket_error()~;
 	}
 
-	char[] port_bytes = socket_info.ai_addr_storage[2:2];
+	char[] port_bytes = socket_info.addr_storage[2:2];
 	char msb = port_bytes[0];
 	char lsb = port_bytes[1];
 	return (uint)((msb << 8) | lsb);
@@ -383,15 +392,14 @@ fn void? server_accept_new_clients(Server* self, tcp::TcpServerSocket* listener,
 {
 	while (true)
 	{
-		tcp::TcpSocket socket;
-		socket.ai_addrlen = socket.ai_addr_storage.len;
-		socket.sock = os::accept(listener.sock, (os::SockAddrPtr)&socket.ai_addr_storage, &socket.ai_addrlen);
-		if (!socket.sock.is_valid())
+		tcp::TcpSocket? socket_result = tcp::accept(listener);
+		if (catch err = socket_result)
 		{
-			fault err = os::socket_error();
-			if (err == io::WOULD_BLOCK || err == io::INTERRUPTED) return;
+			fault socket_err = os::socket_error();
+			if (socket_err == io::WOULD_BLOCK || socket_err == io::INTERRUPTED) return;
 			return err~;
 		}
+		tcp::TcpSocket socket = socket_result;
 
 		if (catch err = set_tcp_no_delay(&socket, true))
 		{
@@ -477,6 +485,14 @@ fn void? server_serve_evented_impl(Server* self, Handler handler, uint max_reque
 	$endif
 }
 
+fn void prefork_stop_workers(CInt[] pids, uint count, CInt signal) @private @if(env::LINUX)
+{
+	for (uint i = 0; i < count; i++)
+	{
+		if (pids[i] > 0) (void)posix::kill(pids[i], signal);
+	}
+}
+
 fn void? server_serve_prefork_impl(Server* self, Handler handler, uint workers = 0, void* context = null) @private
 {
 	$if env::LINUX:
@@ -485,17 +501,65 @@ fn void? server_serve_prefork_impl(Server* self, Handler handler, uint workers =
 		{
 			return server_serve_evented_impl(self, handler, 0, context);
 		}
+		if (workers > PREFORK_MAX_WORKERS) workers = PREFORK_MAX_WORKERS;
 
-		for (uint i = 1; i < workers; i++)
+		prefork_shutdown_requested = false;
+		libc::signal(libc::SIGINT, &prefork_signal_handler);
+		libc::signal(libc::SIGTERM, &prefork_signal_handler);
+
+		CInt[PREFORK_MAX_WORKERS] pids;
+		uint started;
+		for (uint i = 0; i < workers; i++)
 		{
 			CInt pid = fork();
-			if (pid < 0) return io::GENERAL_ERROR~;
-			if (!pid) break;
+			if (pid < 0)
+			{
+				prefork_stop_workers(pids[..], started, libc::SIGTERM);
+				return io::GENERAL_ERROR~;
+			}
+			if (!pid)
+			{
+				libc::signal(libc::SIGINT, null);
+				libc::signal(libc::SIGTERM, null);
+				tcp::TcpServerSocket listener = server_make_listener(self, true)!;
+				defer catch (void)listener.close();
+				return server_run_event_loop(self, &listener, handler, 0, context);
+			}
+			pids[started++] = pid;
 		}
 
-		tcp::TcpServerSocket listener = server_make_listener(self, true)!;
-		defer catch (void)listener.close();
-		return server_run_event_loop(self, &listener, handler, 0, context);
+		while (started)
+		{
+			if (prefork_shutdown_requested)
+			{
+				prefork_stop_workers(pids[..], started, libc::SIGTERM);
+			}
+
+			CInt status;
+			CInt pid = posix::waitpid(-1, &status, posix::WNOHANG);
+			if (pid < 0)
+			{
+				if (libc::errno() == EINTR) continue;
+				prefork_stop_workers(pids[..], started, libc::SIGTERM);
+				return io::GENERAL_ERROR~;
+			}
+			if (!pid)
+			{
+				if (catch thread::sleep_ms(100)) {}
+				continue;
+			}
+
+			for (uint i = 0; i < started; i++)
+			{
+				if (pids[i] == pid)
+				{
+					pids[i] = pids[started - 1];
+					started--;
+					break;
+				}
+			}
+		}
+		return;
 	$else
 		return server_serve_impl(self, handler, 0, context);
 	$endif

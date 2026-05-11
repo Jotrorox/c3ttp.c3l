@@ -1,5 +1,8 @@
 {
   "provides" : "c3ttp",
   "linklib-dir" : "linked-libs",
-  "sources": [ "src/**" ]
+  "sources": [ "c3ttp.c3i", "src/**" ],
+  "targets": {
+    "linux-x64": {}
+  }
 }

@@ -126,19 +126,19 @@ struct HttpUrlParts
 
 fn HttpUrlParts? parse_http_url(String url_string) @private
 {
-	usz? scheme_end_value = url_string.index_of("://");
+	sz? scheme_end_value = url_string.index_of("://");
 	if (catch err = scheme_end_value)
 	{
 		if (try url_string.index_of_char(':')) return UNSUPPORTED_SCHEME~;
 		return INVALID_TARGET~;
 	}
-	usz scheme_end = scheme_end_value;
+	usz scheme_end = (usz)scheme_end_value;
 	String scheme = url_string[:scheme_end];
 	if (!scheme) return INVALID_TARGET~;
 	if (scheme != "http") return UNSUPPORTED_SCHEME~;
 
 	String rest = url_string[scheme_end + 3 ..];
-	usz authority_end = rest.index_of_chars("/?#") ?? rest.len;
+	usz authority_end = (usz)(rest.index_of_chars("/?#") ?? (sz)rest.len);
 	String authority = rest[:authority_end];
 	if (!authority) return MISSING_HOST~;
 
@@ -223,9 +223,9 @@ fn void? parse_authority(String authority, bool require_port, String* host_heade
 	String port_text = "";
 	if (authority[0] == '[')
 	{
-		usz? closing_value = authority.index_of_char(']');
+		sz? closing_value = authority.index_of_char(']');
 		if (catch err = closing_value) return INVALID_HOST~;
-		usz closing = closing_value;
+		usz closing = (usz)closing_value;
 		if (closing + 1 == authority.len)
 		{
 			host = authority;
@@ -242,7 +242,7 @@ fn void? parse_authority(String authority, bool require_port, String* host_heade
 	}
 	else
 	{
-		usz? first_colon = authority.index_of_char(':');
+		sz? first_colon = authority.index_of_char(':');
 		if (catch err = first_colon)
 		{
 			host = authority;
@@ -250,7 +250,7 @@ fn void? parse_authority(String authority, bool require_port, String* host_heade
 		}
 		else
 		{
-			usz colon = first_colon;
+			usz colon = (usz)first_colon;
 			if (authority[colon + 1 ..].contains(":")) return INVALID_HOST~;
 			host = authority[:colon];
 			port_text = authority[colon + 1 ..];

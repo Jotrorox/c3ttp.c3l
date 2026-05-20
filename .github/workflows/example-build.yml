@@ -1,0 +1,35 @@
+name: Build C3 examples
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  build-c3-examples:
+    name: Build ${{ matrix.example }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        example:
+          - examples/client_get
+          - examples/hello_server
+          - examples/router_simple
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup C3
+        uses: jotrorox/setup-c3@v1
+
+      - name: Build example
+        working-directory: ${{ matrix.example }}
+        run: c3c build

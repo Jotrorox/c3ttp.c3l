@@ -2,6 +2,8 @@ module c3ttp @private;
 
 import std::core::env;
 import std::core::mem;
+import std::core::mem::alloc;
+import std::collections::list;
 import std::io;
 import std::thread;
 import std::thread::cpu;
@@ -11,6 +13,7 @@ import std::net::tcp;
 import std::os::linux;
 import std::os::posix;
 import std::time;
+import std::time::clock;
 import libc;
 
 extern fn CInt getsockname(os::NativeSocket socket, os::SockAddrPtr address, os::Socklen_t* address_len) @if(env::POSIX);
@@ -201,8 +204,8 @@ fn Response? client_send_url_impl(Client* self, Allocator allocator, String meth
 	Request request;
 	request_init_impl(&request, allocator, method, target, body);
 	defer request_free_impl(&request);
-	request_set_header_impl(&request, "Host", parsed.host_header);
-	request_set_header_impl(&request, "Connection", "close");
+	request_set_header_impl(&request, "Host", parsed.host_header)!;
+	request_set_header_impl(&request, "Connection", "close")!;
 	return client_send_impl(self, allocator, parsed.connect_host, parsed.port, &request);
 }
 
@@ -218,9 +221,20 @@ fn Response? connection_send_impl(Connection* self, Allocator allocator, Request
 	if (!self.alive) return CONNECTION_CLOSED~;
 
 	write_request_impl{tcp::TcpSocket*}(&self.socket, request)!;
-	Response response = read_response_impl{tcp::TcpSocket*}(allocator, &self.socket, request.method)!;
+	Response response;
+	for (uint informational = 0; ; informational++)
+	{
+		response = read_response_impl{tcp::TcpSocket*}(allocator, &self.socket, request.method)!;
+		if (response.status < 100 || response.status >= 200 || response.status == 101) break;
+		response_free_impl(&response);
+		if (informational >= 15) return TOO_MANY_INFORMATIONAL_RESPONSES~;
+	}
 
-	if (should_close_connection(&request.headers) || should_close_connection(&response.headers))
+	bool protocol_switch = response.status == 101 || (request.method == "CONNECT" && response.status >= 200 && response.status < 300);
+	HeaderInfo response_framing;
+	analyze_headers(&response.headers, false, &response_framing)!;
+	bool close_delimited = !response_has_no_message_body(response.status, request.method) && !response_framing.chunked && !response_framing.has_content_length;
+	if (protocol_switch || close_delimited || should_close_connection(&request.headers) || should_close_connection(&response.headers))
 	{
 		(void)self.socket.close();
 		self.alive = false;
@@ -375,22 +389,137 @@ fn void? respond_socket_keepalive_impl(Allocator allocator, tcp::TcpSocket* sock
 	}
 }
 
+const usz EVENTED_ACCEPT_BUDGET = 64;
+const usz EVENTED_READ_BUDGET = 64 * 1024;
+const usz EVENTED_WRITE_BUDGET = 64 * 1024;
+const uint EVENTED_PIPELINE_BUDGET = 16;
+
+enum EventedPhase @if(env::LINUX)
+{
+	READING,
+	WRITING,
+	IDLE,
+}
+
+struct EventedInputStream (InStream) @if(env::LINUX)
+{
+	String bytes;
+	usz offset;
+}
+
+fn sz? EventedInputStream.read(&self, char[] destination) @dynamic @if(env::LINUX)
+{
+	usz remaining = self.bytes.len - self.offset;
+	if (!remaining) return io::EOF~;
+	usz count = min(remaining, (usz)destination.len);
+	destination[..count] = self.bytes[self.offset..self.offset + count];
+	self.offset += count;
+	return (sz)count;
+}
+
+fn char? EventedInputStream.read_byte(&self) @dynamic @if(env::LINUX)
+{
+	if (self.offset == self.bytes.len) return io::EOF~;
+	return self.bytes[self.offset++];
+}
+
+struct EventedOutputStream (InStream, OutStream) @if(env::LINUX)
+{
+	DString* bytes;
+}
+
+// The HTTP codec's generic stream specialization is shared by its read and
+// write paths, so provide the unused input side as a closed stream.
+fn sz? EventedOutputStream.read(&self, char[] destination) @dynamic @if(env::LINUX)
+{
+	return io::EOF~;
+}
+
+fn char? EventedOutputStream.read_byte(&self) @dynamic @if(env::LINUX)
+{
+	return io::EOF~;
+}
+
+fn sz? EventedOutputStream.write(&self, char[] bytes) @dynamic @if(env::LINUX)
+{
+	self.bytes.append(bytes);
+	return (sz)bytes.len;
+}
+
+fn void? EventedOutputStream.write_byte(&self, char byte) @dynamic @if(env::LINUX)
+{
+	self.bytes.append(byte);
+}
+
+struct EventedConnection @if(env::LINUX)
+{
+	tcp::TcpSocket socket;
+	DString input;
+	DString output;
+	usz write_offset;
+	EventedPhase phase;
+	time::Clock deadline;
+	bool peer_eof;
+	bool close_after_write;
+	bool reserved_request;
+}
+
 fn void close_epoll_socket(int epfd, int fd) @private @if(env::LINUX)
 {
 	linux::epoll_ctl(epfd, (int)linux::EPOLL_CTL_DEL, fd, null);
 	(void)libc::close(fd);
 }
 
-fn void? register_epoll_socket(int epfd, int fd, uint events) @private @if(env::LINUX)
+fn void? set_epoll_socket_events(int epfd, int operation, int fd, uint events) @private @if(env::LINUX)
 {
 	linux::EpollEvent event = { .events = events };
 	event.data.fd = fd;
-	if (linux::epoll_ctl(epfd, (int)linux::EPOLL_CTL_ADD, fd, &event) != 0) return io::GENERAL_ERROR~;
+	if (linux::epoll_ctl(epfd, operation, fd, &event) != 0) return io::GENERAL_ERROR~;
 }
 
-fn void? server_accept_new_clients(Server* self, tcp::TcpServerSocket* listener, int epfd) @private @if(env::LINUX)
+fn void? register_epoll_socket(int epfd, int fd, uint events) @private @if(env::LINUX)
 {
-	while (true)
+	set_epoll_socket_events(epfd, (int)linux::EPOLL_CTL_ADD, fd, events)!;
+}
+
+fn void? modify_epoll_socket(int epfd, int fd, uint events) @private @if(env::LINUX)
+{
+	set_epoll_socket_events(epfd, (int)linux::EPOLL_CTL_MOD, fd, events)!;
+}
+
+fn time::Clock evented_deadline(Duration timeout) @private @if(env::LINUX)
+{
+	if (timeout <= time::DURATION_ZERO) return (time::Clock)ulong::max;
+	return clock::now() + timeout;
+}
+
+fn EventedConnection* find_evented_connection(List { EventedConnection* }* connections, int fd) @private @if(env::LINUX)
+{
+	foreach (connection : *connections) if (connection.socket.sock == fd) return connection;
+	return null;
+}
+
+fn void destroy_evented_connection(Allocator allocator, int epfd, List { EventedConnection* }* connections, EventedConnection* connection) @private @if(env::LINUX)
+{
+	linux::epoll_ctl(epfd, (int)linux::EPOLL_CTL_DEL, connection.socket.sock, null);
+	(void)connection.socket.close();
+	connection.input.free();
+	connection.output.free();
+	for (usz i = 0; i < (usz)connections.len(); i++)
+	{
+		if ((*connections)[(sz)i] == connection)
+		{
+			connections.remove_at((sz)i);
+			break;
+		}
+	}
+	alloc::free(allocator, connection);
+}
+
+fn void? server_accept_new_clients(Server* self, tcp::TcpServerSocket* listener, int epfd, List { EventedConnection* }* connections, usz capacity) @private @if(env::LINUX)
+{
+	usz accepted;
+	while (accepted < EVENTED_ACCEPT_BUDGET && (!capacity || (usz)connections.len() < capacity))
 	{
 		tcp::TcpSocket? socket_result = tcp::accept(listener);
 		if (catch err = socket_result)
@@ -400,41 +529,110 @@ fn void? server_accept_new_clients(Server* self, tcp::TcpServerSocket* listener,
 			return err~;
 		}
 		tcp::TcpSocket socket = socket_result;
+		if (catch nonblocking_error = socket.sock.set_non_blocking(true))
+		{
+			(void)socket.close();
+			return nonblocking_error~;
+		}
 
 		if (catch err = set_tcp_no_delay(&socket, true))
 		{
 			if (catch socket.close()) {}
 			return err~;
 		}
+		EventedConnection* connection = alloc::new(self.allocator, EventedConnection);
+		connection.socket = socket;
+		connection.input = dstring::new_with_capacity(self.allocator, 8192);
+		connection.output = dstring::new_with_capacity(self.allocator, 8192);
+		connection.phase = READING;
+		connection.deadline = evented_deadline(self.options.timeouts.header_timeout);
 		if (catch err = register_epoll_socket(epfd, socket.sock, linux::EPOLLIN | linux::EPOLLERR | linux::EPOLLHUP | linux::EPOLLRDHUP))
 		{
+			connection.input.free();
+			connection.output.free();
+			alloc::free(self.allocator, connection);
 			if (catch socket.close()) {}
 			return err~;
 		}
+		connections.push(connection);
+		accepted++;
 	}
 }
 
 fn void? server_run_event_loop(Server* self, tcp::TcpServerSocket* listener, Handler handler, uint max_requests, void* context) @private @if(env::LINUX)
 {
 	listener.sock.set_non_blocking(true)!;
+	defer catch (void)listener.sock.set_non_blocking(false);
 
 	int epfd = linux::epoll_create1(0);
 	if (epfd < 0) return io::GENERAL_ERROR~;
 	defer (void)libc::close(epfd);
 
 	register_epoll_socket(epfd, listener.sock, linux::EPOLLIN | linux::EPOLLERR | linux::EPOLLHUP)!;
+	bool listener_enabled = true;
+	List { EventedConnection* } connections;
+	connections.init(self.allocator);
+	defer
+	{
+		while (connections.len()) destroy_evented_connection(self.allocator, epfd, &connections, connections[connections.len() - 1]);
+		connections.free();
+	};
 
 	linux::EpollEvent[EPOLL_MAX_EVENTS] events;
 	uint served;
-	bool stop;
+	uint reserved;
 
-	while (!stop && (!max_requests || served < max_requests))
+	while (!max_requests || served < max_requests)
 	{
-		int ready = linux::epoll_wait(epfd, &events[0], EPOLL_MAX_EVENTS, -1);
+		bool capacity_available = !self.options.max_connections || (usz)connections.len() < self.options.max_connections;
+		bool request_slots_available = !max_requests || served + reserved < max_requests;
+		bool should_listen = capacity_available && request_slots_available;
+		if (should_listen != listener_enabled)
+		{
+			if (should_listen)
+			{
+				register_epoll_socket(epfd, listener.sock, linux::EPOLLIN | linux::EPOLLERR | linux::EPOLLHUP)!;
+			}
+			else
+			{
+				linux::epoll_ctl(epfd, (int)linux::EPOLL_CTL_DEL, listener.sock, null);
+			}
+			listener_enabled = should_listen;
+		}
+
+		int timeout_ms = 50;
+		time::Clock now = clock::now();
+		foreach (connection : connections)
+		{
+			if (connection.phase != WRITING && connection.input.len()) timeout_ms = 0;
+			if (connection.deadline == (time::Clock)ulong::max) continue;
+			if (connection.deadline <= now) { timeout_ms = 0; break; }
+			long remaining_ms = (connection.deadline - now).to_ms();
+			if (remaining_ms < timeout_ms) timeout_ms = (int)max(1L, remaining_ms);
+		}
+		int ready = linux::epoll_wait(epfd, &events[0], EPOLL_MAX_EVENTS, timeout_ms);
 		if (ready < 0)
 		{
 			if (libc::errno() == EINTR) continue;
 			return io::GENERAL_ERROR~;
+		}
+		// Retained pipelined bytes need no new kernel readiness edge. Schedule
+		// those connections explicitly, still bounded by the event array.
+		foreach (connection : connections)
+		{
+			if (ready == EPOLL_MAX_EVENTS) break;
+			if (connection.phase == WRITING || !connection.input.len()) continue;
+			bool already_scheduled;
+			for (int event_index = 0; event_index < ready; event_index++)
+			{
+				if (events[event_index].data.fd == connection.socket.sock) { already_scheduled = true; break; }
+			}
+			if (!already_scheduled)
+			{
+				events[ready] = {};
+				events[ready].data.fd = connection.socket.sock;
+				ready++;
+			}
 		}
 
 		for (int i = 0; i < ready; i++)
@@ -444,32 +642,138 @@ fn void? server_run_event_loop(Server* self, tcp::TcpServerSocket* listener, Han
 
 			if (fd == listener.sock)
 			{
-				server_accept_new_clients(self, listener, epfd)!;
+				if (listener_enabled) server_accept_new_clients(self, listener, epfd, &connections, self.options.max_connections)!;
 				continue;
 			}
 
-			if (event_mask & (linux::EPOLLERR | linux::EPOLLHUP | linux::EPOLLRDHUP))
+			EventedConnection* connection = find_evented_connection(&connections, fd);
+			if (!connection) continue;
+			bool destroy;
+			if (event_mask & linux::EPOLLERR) destroy = true;
+			if (event_mask & (linux::EPOLLHUP | linux::EPOLLRDHUP)) connection.peer_eof = true;
+
+			if (!destroy && connection.phase != WRITING && event_mask & (linux::EPOLLIN | linux::EPOLLHUP | linux::EPOLLRDHUP))
 			{
-				close_epoll_socket(epfd, fd);
-				continue;
+				usz budget = EVENTED_READ_BUDGET;
+				char[8192] buffer;
+				while (budget)
+				{
+					usz wanted = min(budget, (usz)buffer.len);
+					sz count = libc::recv(fd, &buffer[0], wanted, 0);
+					if (count > 0)
+					{
+						if (connection.phase == IDLE)
+						{
+							connection.phase = READING;
+							connection.deadline = evented_deadline(self.options.timeouts.header_timeout);
+						}
+						connection.input.append(buffer[..count]);
+						budget -= (usz)count;
+						continue;
+					}
+					if (!count)
+					{
+						connection.peer_eof = true;
+					}
+					else if (libc::errno() != EAGAIN && libc::errno() != EWOULDBLOCK && libc::errno() != EINTR)
+					{
+						destroy = true;
+					}
+					break;
+				}
 			}
 
-			if (!(event_mask & linux::EPOLLIN)) continue;
-
-			tcp::TcpSocket socket = { .sock = (os::NativeSocket)fd };
-			bool keep_open = true;
-			if (catch err = respond_socket_keepalive_impl(self.allocator, &socket, handler, 1, context, self.options, &keep_open))
+			uint pipelined;
+			while (!destroy && connection.phase != WRITING && connection.input.len() && pipelined < EVENTED_PIPELINE_BUDGET)
 			{
-				close_epoll_socket(epfd, fd);
-				continue;
+				if (max_requests && served + reserved >= max_requests) break;
+				EventedInputStream input = { .bytes = connection.input.str_view() };
+				Request? request_result = read_request_impl{EventedInputStream*}(self.allocator, &input, self.options.limits);
+				if (catch parse_error = request_result)
+				{
+					if (parse_error == io::EOF || parse_error == io::UNEXPECTED_EOF)
+					{
+						if (connection.peer_eof) destroy = true;
+						break;
+					}
+					destroy = true;
+					break;
+				}
+				Request request = request_result;
+				connection.input.delete(0, (sz)input.offset);
+				Response response;
+				response_init_impl(&response, self.allocator, 200, "OK");
+				if (catch handler_error = handler(&request, &response, context))
+				{
+					response_free_impl(&response);
+					request_free_impl(&request);
+					destroy = true;
+					break;
+				}
+				apply_default_connection_policy(self.allocator, &request.headers, &response.headers);
+				connection.close_after_write = connection.peer_eof || should_close_connection(&request.headers) || should_close_connection(&response.headers);
+				EventedOutputStream output = { .bytes = &connection.output };
+				if (catch write_error = write_response_impl{EventedOutputStream*}(&output, &response, request.method)) destroy = true;
+				response_free_impl(&response);
+				request_free_impl(&request);
+				if (destroy) break;
+				connection.phase = WRITING;
+				connection.deadline = evented_deadline(self.options.timeouts.write_timeout);
+				connection.reserved_request = true;
+				reserved++;
+				modify_epoll_socket(epfd, fd, linux::EPOLLOUT | linux::EPOLLERR | linux::EPOLLHUP | linux::EPOLLRDHUP)!;
+				pipelined++;
 			}
 
-			served++;
-			if (!keep_open) close_epoll_socket(epfd, fd);
-			if (max_requests && served >= max_requests)
+			if (!destroy && connection.phase == WRITING && event_mask & linux::EPOLLOUT)
 			{
-				stop = true;
-				break;
+				usz budget = EVENTED_WRITE_BUDGET;
+				while (budget && connection.write_offset < (usz)connection.output.len())
+				{
+					usz wanted = min(budget, (usz)connection.output.len() - connection.write_offset);
+					sz count = libc::send(fd, connection.output.str_view()[connection.write_offset..].ptr, wanted, MSG_NOSIGNAL);
+					if (count > 0)
+					{
+						connection.write_offset += (usz)count;
+						budget -= (usz)count;
+						connection.deadline = evented_deadline(self.options.timeouts.write_timeout);
+						continue;
+					}
+					if (count < 0 && libc::errno() != EAGAIN && libc::errno() != EWOULDBLOCK && libc::errno() != EINTR) destroy = true;
+					break;
+				}
+				if (!destroy && connection.write_offset == (usz)connection.output.len())
+				{
+					connection.output.clear();
+					connection.write_offset = 0;
+					if (connection.reserved_request) { connection.reserved_request = false; reserved--; served++; }
+					if (connection.close_after_write || (max_requests && served >= max_requests))
+					{
+						destroy = true;
+					}
+					else
+					{
+						connection.phase = connection.input.len() ? READING : IDLE;
+						connection.deadline = evented_deadline(connection.input.len() ? self.options.timeouts.header_timeout : self.options.timeouts.idle_timeout);
+						modify_epoll_socket(epfd, fd, linux::EPOLLIN | linux::EPOLLERR | linux::EPOLLHUP | linux::EPOLLRDHUP)!;
+					}
+				}
+			}
+			if (destroy)
+			{
+				if (connection.reserved_request) reserved--;
+				destroy_evented_connection(self.allocator, epfd, &connections, connection);
+			}
+		}
+
+		now = clock::now();
+		for (usz index = (usz)connections.len(); index > 0; index--)
+		{
+			EventedConnection* connection = connections[(sz)(index - 1)];
+			if (connection.deadline != (time::Clock)ulong::max && connection.deadline <= now)
+			{
+				if (connection.reserved_request) reserved--;
+				destroy_evented_connection(self.allocator, epfd, &connections, connection);
 			}
 		}
 	}

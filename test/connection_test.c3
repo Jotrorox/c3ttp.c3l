@@ -13,14 +13,14 @@ fn void? handle_counted_persistent(Request* request, Response* response, void* c
 	persistent_request_count++;
 	response.status = 200;
 	response.set_body(string::tformat("req-%d", persistent_request_count));
-	if (persistent_request_count >= 2) response.set_header("Connection", "close");
+	if (persistent_request_count >= 2) response.set_header("Connection", "close")!!;
 }
 
 fn void? handle_close_immediately(Request* request, Response* response, void* context)
 {
 	response.status = 200;
 	response.set_body("once");
-	response.set_header("Connection", "close");
+	response.set_header("Connection", "close")!!;
 }
 
 struct ConnTestArgs
@@ -69,8 +69,7 @@ fn void connection_reuses_socket_for_multiple_requests() @test
 	Request request;
 	request.init(tmem, "GET", "/ping");
 	defer request.free();
-	request.set_header("Host", string::tformat("127.0.0.1:%d", port));
-
+	request.set_header("Host", string::tformat("127.0.0.1:%d", port))!!;
 	Response first = conn.send(tmem, &request)!!;
 	defer first.free();
 	test::eq(200, first.status);
@@ -105,8 +104,7 @@ fn void connection_closes_when_server_sends_close() @test
 	Request request;
 	request.init(tmem, "GET", "/ping");
 	defer request.free();
-	request.set_header("Host", string::tformat("127.0.0.1:%d", port));
-
+	request.set_header("Host", string::tformat("127.0.0.1:%d", port))!!;
 	Response response = conn.send(tmem, &request)!!;
 	defer response.free();
 	test::eq(200, response.status);
@@ -135,9 +133,8 @@ fn void connection_closes_when_request_has_close() @test
 	Request request;
 	request.init(tmem, "GET", "/ping");
 	defer request.free();
-	request.set_header("Host", string::tformat("127.0.0.1:%d", port));
-	request.set_header("Connection", "close");
-
+	request.set_header("Host", string::tformat("127.0.0.1:%d", port))!!;
+	request.set_header("Connection", "close")!!;
 	Response response = conn.send(tmem, &request)!!;
 	defer response.free();
 	test::eq(200, response.status);
@@ -166,8 +163,7 @@ fn void connection_send_on_closed_returns_error() @test
 	Request request;
 	request.init(tmem, "GET", "/ping");
 	defer request.free();
-	request.set_header("Host", string::tformat("127.0.0.1:%d", port));
-
+	request.set_header("Host", string::tformat("127.0.0.1:%d", port))!!;
 	Response first = conn.send(tmem, &request)!!;
 	defer first.free();
 	test::eq(false, conn.alive);

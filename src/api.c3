@@ -62,26 +62,23 @@ fn String? request_header_impl(Request* self, String name) @private
 	return h.value;
 }
 
-<*
- @require name.len > 0 : "header name must not be empty"
-*>
-fn void request_set_header_impl(Request* self, String name, String value) @private
+fn void? request_set_header_impl(Request* self, String name, String value) @private
 {
+	validate_field_name(name)!;
+	validate_field_value(value)!;
 	upsert_header(&self.headers, self.allocator, name, value);
 }
 
-<*
- @require name.len > 0 : "header name must not be empty"
-*>
-fn void request_add_header_impl(Request* self, String name, String value) @private
+fn void? request_add_header_impl(Request* self, String name, String value) @private
 {
+	validate_field_name(name)!;
+	validate_field_value(value)!;
 	self.headers.push({ .name = name.copy(self.allocator), .value = value.copy(self.allocator) });
 }
 
 <*
  @require allocator != null : "allocator must be set"
  @require status >= 100 && status <= 599 : "status must be in the HTTP range"
- @require reason.len > 0 : "reason must not be empty"
  @require version.len > 0 : "version must not be empty"
 *>
 fn Response* response_init_impl(Response* self, Allocator allocator, ushort status, String reason, String body = "", String version = HTTP_11) @private
@@ -141,19 +138,17 @@ fn String response_header_or_impl(Response* self, String name, String default_va
 	return default_value;
 }
 
-<*
- @require name.len > 0 : "header name must not be empty"
-*>
-fn void response_set_header_impl(Response* self, String name, String value) @private
+fn void? response_set_header_impl(Response* self, String name, String value) @private
 {
+	validate_field_name(name)!;
+	validate_field_value(value)!;
 	upsert_header(&self.headers, self.allocator, name, value);
 }
 
-<*
- @require name.len > 0 : "header name must not be empty"
-*>
-fn void response_add_header_impl(Response* self, String name, String value) @private
+fn void? response_add_header_impl(Response* self, String name, String value) @private
 {
+	validate_field_name(name)!;
+	validate_field_value(value)!;
 	self.headers.push({ .name = name.copy(self.allocator), .value = value.copy(self.allocator) });
 }
 
@@ -185,13 +180,13 @@ fn Response? client_delete_impl(Client* self, Allocator allocator, String url_st
 fn void request_set_json_body_impl(Request* self, String body) @private
 {
 	request_set_body_impl(self, body);
-	request_set_header_impl(self, "Content-Type", "application/json");
+	request_set_header_impl(self, "Content-Type", "application/json")!!;
 }
 
 fn void request_set_form_body_impl(Request* self, String body) @private
 {
 	request_set_body_impl(self, body);
-	request_set_header_impl(self, "Content-Type", "application/x-www-form-urlencoded");
+	request_set_header_impl(self, "Content-Type", "application/x-www-form-urlencoded")!!;
 }
 
 fn ResourceLimits default_resource_limits_impl() @private
@@ -221,6 +216,7 @@ fn ServerOptions default_server_options_impl() @private
 {
 	return {
 		.limits = default_resource_limits_impl(),
-		.timeouts = default_server_timeouts_impl()
+		.timeouts = default_server_timeouts_impl(),
+		.max_connections = 1024
 	};
 }

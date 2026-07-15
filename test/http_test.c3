@@ -70,7 +70,7 @@ const usz LARGE_BATCH_TEST_BODY_SIZE = 9000;
 fn ResourceLimits tiny_limits()
 {
 	ResourceLimits limits = default_resource_limits();
-	limits.max_request_line_size = 16;
+	limits.max_request_line_size = 20;
 	limits.max_header_line_size = 16;
 	limits.max_header_count = 2;
 	limits.max_total_header_bytes = 24;
@@ -85,9 +85,8 @@ fn void request_roundtrip() @test
 	Request request;
 	request.init(tmem, "POST", "/echo?x=1", "hello");
 	defer request.free();
-	request.set_header("Host", "example.com");
-	request.set_header("Content-Type", "text/plain");
-
+	request.set_header("Host", "example.com")!!;
+	request.set_header("Content-Type", "text/plain")!!;
 	io::ByteBuffer buffer;
 	buffer.tinit(80);
 	defer buffer.free();
@@ -108,8 +107,7 @@ fn void absolute_form_request_roundtrip() @test
 	Request request;
 	request.init(tmem, "GET", "http://example.com:8080/path?q=1");
 	defer request.free();
-	request.set_header("Host", "example.com:8080");
-
+	request.set_header("Host", "example.com:8080")!!;
 	io::ByteBuffer buffer;
 	buffer.tinit(96);
 	defer buffer.free();
@@ -127,8 +125,7 @@ fn void authority_form_connect_roundtrip() @test
 	Request request;
 	request.init(tmem, "CONNECT", "example.com:443");
 	defer request.free();
-	request.set_header("Host", "example.com:443");
-
+	request.set_header("Host", "example.com:443")!!;
 	io::ByteBuffer buffer;
 	buffer.tinit(64);
 	defer buffer.free();
@@ -146,8 +143,7 @@ fn void asterisk_form_options_roundtrip() @test
 	Request request;
 	request.init(tmem, "OPTIONS", "*");
 	defer request.free();
-	request.set_header("Host", "example.com");
-
+	request.set_header("Host", "example.com")!!;
 	io::ByteBuffer buffer;
 	buffer.tinit(64);
 	defer buffer.free();
@@ -164,8 +160,7 @@ fn void zero_length_request_roundtrip() @test
 	Request request;
 	request.init(tmem, "GET", "/empty");
 	defer request.free();
-	request.set_header("Host", "example.com");
-
+	request.set_header("Host", "example.com")!!;
 	io::ByteBuffer buffer;
 	buffer.tinit(64);
 	defer buffer.free();
@@ -183,8 +178,7 @@ fn void response_roundtrip() @test
 	Response response;
 	response.init(tmem, 201, "Created", "{\"ok\":true}");
 	defer response.free();
-	response.set_header("Content-Type", "application/json");
-
+	response.set_header("Content-Type", "application/json")!!;
 	io::ByteBuffer buffer;
 	buffer.tinit(64);
 	defer buffer.free();
@@ -250,9 +244,8 @@ fn void chunked_request_roundtrip() @test
 	Request request;
 	request.init(tmem, "POST", "/chunked", "hello world");
 	defer request.free();
-	request.set_header("Host", "example.com");
-	request.set_header("Transfer-Encoding", "chunked");
-
+	request.set_header("Host", "example.com")!!;
+	request.set_header("Transfer-Encoding", "chunked")!!;
 	io::ByteBuffer buffer;
 	buffer.tinit(96);
 	defer buffer.free();
@@ -329,8 +322,7 @@ fn void chunked_response_roundtrip() @test
 	Response response;
 	response.init(tmem, 200, "OK", "chunk-response");
 	defer response.free();
-	response.set_header("Transfer-Encoding", "chunked");
-
+	response.set_header("Transfer-Encoding", "chunked")!!;
 	io::ByteBuffer buffer;
 	buffer.tinit(96);
 	defer buffer.free();
@@ -367,7 +359,7 @@ fn void write_chunked_response_emits_trailers() @test
 	Response response;
 	response.init(tmem, 200, "OK", "data");
 	defer response.free();
-	response.set_header("Transfer-Encoding", "chunked");
+	response.set_header("Transfer-Encoding", "chunked")!!;
 	response.trailers.push({ .name = "Expires".copy(tmem), .value = "soon".copy(tmem) });
 
 	io::ByteBuffer buffer;
@@ -431,18 +423,13 @@ fn void invalid_request_header_without_separator() @test
 	test::@error(read_request(tmem, &buffer), INVALID_HEADER);
 }
 
-fn void request_line_with_repeated_spaces_is_accepted() @test
+fn void request_line_with_repeated_spaces_is_rejected() @test
 {
 	io::ByteBuffer buffer;
 	init_buffer(&buffer, "GET   /space   HTTP/1.1\r\nHost: example.com\r\n\r\n")!!;
 	defer buffer.free();
 
-	Request request = read_request(tmem, &buffer)!!;
-	defer request.free();
-
-	test::eq("GET", request.method);
-	test::eq("/space", request.target);
-	test::eq("HTTP/1.1", request.version);
+	test::@error(read_request(tmem, &buffer), INVALID_REQUEST_LINE);
 }
 
 fn void request_headers_trim_surrounding_whitespace() @test
@@ -472,8 +459,7 @@ fn void connect_with_origin_form_is_rejected() @test
 	Request request;
 	request.init(tmem, "CONNECT", "/proxy");
 	defer request.free();
-	request.set_header("Host", "example.com");
-
+	request.set_header("Host", "example.com")!!;
 	io::ByteBuffer buffer;
 	buffer.tinit(64);
 	defer buffer.free();
@@ -486,8 +472,7 @@ fn void origin_form_without_leading_slash_is_rejected() @test
 	Request request;
 	request.init(tmem, "GET", "relative");
 	defer request.free();
-	request.set_header("Host", "example.com");
-
+	request.set_header("Host", "example.com")!!;
 	io::ByteBuffer buffer;
 	buffer.tinit(64);
 	defer buffer.free();
@@ -575,17 +560,13 @@ fn void padded_mixed_case_chunked_transfer_encoding_is_accepted() @test
 	test::eq("ChUnKeD", response.header("Transfer-Encoding")!!);
 }
 
-fn void mixed_case_identity_transfer_encoding_is_accepted() @test
+fn void mixed_case_identity_transfer_encoding_is_rejected() @test
 {
 	io::ByteBuffer buffer;
 	init_buffer(&buffer, "HTTP/1.1 200 OK\r\nTransfer-Encoding: IdEnTiTy\r\n\r\n")!!;
 	defer buffer.free();
 
-	Response response = read_response(tmem, &buffer)!!;
-	defer response.free();
-
-	test::eq("", response.body);
-	test::eq("IdEnTiTy", response.header("Transfer-Encoding")!!);
+	test::@error(read_response(tmem, &buffer), UNSUPPORTED_TRANSFER_ENCODING);
 }
 
 fn void forbidden_chunked_trailer_is_rejected() @test
@@ -668,36 +649,39 @@ fn void request_without_host_is_rejected() @test
 	test::@error(read_request(tmem, &buffer), MISSING_HOST);
 }
 
-fn void unsupported_request_method_is_rejected() @test
+fn void extension_request_method_is_accepted() @test
 {
 	io::ByteBuffer buffer;
 	init_buffer(&buffer, "BREW /coffee HTTP/1.1\r\nHost: example.com\r\n\r\n")!!;
 	defer buffer.free();
 
-	test::@error(read_request(tmem, &buffer), UNSUPPORTED_METHOD);
+	Request request = read_request(tmem, &buffer)!!;
+	defer request.free();
+	test::eq("BREW", request.method);
 }
 
-fn void lowercase_request_method_is_rejected() @test
+fn void lowercase_request_method_is_accepted() @test
 {
 	io::ByteBuffer buffer;
 	init_buffer(&buffer, "get / HTTP/1.1\r\nHost: example.com\r\n\r\n")!!;
 	defer buffer.free();
 
-	test::@error(read_request(tmem, &buffer), UNSUPPORTED_METHOD);
+	Request request = read_request(tmem, &buffer)!!;
+	defer request.free();
+	test::eq("get", request.method);
 }
 
-fn void write_request_rejects_unsupported_method() @test
+fn void write_request_accepts_extension_method() @test
 {
 	Request request;
 	request.init(tmem, "BREW", "/coffee");
 	defer request.free();
-	request.set_header("Host", "example.com");
-
+	request.set_header("Host", "example.com")!!;
 	io::ByteBuffer buffer;
 	buffer.tinit(64);
 	defer buffer.free();
 
-	test::@error(write_request(&buffer, &request), UNSUPPORTED_METHOD);
+	write_request(&buffer, &request)!!;
 }
 
 fn void write_request_rejects_duplicate_host() @test
@@ -748,8 +732,7 @@ fn void write_response_rejects_unsupported_transfer_encoding_tokens() @test
 	Response response;
 	response.init(tmem, 200, "OK");
 	defer response.free();
-	response.set_header("Transfer-Encoding", "gzip, chunked");
-
+	response.set_header("Transfer-Encoding", "gzip, chunked")!!;
 	io::ByteBuffer buffer;
 	buffer.tinit(64);
 	defer buffer.free();
@@ -762,9 +745,8 @@ fn void write_response_rejects_conflicting_chunked_and_content_length() @test
 	Response response;
 	response.init(tmem, 200, "OK");
 	defer response.free();
-	response.set_header("Transfer-Encoding", "chunked");
-	response.set_header("Content-Length", "4");
-
+	response.set_header("Transfer-Encoding", "chunked")!!;
+	response.set_header("Content-Length", "4")!!;
 	io::ByteBuffer buffer;
 	buffer.tinit(64);
 	defer buffer.free();
@@ -813,8 +795,7 @@ fn void write_request_from_streams_content_length_body() @test
 	Request request;
 	request.init(tmem, "POST", "/stream");
 	defer request.free();
-	request.set_header("Host", "example.com");
-
+	request.set_header("Host", "example.com")!!;
 	io::ByteReader reader;
 	init_reader(&reader, "stream-body");
 
@@ -834,7 +815,7 @@ fn void write_response_from_streams_chunked_body_and_trailers() @test
 	Response response;
 	response.init(tmem, 200, "OK");
 	defer response.free();
-	response.set_header("Transfer-Encoding", "chunked");
+	response.set_header("Transfer-Encoding", "chunked")!!;
 	response.trailers.push({ .name = "X-Trailer".copy(tmem), .value = "done".copy(tmem) });
 
 	io::ByteReader reader;
@@ -855,10 +836,9 @@ fn void write_request_batches_small_message() @test
 	Request request;
 	request.init(tmem, "POST", "/batched", "hello");
 	defer request.free();
-	request.set_header("Host", "example.com");
-	request.set_header("Content-Type", "text/plain");
-	request.set_header("X-Test", "1");
-
+	request.set_header("Host", "example.com")!!;
+	request.set_header("Content-Type", "text/plain")!!;
+	request.set_header("X-Test", "1")!!;
 	CountingBuffer buffer;
 	init_counting_buffer(&buffer, 128);
 	defer free_counting_buffer(&buffer);
@@ -875,7 +855,7 @@ fn void write_response_batches_small_chunked_message() @test
 	Response response;
 	response.init(tmem, 200, "OK", "data");
 	defer response.free();
-	response.set_header("Transfer-Encoding", "chunked");
+	response.set_header("Transfer-Encoding", "chunked")!!;
 	response.trailers.push({ .name = "Expires".copy(tmem), .value = "soon".copy(tmem) });
 
 	CountingBuffer buffer;
@@ -894,7 +874,7 @@ fn void write_response_from_batches_small_chunked_stream() @test
 	Response response;
 	response.init(tmem, 200, "OK");
 	defer response.free();
-	response.set_header("Transfer-Encoding", "chunked");
+	response.set_header("Transfer-Encoding", "chunked")!!;
 	response.trailers.push({ .name = "X-Trailer".copy(tmem), .value = "done".copy(tmem) });
 
 	io::ByteReader reader;
@@ -919,8 +899,7 @@ fn void write_request_large_body_uses_header_flush_and_direct_write() @test
 	Request request;
 	request.init(tmem, "POST", "/large", body.str_view());
 	defer request.free();
-	request.set_header("Host", "example.com");
-
+	request.set_header("Host", "example.com")!!;
 	CountingBuffer buffer;
 	init_counting_buffer(&buffer, LARGE_BATCH_TEST_BODY_SIZE + 128);
 	defer free_counting_buffer(&buffer);
@@ -1018,9 +997,8 @@ fn void request_header_or_returns_value() @test
 	Request request;
 	request.init(tmem, "GET", "/");
 	defer request.free();
-	request.set_header("Host", "example.com");
-	request.set_header("X-Custom", "value");
-
+	request.set_header("Host", "example.com")!!;
+	request.set_header("X-Custom", "value")!!;
 	test::eq("value", request.header_or("X-Custom", "default"));
 	test::eq("example.com", request.header_or("host", "default"));
 }
@@ -1030,8 +1008,7 @@ fn void request_header_or_returns_default() @test
 	Request request;
 	request.init(tmem, "GET", "/");
 	defer request.free();
-	request.set_header("Host", "example.com");
-
+	request.set_header("Host", "example.com")!!;
 	test::eq("default", request.header_or("X-Missing", "default"));
 }
 
@@ -1040,8 +1017,7 @@ fn void response_header_or_returns_value() @test
 	Response response;
 	response.init(tmem, 200, "OK");
 	defer response.free();
-	response.set_header("Content-Type", "text/plain");
-
+	response.set_header("Content-Type", "text/plain")!!;
 	test::eq("text/plain", response.header_or("Content-Type", "default"));
 }
 
@@ -1059,7 +1035,7 @@ fn void request_set_json_body_sets_content_type() @test
 	Request request;
 	request.init(tmem, "POST", "/api");
 	defer request.free();
-	request.set_header("Host", "example.com");
+	request.set_header("Host", "example.com")!!;
 	request.set_json_body("{\"ok\":true}");
 
 	test::eq("{\"ok\":true}", request.body);
@@ -1071,7 +1047,7 @@ fn void request_set_form_body_sets_content_type() @test
 	Request request;
 	request.init(tmem, "POST", "/form");
 	defer request.free();
-	request.set_header("Host", "example.com");
+	request.set_header("Host", "example.com")!!;
 	request.set_form_body("name=value");
 
 	test::eq("name=value", request.body);
@@ -1109,4 +1085,44 @@ fn void response_text_sets_content_type() @test
 
 	test::eq("plain text", response.body);
 	test::eq("text/plain", response.header("Content-Type")!!);
+}
+
+fn void bare_lf_request_is_rejected() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "GET / HTTP/1.1\nHost: example.com\n\n")!!;
+	defer buffer.free();
+	test::@error(read_request(tmem, &buffer), INVALID_LINE_ENDING);
+}
+
+fn void malformed_content_lengths_are_rejected() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "POST / HTTP/1.1\r\nHost: example.com\r\nContent-Length: +1\r\n\r\nx")!!;
+	defer buffer.free();
+	test::@error(read_request(tmem, &buffer), INVALID_CONTENT_LENGTH);
+}
+
+fn void direct_header_injection_is_rejected_before_writing() @test
+{
+	Response response;
+	response.init(tmem, 200, "OK", "body");
+	defer response.free();
+	response.headers.push({ .name = "X-Test".copy(tmem), .value = "safe\r\nInjected: yes".copy(tmem) });
+
+	CountingBuffer output;
+	init_counting_buffer(&output);
+	defer free_counting_buffer(&output);
+	test::@error(write_response(&output, &response), INVALID_HEADER);
+	test::eq((usz)0, output.write_calls);
+}
+
+fn void empty_response_reason_phrase_is_accepted() @test
+{
+	io::ByteBuffer buffer;
+	init_buffer(&buffer, "HTTP/1.1 204 \r\n\r\n")!!;
+	defer buffer.free();
+	Response response = read_response(tmem, &buffer)!!;
+	defer response.free();
+	test::eq("", response.reason);
 }

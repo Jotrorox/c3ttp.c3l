@@ -48,7 +48,7 @@ fn void response_set_cookie_simple() @test
 	Response response;
 	response.init(tmem, 200, "OK");
 	defer response.free();
-	response.set_cookie("session", "abc123");
+	response.set_cookie("session", "abc123")!!;
 	test::eq("session=abc123", response.header("Set-Cookie")!!);
 }
 
@@ -57,7 +57,7 @@ fn void response_set_cookie_with_attributes() @test
 	Response response;
 	response.init(tmem, 200, "OK");
 	defer response.free();
-	response.set_cookie("session", "abc123", "/", 3600, true, true, "Strict");
+	response.set_cookie("session", "abc123", "/", 3600, true, true, "Strict")!!;
 	String cookie = response.header("Set-Cookie")!!;
 	test::@check(cookie.contains("session=abc123"), "expected name=value");
 	test::@check(cookie.contains("Path=/"), "expected path");
@@ -72,8 +72,8 @@ fn void response_set_cookie_multiple_cookies() @test
 	Response response;
 	response.init(tmem, 200, "OK");
 	defer response.free();
-	response.set_cookie("a", "1");
-	response.set_cookie("b", "2");
+	response.set_cookie("a", "1")!!;
+	response.set_cookie("b", "2")!!;
 	test::eq((usz)2, count_headers(&response.headers, "Set-Cookie"));
 }
 
@@ -82,6 +82,41 @@ fn void response_set_cookie_no_optional_attributes() @test
 	Response response;
 	response.init(tmem, 200, "OK");
 	defer response.free();
-	response.set_cookie("id", "xyz", "", -1, false, false, "");
+	response.set_cookie("id", "xyz", "", -1, false, false, "")!!;
 	test::eq("id=xyz", response.header("Set-Cookie")!!);
+}
+
+fn void response_set_cookie_rejects_injection_without_mutation() @test
+{
+	Response response;
+	response.init(tmem, 200, "OK");
+	defer response.free();
+
+	test::@error(response.set_cookie("session", "ok\r\nX-Evil: yes"), INVALID_HEADER);
+	test::eq((sz)0, response.headers.len());
+
+	test::@error(response.set_cookie("session", "ok", "/; Secure"), INVALID_HEADER);
+	test::@error(response.set_cookie("session", "ok", "/", -1, false, false, "strict"), INVALID_HEADER);
+	test::@error(response.set_cookie("bad name", "ok"), INVALID_HEADER);
+	test::eq((sz)0, response.headers.len());
+}
+
+fn void header_mutators_reject_invalid_syntax_before_mutation() @test
+{
+	Request request;
+	request.init(tmem, "GET", "/");
+	defer request.free();
+	request.set_header("X-Good", "original")!!;
+
+	test::@error(request.set_header("X-Good", "changed\r\nX-Evil: yes"), INVALID_HEADER);
+	test::eq("original", request.header("X-Good")!!);
+	test::@error(request.add_header("Bad Name", "value"), INVALID_HEADER);
+	test::eq((sz)1, request.headers.len());
+
+	Response response;
+	response.init(tmem, 200, "OK");
+	defer response.free();
+	test::@error(response.add_header("", "value"), INVALID_HEADER);
+	test::@error(response.set_header("X-Test", "bad\x00value"), INVALID_HEADER);
+	test::eq((sz)0, response.headers.len());
 }

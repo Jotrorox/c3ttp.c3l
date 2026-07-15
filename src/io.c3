@@ -98,6 +98,10 @@ fn void? write_request_impl(Stream stream, Request* request) <Stream> @private
 	validate_version(request.version)!;
 	validate_method(request.method)!;
 	validate_request_target(request.method, request.target)!;
+	HeaderInfo preflight;
+	analyze_headers(&request.headers, true, &preflight)!;
+	validate_trailers(&request.trailers, preflight.chunked)!;
+	validate_outbound_length(&preflight, request.body.len, true)!;
 	char[HTTP_WRITE_BUFFER_SIZE] scratch = {};
 	io::WriteBuffer buffered;
 	buffered.init(out_stream, scratch[..]);
@@ -114,6 +118,10 @@ fn void? write_request_from_impl(OutStream out_stream, Request* request, InStrea
 	validate_version(request.version)!;
 	validate_method(request.method)!;
 	validate_request_target(request.method, request.target)!;
+	HeaderInfo preflight;
+	analyze_headers(&request.headers, true, &preflight)!;
+	validate_trailers(&request.trailers, preflight.chunked)!;
+	validate_outbound_length(&preflight, content_length, true)!;
 	char[HTTP_WRITE_BUFFER_SIZE] scratch = {};
 	io::WriteBuffer buffered;
 	buffered.init(out_stream, scratch[..]);
@@ -129,6 +137,11 @@ fn void? write_response_impl(Stream stream, Response* response, String request_m
 {
 	OutStream out_stream = (OutStream)stream;
 	validate_version(response.version)!;
+	validate_status_and_reason(response.status, response.reason)!;
+	HeaderInfo preflight;
+	analyze_headers(&response.headers, false, &preflight)!;
+	validate_trailers(&response.trailers, preflight.chunked)!;
+	validate_outbound_length(&preflight, response.body.len, !response_has_no_message_body(response.status, request_method))!;
 	char[HTTP_WRITE_BUFFER_SIZE] scratch = {};
 	io::WriteBuffer buffered;
 	buffered.init(out_stream, scratch[..]);
@@ -146,6 +159,11 @@ fn void? write_response_impl(Stream stream, Response* response, String request_m
 fn void? write_response_from_impl(OutStream out_stream, Response* response, InStream body_stream, usz content_length = 0, String request_method = "") @private
 {
 	validate_version(response.version)!;
+	validate_status_and_reason(response.status, response.reason)!;
+	HeaderInfo preflight;
+	analyze_headers(&response.headers, false, &preflight)!;
+	validate_trailers(&response.trailers, preflight.chunked)!;
+	validate_outbound_length(&preflight, content_length, !response_has_no_message_body(response.status, request_method))!;
 	char[HTTP_WRITE_BUFFER_SIZE] scratch = {};
 	io::WriteBuffer buffered;
 	buffered.init(out_stream, scratch[..]);
@@ -163,7 +181,13 @@ fn void? write_response_from_impl(OutStream out_stream, Response* response, InSt
 fn Response? exchange_impl(Allocator allocator, Stream stream, Request* request) <Stream> @private
 {
 	write_request_impl{$Typeof(stream)}(stream, request)!;
-	return read_response_impl{$Typeof(stream)}(allocator, stream, request.method);
+	for (uint informational = 0; ; informational++)
+	{
+		Response response = read_response_impl{$Typeof(stream)}(allocator, stream, request.method)!;
+		if (response.status < 100 || response.status >= 200 || response.status == 101) return response;
+		response_free_impl(&response);
+		if (informational >= 15) return TOO_MANY_INFORMATIONAL_RESPONSES~;
+	}
 }
 
 fn void? respond_once_impl(Allocator allocator, Stream stream, Handler handler, void* context) <Stream> @private
@@ -215,7 +239,10 @@ fn Response? parse_status_line(Allocator allocator, String line) @private
 	String reason;
 	parse_status_line_parts(line, &version, &status_text, &reason)!;
 	validate_version(version)!;
-	ushort status = (ushort)status_text.to_uint()!;
+	if (status_text.len != 3) return INVALID_STATUS_LINE~;
+	foreach (c : status_text) if (c < '0' || c > '9') return INVALID_STATUS_LINE~;
+	ushort status = (ushort)((status_text[0] - '0') * 100 + (status_text[1] - '0') * 10 + status_text[2] - '0');
+	validate_status_and_reason(status, reason)!;
 
 	Response response;
 	response_init_impl(&response, allocator, status, reason, "", version);
@@ -248,11 +275,16 @@ fn void? read_headers_and_body(Allocator allocator, HttpLineBuffer* line_buffer,
 
 	if (!info.has_content_length)
 	{
-		set_empty_body(allocator, body);
+		if (require_host)
+		{
+			set_empty_body(allocator, body);
+			return;
+		}
+		read_close_delimited_body(allocator, stream, body, limits)!;
 		return;
 	}
 
-	usz content_length = info.content_length_text.to_uint()!;
+	usz content_length = parse_content_length(info.content_length_text)!;
 	if (content_length > limits.max_buffered_body_size) return BUFFERED_BODY_TOO_LARGE~;
 	if (!content_length)
 	{
@@ -303,8 +335,12 @@ fn void? read_headers_and_body_to(Allocator allocator, HttpLineBuffer* line_buff
 	}
 	clear_headers(trailers);
 
-	if (!info.has_content_length) return;
-	usz content_length = info.content_length_text.to_uint()!;
+	if (!info.has_content_length)
+	{
+		if (!require_host) copy_to_eof(in_stream, body_stream)!;
+		return;
+	}
+	usz content_length = parse_content_length(info.content_length_text)!;
 	if (!content_length) return;
 	set_stream_read_timeout{$Typeof(in_stream)}(in_stream, get_stream_body_timeout{$Typeof(in_stream)}(in_stream), READ_TIMEOUT);
 	copy_exact_to_stream(in_stream, body_stream, content_length)!;
@@ -321,12 +357,7 @@ fn void? read_chunked_body(Allocator allocator, HttpLineBuffer* line_buffer, Str
 	{
 		String line = read_http_line{$Typeof(stream)}(line_buffer, stream, limits.max_header_line_size, HEADER_LINE_TOO_LARGE)!;
 
-		usz extension = (usz)(line.index_of_char(';') ?? (sz)line.len);
-		String size_text = line[:extension].trim();
-		if (!size_text) return INVALID_CHUNK~;
-		usz? chunk_size_value = size_text.to_uint(16);
-		if (catch err = chunk_size_value) return INVALID_CHUNK~;
-		usz chunk_size = chunk_size_value;
+		usz chunk_size = parse_chunk_size_line(line)!;
 		if (chunk_size > limits.max_chunk_size) return CHUNK_TOO_LARGE~;
 		if (!chunk_size)
 		{
@@ -336,8 +367,8 @@ fn void? read_chunked_body(Allocator allocator, HttpLineBuffer* line_buffer, Str
 			chunks.free();
 			return;
 		}
-		if (total_size + chunk_size > limits.max_chunked_body_size) return CHUNKED_BODY_TOO_LARGE~;
-		if (total_size + chunk_size > limits.max_buffered_body_size) return BUFFERED_BODY_TOO_LARGE~;
+		if (total_size > limits.max_chunked_body_size || chunk_size > limits.max_chunked_body_size - total_size) return CHUNKED_BODY_TOO_LARGE~;
+		if (total_size > limits.max_buffered_body_size || chunk_size > limits.max_buffered_body_size - total_size) return BUFFERED_BODY_TOO_LARGE~;
 
 		chunks.reserve((sz)chunk_size);
 		usz remaining = chunk_size;
@@ -367,19 +398,14 @@ fn void? read_chunked_body_to(Allocator allocator, HttpLineBuffer* line_buffer, 
 	{
 		String line = read_http_line{$Typeof(in_stream)}(line_buffer, in_stream, limits.max_header_line_size, HEADER_LINE_TOO_LARGE)!;
 
-		usz extension = (usz)(line.index_of_char(';') ?? (sz)line.len);
-		String size_text = line[:extension].trim();
-		if (!size_text) return INVALID_CHUNK~;
-		usz? chunk_size_value = size_text.to_uint(16);
-		if (catch err = chunk_size_value) return INVALID_CHUNK~;
-		usz chunk_size = chunk_size_value;
+		usz chunk_size = parse_chunk_size_line(line)!;
 		if (chunk_size > limits.max_chunk_size) return CHUNK_TOO_LARGE~;
 		if (!chunk_size)
 		{
 			read_trailers(allocator, line_buffer, in_stream, trailers, limits)!;
 			return;
 		}
-		if (total_size + chunk_size > limits.max_chunked_body_size) return CHUNKED_BODY_TOO_LARGE~;
+		if (total_size > limits.max_chunked_body_size || chunk_size > limits.max_chunked_body_size - total_size) return CHUNKED_BODY_TOO_LARGE~;
 
 		copy_exact_chunk_to_stream(in_stream, body_stream, buffer[..], chunk_size)!;
 		char[2] chunk_crlf = {};
@@ -389,14 +415,76 @@ fn void? read_chunked_body_to(Allocator allocator, HttpLineBuffer* line_buffer, 
 	}
 }
 
+fn usz? parse_chunk_size_line(String line) @private
+{
+	if (!line) return INVALID_CHUNK~;
+	usz end = (usz)(line.index_of_char(';') ?? (sz)line.len);
+	if (!end) return INVALID_CHUNK~;
+	usz value;
+	usz max_value = ~0;
+	foreach (c : line[:end])
+	{
+		usz digit;
+		if (c >= '0' && c <= '9') { digit = (usz)(c - '0'); }
+		else if (c >= 'a' && c <= 'f') { digit = (usz)(c - 'a' + 10); }
+		else if (c >= 'A' && c <= 'F') { digit = (usz)(c - 'A' + 10); }
+		else { return INVALID_CHUNK~; }
+		if (value > (max_value - digit) / 16) return INVALID_CHUNK~;
+		value = value * 16 + digit;
+	}
+	if (end < line.len) validate_chunk_extensions(line[end ..])!;
+	return value;
+}
+
+fn void? validate_chunk_extensions(String extensions) @private
+{
+	usz i;
+	while (i < extensions.len)
+	{
+		if (extensions[i++] != ';') return INVALID_CHUNK~;
+		usz name_start = i;
+		while (i < extensions.len && is_tchar(extensions[i])) i++;
+		if (i == name_start) return INVALID_CHUNK~;
+		if (i == extensions.len || extensions[i] == ';') continue;
+		if (extensions[i++] != '=' || i == extensions.len) return INVALID_CHUNK~;
+		if (extensions[i] == '"')
+		{
+			i++;
+			bool closed;
+			while (i < extensions.len)
+			{
+				char c = extensions[i++];
+				if (c == '"') { closed = true; break; }
+				if (c == '\\')
+				{
+					if (i == extensions.len) return INVALID_CHUNK~;
+					c = extensions[i++];
+					if (c == 0x7f || (c < 0x20 && c != '\t')) return INVALID_CHUNK~;
+				}
+				else if (c == 0x7f || (c < 0x20 && c != '\t')) return INVALID_CHUNK~;
+			}
+			if (!closed) return INVALID_CHUNK~;
+		}
+		else
+		{
+			usz value_start = i;
+			while (i < extensions.len && is_tchar(extensions[i])) i++;
+			if (i == value_start) return INVALID_CHUNK~;
+		}
+		if (i < extensions.len && extensions[i] != ';') return INVALID_CHUNK~;
+	}
+}
+
 fn Header? parse_header(Allocator allocator, String line) @private
 {
+	if (!line || line[0] == ' ' || line[0] == '\t') return INVALID_HEADER~;
 	sz? split_value = line.index_of_char(':');
 	if (catch err = split_value) return INVALID_HEADER~;
 	usz split = (usz)split_value;
-	String name = line[:split].trim();
+	String name = line[:split];
 	String value = line[split + 1 ..].trim();
-	if (!name) return INVALID_HEADER~;
+	validate_field_name(name)!;
+	validate_field_value(value)!;
 	return {
 		.name = name.copy(allocator),
 		.value = value.copy(allocator)
@@ -410,11 +498,16 @@ fn void? read_header_block(Allocator allocator, HttpLineBuffer* line_buffer, InS
 	while (true)
 	{
 		String line = read_http_line{$Typeof(stream)}(line_buffer, stream, limits.max_header_line_size, HEADER_LINE_TOO_LARGE)!;
-		if (!line) break;
+		if (!line)
+		{
+			if (total_bytes > limits.max_total_header_bytes || 2 > limits.max_total_header_bytes - total_bytes) return HEADERS_TOO_LARGE~;
+			break;
+		}
 		if ((usz)headers.len() >= limits.max_header_count) return TOO_MANY_HEADERS~;
-		if (total_bytes + line.len > limits.max_total_header_bytes) return HEADERS_TOO_LARGE~;
+		if (total_bytes > limits.max_total_header_bytes || line.len > limits.max_total_header_bytes - total_bytes ||
+			line.len + 2 > limits.max_total_header_bytes - total_bytes) return HEADERS_TOO_LARGE~;
 		headers.push(parse_header(allocator, line)!);
-		total_bytes += line.len;
+		total_bytes += line.len + 2;
 	}
 }
 
@@ -441,7 +534,11 @@ fn void? write_headers(OutStream stream, HeaderList* headers, bool require_host,
 	foreach (header : *headers)
 	{
 		analyze_header(header, &info, &seen_transfer_encoding, &seen_connection)!;
-		if (header_name_eq(header.name, "Content-Length")) continue;
+		if (header_name_eq(header.name, "Content-Length"))
+		{
+			if (!include_implicit_content_length) io::fprintf(&header_block, "%s: %s\r\n", header.name, header.value)!;
+			continue;
+		}
 		io::fprintf(&header_block, "%s: %s\r\n", header.name, header.value)!;
 	}
 	if (require_host && !info.has_host) return MISSING_HOST~;
@@ -587,72 +684,33 @@ fn String http_line_view(HttpLineBuffer* self) @private
 fn String? read_http_line(HttpLineBuffer* line_buffer, Stream stream, usz limit, fault too_long_fault) <Stream> @private
 {
 	reset_http_line_buffer(line_buffer);
-	$if Stream == TimedTcpStream*:
-		while (true)
+	bool saw_cr;
+	while (true)
+	{
+		char? c_value = stream.read_byte();
+		if (catch err = c_value)
 		{
-			if (!timed_tcp_stream_buffered_bytes(stream))
-			{
-				sz read = timed_tcp_stream_fill_buffer(stream)!;
-				if (!read)
-				{
-					if (!line_buffer.length) return io::EOF~;
-					return io::UNEXPECTED_EOF~;
-				}
-			}
-
-			usz segment_start = stream.read_buffer_start;
-			usz segment_end = stream.read_buffer_end;
-			usz line_end = segment_end;
-			bool has_newline = false;
-			for (usz i = segment_start; i < segment_end; i++)
-			{
-				if (stream.read_buffer_storage[i] == '\n')
-				{
-					line_end = i;
-					stream.read_buffer_start = i + 1;
-					has_newline = true;
-					break;
-				}
-			}
-
-			for (usz i = segment_start; i < line_end; i++)
-			{
-				char c = stream.read_buffer_storage[i];
-				if (c == '\r') continue;
-				append_http_line_char(line_buffer, c, limit, too_long_fault)!;
-			}
-			if (!has_newline)
-			{
-				stream.read_buffer_start = segment_end;
-			}
-
-			if (stream.read_buffer_start == stream.read_buffer_end)
-			{
-				timed_tcp_stream_reset_buffer(stream);
-			}
-
-			if (has_newline) return http_line_view(line_buffer);
+			if (err == io::EOF && !line_buffer.length && !saw_cr) return io::EOF~;
+			if (err == io::EOF) return io::UNEXPECTED_EOF~;
+			return err~;
 		}
-	$else
-		while (true)
+
+		char c = c_value;
+		if (saw_cr)
 		{
-			char? c_value = stream.read_byte();
-			if (catch err = c_value)
-			{
-				if (err == io::EOF)
-				{
-					if (!line_buffer.length) return io::EOF~;
-					return io::UNEXPECTED_EOF~;
-				}
-				return err~;
-			}
-
-			char c = c_value;
-			if (c == '\n') return http_line_view(line_buffer);
-			if (c == '\r') continue;
-			append_http_line_char(line_buffer, c, limit, too_long_fault)!;
+			if (c != '\n') return INVALID_LINE_ENDING~;
+			return http_line_view(line_buffer);
 		}
-	$endif
+		if (c == '\n') return INVALID_LINE_ENDING~;
+		if (c == '\r')
+		{
+			saw_cr = true;
+			continue;
+		}
+		// Include the mandatory CRLF in the configured wire-size limit.
+		if (limit && line_buffer.length + 2 >= limit) return too_long_fault~;
+		append_http_line_char(line_buffer, c, 0, too_long_fault)!;
+	}
 }
 
 fn usz skip_http_spaces(String text, usz index) @private
@@ -666,48 +724,27 @@ fn usz skip_http_spaces(String text, usz index) @private
 
 fn void? parse_request_line_parts(String line, String* method, String* target, String* version) @private
 {
-	usz index = skip_http_spaces(line, 0);
-	if (index == line.len) return INVALID_REQUEST_LINE~;
-
-	usz method_end = (usz)(line[index ..].index_of_char(' ') ?? (sz)(line.len - index));
-	method_end += index;
-	if (method_end == index) return INVALID_REQUEST_LINE~;
-	*method = line[index:method_end - index];
-
-	index = skip_http_spaces(line, method_end);
-	if (index == line.len) return INVALID_REQUEST_LINE~;
-
-	usz target_end = (usz)(line[index ..].index_of_char(' ') ?? (sz)(line.len - index));
-	target_end += index;
-	if (target_end == index) return INVALID_REQUEST_LINE~;
-	*target = line[index:target_end - index];
-
-	index = skip_http_spaces(line, target_end);
-	if (index == line.len) return INVALID_REQUEST_LINE~;
-	*version = line[index ..];
+	sz? first_value = line.index_of_char(' ');
+	if (catch err = first_value) return INVALID_REQUEST_LINE~;
+	usz first = (usz)first_value;
+	if (!first || first + 1 >= line.len) return INVALID_REQUEST_LINE~;
+	sz? second_relative = line[first + 1 ..].index_of_char(' ');
+	if (catch err = second_relative) return INVALID_REQUEST_LINE~;
+	usz second = first + 1 + (usz)second_relative;
+	if (second == first + 1 || second + 1 >= line.len) return INVALID_REQUEST_LINE~;
+	if (line[second + 1 ..].contains(" ")) return INVALID_REQUEST_LINE~;
+	*method = line[:first];
+	*target = line[first + 1:second - first - 1];
+	*version = line[second + 1 ..];
 }
 
 fn void? parse_status_line_parts(String line, String* version, String* status_text, String* reason) @private
 {
-	usz index = skip_http_spaces(line, 0);
-	if (index == line.len) return INVALID_STATUS_LINE~;
-
-	usz version_end = (usz)(line[index ..].index_of_char(' ') ?? (sz)(line.len - index));
-	version_end += index;
-	if (version_end == index) return INVALID_STATUS_LINE~;
-	*version = line[index:version_end - index];
-
-	index = skip_http_spaces(line, version_end);
-	if (index == line.len) return INVALID_STATUS_LINE~;
-
-	usz status_end = (usz)(line[index ..].index_of_char(' ') ?? (sz)(line.len - index));
-	status_end += index;
-	if (status_end == index) return INVALID_STATUS_LINE~;
-	*status_text = line[index:status_end - index];
-
-	index = skip_http_spaces(line, status_end);
-	if (index == line.len) return INVALID_STATUS_LINE~;
-	*reason = line[index ..];
+	// The second SP is required, even when the reason phrase is empty.
+	if (line.len < 13 || line[8] != ' ' || line[12] != ' ') return INVALID_STATUS_LINE~;
+	*version = line[:8];
+	*status_text = line[9:3];
+	*reason = line[13 ..];
 }
 
 fn Duration get_stream_header_timeout(Stream stream) <Stream> @private
@@ -751,6 +788,64 @@ fn void? copy_exact_to_stream(InStream in_stream, OutStream out_stream, usz leng
 {
 	char[4096] buffer = {};
 	copy_exact_chunk_to_stream(in_stream, out_stream, buffer[..], length)!;
+}
+
+fn void? copy_to_eof(InStream in_stream, OutStream out_stream) @private
+{
+	char[4096] buffer = {};
+	while (true)
+	{
+		sz? read_value = in_stream.read(buffer[..]);
+		if (catch err = read_value)
+		{
+			if (err == io::EOF) return;
+			return err~;
+		}
+		usz read = (usz)read_value;
+		if (!read) return;
+		write_exact(out_stream, buffer[:read])!;
+	}
+}
+
+fn void? read_close_delimited_body(Allocator allocator, InStream stream, String* body, ResourceLimits limits) @private
+{
+	DString result = dstring::new_with_capacity(allocator, 256);
+	defer result.free();
+	char[4096] buffer = {};
+	while (true)
+	{
+		sz? read_value = stream.read(buffer[..]);
+		if (catch err = read_value)
+		{
+			if (err == io::EOF) break;
+			return err~;
+		}
+		usz read = (usz)read_value;
+		if (!read) break;
+		usz accumulated = result.str_view().len;
+		if (accumulated > limits.max_buffered_body_size || read > limits.max_buffered_body_size - accumulated) return BUFFERED_BODY_TOO_LARGE~;
+		result.append_bytes(buffer[:read]);
+	}
+	(*body).free(allocator);
+	*body = result.copy_str(allocator);
+}
+
+fn void? validate_status_and_reason(ushort status, String reason) @private
+{
+	if (status < 100 || status > 599) return INVALID_STATUS_LINE~;
+	foreach (c : reason)
+	{
+		if (c == '\t' || c == ' ') continue;
+		if (c >= 0x21 && c <= 0x7e) continue;
+		if (c >= 0x80) continue;
+		return INVALID_STATUS_LINE~;
+	}
+}
+
+fn void? validate_outbound_length(HeaderInfo* info, usz body_length, bool emits_body) @private
+{
+	if (!info.has_content_length || !emits_body || info.chunked) return;
+	if (parse_content_length(info.content_length_text)! != body_length) return INVALID_CONTENT_LENGTH~;
 }
 
 fn void? copy_exact_chunk_to_stream(InStream in_stream, OutStream out_stream, char[] buffer, usz length) @private

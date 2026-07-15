@@ -13,13 +13,13 @@ fn void? handle_ping(Request* request, Response* response, void* context)
 	test::eq("/ping", request.target);
 	response.status = 200;
 	response.set_body("pong");
-	response.set_header("Content-Type", "text/plain");
+	response.set_header("Content-Type", "text/plain")!!;
 }
 
 fn void? handle_ping_keep_alive(Request* request, Response* response, void* context)
 {
 	handle_ping(request, response, context)!;
-	response.set_header("Connection", "keep-alive");
+	response.set_header("Connection", "keep-alive")!!;
 }
 
 fn void? handle_head_ping(Request* request, Response* response, void* context)
@@ -28,7 +28,7 @@ fn void? handle_head_ping(Request* request, Response* response, void* context)
 	test::eq("/ping", request.target);
 	response.status = 200;
 	response.set_body("pong");
-	response.set_header("Content-Type", "text/plain");
+	response.set_header("Content-Type", "text/plain")!!;
 }
 
 struct RequestCounter
@@ -42,22 +42,22 @@ fn void? handle_count(Request* request, Response* response, void* context)
 	counter.value++;
 	response.status = 200;
 	response.set_body(string::tformat("request-%d", counter.value));
-	if (request.target == "/close") response.set_header("Connection", "close");
+	if (request.target == "/close") response.set_header("Connection", "close")!!;
 }
 
 fn void? handle_echo_request_observation(Request* request, Response* response, void* context)
 {
 	response.status = 200;
 	response.set_body(request.target);
-	response.set_header("X-Observed-Method", request.method);
-	response.set_header("X-Observed-Host", request.header("Host")!!);
+	response.set_header("X-Observed-Method", request.method)!!;
+	response.set_header("X-Observed-Host", request.header("Host")!!)!!;
 }
 
 fn void? handle_echo_body(Request* request, Response* response, void* context)
 {
 	response.status = 200;
 	response.set_body(request.body);
-	response.set_header("X-Observed-Method", request.method);
+	response.set_header("X-Observed-Method", request.method)!!;
 }
 
 const usz LARGE_RESPONSE_BODY_SIZE = 16 * 1024 * 1024;
@@ -69,7 +69,7 @@ fn void? handle_large_body(Request* request, Response* response, void* context)
 	body.append_repeat('x', LARGE_RESPONSE_BODY_SIZE);
 	response.status = 200;
 	response.set_body(body.str_view());
-	response.set_header("Content-Type", "text/plain");
+	response.set_header("Content-Type", "text/plain")!!;
 }
 
 fn ServerOptions tiny_server_options()
@@ -223,9 +223,8 @@ fn void head_exchange_does_not_send_or_read_a_response_body() @test
 	Request request;
 	request.init(tmem, "HEAD", "/ping");
 	defer request.free();
-	request.set_header("Host", "example.com");
-	request.set_header("Connection", "close");
-
+	request.set_header("Host", "example.com")!!;
+	request.set_header("Connection", "close")!!;
 	Response response = exchange(tmem, &pair.send, &request)!!;
 	defer response.free();
 
@@ -414,9 +413,8 @@ fn void tcp_listener_roundtrip() @test
 	Request request;
 	request.init(tmem, "GET", "/ping");
 	defer request.free();
-	request.set_header("Host", string::tformat("127.0.0.1:%d", port));
-	request.set_header("Connection", "close");
-
+	request.set_header("Host", string::tformat("127.0.0.1:%d", port))!!;
+	request.set_header("Connection", "close")!!;
 	Client client = new_client();
 	Response response = client.send(tmem, "127.0.0.1", port, &request)!!;
 	defer response.free();
@@ -454,9 +452,8 @@ fn void serve_once_uses_existing_listener_without_rebinding() @test
 	Request request;
 	request.init(tmem, "GET", "/ping");
 	defer request.free();
-	request.set_header("Host", string::tformat("127.0.0.1:%d", port));
-	request.set_header("Connection", "close");
-
+	request.set_header("Host", string::tformat("127.0.0.1:%d", port))!!;
+	request.set_header("Connection", "close")!!;
 	Client client = new_client();
 	Response response = client.send(tmem, "127.0.0.1", port, &request)!!;
 	defer response.free();
@@ -562,9 +559,8 @@ fn void server_serve_once_reuses_connection_until_close() @test
 	Request first_request;
 	first_request.init(tmem, "GET", "/ping");
 	defer first_request.free();
-	first_request.set_header("Host", string::tformat("127.0.0.1:%d", port));
-	first_request.set_header("Connection", "keep-alive");
-
+	first_request.set_header("Host", string::tformat("127.0.0.1:%d", port))!!;
+	first_request.set_header("Connection", "keep-alive")!!;
 	Response first = exchange(tmem, &socket, &first_request)!!;
 	defer first.free();
 	test::eq("pong", first.body);
@@ -572,9 +568,8 @@ fn void server_serve_once_reuses_connection_until_close() @test
 	Request second_request;
 	second_request.init(tmem, "GET", "/ping");
 	defer second_request.free();
-	second_request.set_header("Host", string::tformat("127.0.0.1:%d", port));
-	second_request.set_header("Connection", "close");
-
+	second_request.set_header("Host", string::tformat("127.0.0.1:%d", port))!!;
+	second_request.set_header("Connection", "close")!!;
 	Response second = exchange(tmem, &socket, &second_request)!!;
 	defer second.free();
 	test::eq("pong", second.body);

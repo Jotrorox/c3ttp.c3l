@@ -329,6 +329,18 @@ fn void? router_handler_fn(Request* request, Response* response, void* context)
 	return router_route_internal(router, request, response, context);
 }
 
+struct RouterServeContext @private
+{
+	Router* router;
+	void* handler_context;
+}
+
+fn void? router_serve_handler_fn(Request* request, Response* response, void* context) @private
+{
+	RouterServeContext* serve_context = (RouterServeContext*)context;
+	return router_route_internal(serve_context.router, request, response, serve_context.handler_context);
+}
+
 fn Handler router_as_handler_impl(Router* self)
 {
 	return (Handler)&router_handler_fn;
@@ -336,16 +348,14 @@ fn Handler router_as_handler_impl(Router* self)
 
 fn void? router_serve_impl(Router* self, Server* server, uint max_requests, void* context)
 {
-	Handler h = router_as_handler_impl(self);
-	void* ctx = (void*)self;
-	return server.serve(h, max_requests, ctx);
+	RouterServeContext serve_context = { .router = self, .handler_context = context };
+	return server.serve(&router_serve_handler_fn, max_requests, &serve_context);
 }
 
 fn void? router_serve_evented_impl(Router* self, Server* server, uint max_requests, void* context)
 {
-	Handler h = router_as_handler_impl(self);
-	void* ctx = (void*)self;
-	return server.serve_evented(h, max_requests, ctx);
+	RouterServeContext serve_context = { .router = self, .handler_context = context };
+	return server.serve_evented(&router_serve_handler_fn, max_requests, &serve_context);
 }
 
 fn void router_group_impl(Router* self, String prefix, RouterGroupCallback group_cb)
@@ -391,20 +401,20 @@ fn void response_no_content_impl(Response* self)
 	self.reason = "No Content".copy(self.allocator);
 }
 
-fn void response_moved_permanently_impl(Response* self, String location)
+fn void? response_moved_permanently_impl(Response* self, String location)
 {
 	self.status = 301;
 	self.reason.free(self.allocator);
 	self.reason = "Moved Permanently".copy(self.allocator);
-	self.set_header("Location", location);
+	self.set_header("Location", location)!;
 }
 
-fn void response_found_impl(Response* self, String location)
+fn void? response_found_impl(Response* self, String location)
 {
 	self.status = 302;
 	self.reason.free(self.allocator);
 	self.reason = "Found".copy(self.allocator);
-	self.set_header("Location", location);
+	self.set_header("Location", location)!;
 }
 
 fn void response_not_modified_impl(Response* self)
@@ -480,17 +490,17 @@ fn void response_not_implemented_impl(Response* self, String message)
 fn void response_json_impl(Response* self, String body)
 {
 	self.set_body(body);
-	self.set_header("Content-Type", "application/json");
+	self.set_header("Content-Type", "application/json")!!;
 }
 
 fn void response_html_impl(Response* self, String body)
 {
 	self.set_body(body);
-	self.set_header("Content-Type", "text/html");
+	self.set_header("Content-Type", "text/html")!!;
 }
 
 fn void response_text_impl(Response* self, String body)
 {
 	self.set_body(body);
-	self.set_header("Content-Type", "text/plain");
+	self.set_header("Content-Type", "text/plain")!!;
 }

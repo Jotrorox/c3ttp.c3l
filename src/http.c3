@@ -9,6 +9,52 @@ struct HeaderInfo
 	bool connection_close;
 }
 
+fn bool is_tchar(char c) @private
+{
+	if (char_is_alpha_num(c)) return true;
+	return c == '!' || c == '#' || c == '$' || c == '%' || c == '&' || c == '\'' ||
+		c == '*' || c == '+' || c == '-' || c == '.' || c == '^' || c == '_' ||
+		c == '`' || c == '|' || c == '~';
+}
+
+fn void? validate_field_name(String name) @private
+{
+	if (!name) return INVALID_HEADER~;
+	foreach (c : name) if (!is_tchar(c)) return INVALID_HEADER~;
+}
+
+fn void? validate_field_value(String value) @private
+{
+	foreach (c : value)
+	{
+		if (c == '\t' || c == ' ') continue;
+		if (c >= 0x21 && c <= 0x7e) continue;
+		if (c >= 0x80) continue;
+		return INVALID_HEADER~;
+	}
+}
+
+fn void? validate_header_syntax(Header header) @private
+{
+	validate_field_name(header.name)!;
+	validate_field_value(header.value)!;
+}
+
+fn usz? parse_content_length(String text) @private
+{
+	if (!text) return INVALID_CONTENT_LENGTH~;
+	usz value;
+	usz max_value = ~0;
+	foreach (c : text)
+	{
+		if (c < '0' || c > '9') return INVALID_CONTENT_LENGTH~;
+		usz digit = (usz)(c - '0');
+		if (value > (max_value - digit) / 10) return INVALID_CONTENT_LENGTH~;
+		value = value * 10 + digit;
+	}
+	return value;
+}
+
 fn void upsert_header(HeaderList* headers, Allocator allocator, String name, String value) @private
 {
 	if (try header = find_header_ref(headers, name))
@@ -51,6 +97,7 @@ fn bool ascii_eq_ignore_case(String left, String right) @private
 
 fn void? analyze_header(Header header, HeaderInfo* info, bool* seen_transfer_encoding, bool* seen_connection) @private
 {
+	validate_header_syntax(header)!;
 	if (header_name_eq(header.name, "Host"))
 	{
 		if (info.has_host) return DUPLICATE_HEADER~;
@@ -61,6 +108,7 @@ fn void? analyze_header(Header header, HeaderInfo* info, bool* seen_transfer_enc
 	if (header_name_eq(header.name, "Content-Length"))
 	{
 		if (info.has_content_length) return DUPLICATE_HEADER~;
+		parse_content_length(header.value)!;
 		info.has_content_length = true;
 		info.content_length_text = header.value;
 		return;
@@ -70,7 +118,6 @@ fn void? analyze_header(Header header, HeaderInfo* info, bool* seen_transfer_enc
 		if (*seen_transfer_encoding) return DUPLICATE_HEADER~;
 		*seen_transfer_encoding = true;
 		String te = header.value;
-		if (ascii_eq_ignore_case(te, "identity")) return;
 		if (ascii_eq_ignore_case(te.trim(), "chunked"))
 		{
 			info.chunked = true;
@@ -80,9 +127,8 @@ fn void? analyze_header(Header header, HeaderInfo* info, bool* seen_transfer_enc
 	}
 	if (header_name_eq(header.name, "Connection"))
 	{
-		if (*seen_connection) return DUPLICATE_HEADER~;
 		*seen_connection = true;
-		info.connection_close = header_contains_token(header.value, "close");
+		if (header_contains_token(header.value, "close")) info.connection_close = true;
 	}
 }
 
@@ -107,11 +153,27 @@ fn void? validate_trailers(HeaderList* trailers, bool allow_trailers) @private
 	if (!allow_trailers && trailers.len() > 0) return INVALID_TRAILER~;
 	foreach (header : *trailers)
 	{
+		validate_header_syntax(header)!;
 		if (header_name_eq(header.name, "Transfer-Encoding")) return INVALID_TRAILER~;
 		if (header_name_eq(header.name, "Content-Length")) return INVALID_TRAILER~;
 		if (header_name_eq(header.name, "Host")) return INVALID_TRAILER~;
 		if (header_name_eq(header.name, "Connection")) return INVALID_TRAILER~;
 		if (header_name_eq(header.name, "Trailer")) return INVALID_TRAILER~;
+		if (header_name_eq(header.name, "TE")) return INVALID_TRAILER~;
+		if (header_name_eq(header.name, "Authorization")) return INVALID_TRAILER~;
+		if (header_name_eq(header.name, "Proxy-Authorization")) return INVALID_TRAILER~;
+		if (header_name_eq(header.name, "Proxy-Authenticate")) return INVALID_TRAILER~;
+		if (header_name_eq(header.name, "WWW-Authenticate")) return INVALID_TRAILER~;
+		if (header_name_eq(header.name, "Content-Encoding")) return INVALID_TRAILER~;
+		if (header_name_eq(header.name, "Content-Type")) return INVALID_TRAILER~;
+		if (header_name_eq(header.name, "Content-Range")) return INVALID_TRAILER~;
+		if (header_name_eq(header.name, "Content-Disposition")) return INVALID_TRAILER~;
+		if (header_name_eq(header.name, "Content-Language")) return INVALID_TRAILER~;
+		if (header_name_eq(header.name, "Content-Location")) return INVALID_TRAILER~;
+		if (header_name_eq(header.name, "Cache-Control")) return INVALID_TRAILER~;
+		if (header_name_eq(header.name, "Expect")) return INVALID_TRAILER~;
+		if (header_name_eq(header.name, "Max-Forwards")) return INVALID_TRAILER~;
+		if (header_name_eq(header.name, "Range")) return INVALID_TRAILER~;
 	}
 }
 
@@ -294,9 +356,11 @@ fn bool char_is_alpha_num(char c) @private
 
 fn bool should_close_connection(HeaderList* headers) @private
 {
-	String? connection = get_header(headers, "Connection");
-	if (catch err = connection) return false;
-	return header_contains_token(connection, "close");
+	foreach (header : *headers)
+	{
+		if (header_name_eq(header.name, "Connection") && header_contains_token(header.value, "close")) return true;
+	}
+	return false;
 }
 
 fn void apply_default_connection_policy(Allocator allocator, HeaderList* request_headers, HeaderList* response_headers) @private
@@ -339,12 +403,14 @@ fn bool response_status_disallows_body(ushort status) @private
 fn bool response_has_no_message_body(ushort status, String request_method = "") @private
 {
 	if (request_method == "HEAD") return true;
+	if (request_method == "CONNECT" && status >= 200 && status < 300) return true;
 	return response_status_disallows_body(status);
 }
 
 fn bool response_should_emit_implicit_content_length(ushort status, String request_method = "") @private
 {
 	if (request_method == "HEAD") return true;
+	if (request_method == "CONNECT" && status >= 200 && status < 300) return false;
 	return !response_status_disallows_body(status);
 }
 
@@ -355,16 +421,8 @@ fn void? validate_version(String version) @private
 
 fn void? validate_method(String method) @private
 {
-	if (method == "GET") return;
-	if (method == "HEAD") return;
-	if (method == "POST") return;
-	if (method == "PUT") return;
-	if (method == "DELETE") return;
-	if (method == "OPTIONS") return;
-	if (method == "PATCH") return;
-	if (method == "TRACE") return;
-	if (method == "CONNECT") return;
-	return UNSUPPORTED_METHOD~;
+	if (!method) return UNSUPPORTED_METHOD~;
+	foreach (c : method) if (!is_tchar(c)) return UNSUPPORTED_METHOD~;
 }
 
 fn char to_hex_char(char nibble) @private
@@ -505,8 +563,26 @@ fn ParamList? parse_cookie_header_impl(Allocator allocator, String header_value)
 	return list;
 }
 
-fn void response_set_cookie_impl(Response* self, String name, String value, String path, long max_age, bool http_only, bool secure, String same_site) @private
+fn bool is_cookie_octet(char c) @private
 {
+	return c == 0x21 || (c >= 0x23 && c <= 0x2B) ||
+	       (c >= 0x2D && c <= 0x3A) || (c >= 0x3C && c <= 0x5B) ||
+	       (c >= 0x5D && c <= 0x7E);
+}
+
+fn void? validate_cookie(String name, String value, String path, String same_site) @private
+{
+	// cookie-name is a token, while cookie-value uses RFC 6265 cookie-octet.
+	validate_field_name(name)!;
+	foreach (c : value) if (!is_cookie_octet(c)) return INVALID_HEADER~;
+	// path-value is av-octet: visible ASCII plus SP, excluding semicolon.
+	foreach (c : path) if (c < 0x20 || c > 0x7E || c == ';') return INVALID_HEADER~;
+	if (same_site && same_site != "Strict" && same_site != "Lax" && same_site != "None") return INVALID_HEADER~;
+}
+
+fn void? response_set_cookie_impl(Response* self, String name, String value, String path, long max_age, bool http_only, bool secure, String same_site) @private
+{
+	validate_cookie(name, value, path, same_site)!;
 	@pool()
 	{
 		DString cookie = dstring::temp();
@@ -530,6 +606,6 @@ fn void response_set_cookie_impl(Response* self, String name, String value, Stri
 			cookie.append_string("; SameSite=");
 			cookie.append_string(same_site);
 		}
-		response_add_header_impl(self, "Set-Cookie", cookie.str_view());
+		response_add_header_impl(self, "Set-Cookie", cookie.str_view())!;
 	};
 }

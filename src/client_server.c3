@@ -390,6 +390,10 @@ fn void? respond_socket_keepalive_impl(Allocator allocator, tcp::TcpSocket* sock
 }
 
 const usz EVENTED_ACCEPT_BUDGET = 64;
+// Evented buffers are allocated on first use. Keep their initial footprint small;
+// DString grows automatically for larger requests and responses.
+const sz EVENTED_INPUT_INITIAL_CAPACITY = 1024;
+const sz EVENTED_OUTPUT_INITIAL_CAPACITY = 256;
 const usz EVENTED_READ_BUDGET = 64 * 1024;
 const usz EVENTED_WRITE_BUDGET = 64 * 1024;
 const uint EVENTED_PIPELINE_BUDGET = 16;
@@ -412,7 +416,7 @@ fn sz? EventedInputStream.read(&self, char[] destination) @dynamic @if(env::LINU
 	usz remaining = self.bytes.len - self.offset;
 	if (!remaining) return io::EOF~;
 	usz count = min(remaining, (usz)destination.len);
-	destination[..count] = self.bytes[self.offset..self.offset + count];
+	destination[:count] = self.bytes[self.offset:count];
 	self.offset += count;
 	return (sz)count;
 }
@@ -499,6 +503,16 @@ fn EventedConnection* find_evented_connection(List { EventedConnection* }* conne
 	return null;
 }
 
+fn void ensure_evented_input(Server* server, EventedConnection* connection) @private @if(env::LINUX)
+{
+	if (!connection.input) connection.input = dstring::new_with_capacity(server.allocator, EVENTED_INPUT_INITIAL_CAPACITY);
+}
+
+fn void ensure_evented_output(Server* server, EventedConnection* connection) @private @if(env::LINUX)
+{
+	if (!connection.output) connection.output = dstring::new_with_capacity(server.allocator, EVENTED_OUTPUT_INITIAL_CAPACITY);
+}
+
 fn void destroy_evented_connection(Allocator allocator, int epfd, List { EventedConnection* }* connections, EventedConnection* connection) @private @if(env::LINUX)
 {
 	linux::epoll_ctl(epfd, (int)linux::EPOLL_CTL_DEL, connection.socket.sock, null);
@@ -541,11 +555,17 @@ fn void? server_accept_new_clients(Server* self, tcp::TcpServerSocket* listener,
 			return err~;
 		}
 		EventedConnection* connection = alloc::new(self.allocator, EventedConnection);
-		connection.socket = socket;
-		connection.input = dstring::new_with_capacity(self.allocator, 8192);
-		connection.output = dstring::new_with_capacity(self.allocator, 8192);
-		connection.phase = READING;
-		connection.deadline = evented_deadline(self.options.timeouts.header_timeout);
+		// Initialize the whole state object: alloc::new does not guarantee that
+		// fields omitted by piecemeal assignment start as zero/false.
+		*connection = {
+			.socket = socket,
+			// Input and output storage stays unallocated until the connection actually
+			// receives a request or produces a response.
+			.input = {},
+			.output = {},
+			.phase = READING,
+			.deadline = evented_deadline(self.options.timeouts.header_timeout)
+		};
 		if (catch err = register_epoll_socket(epfd, socket.sock, linux::EPOLLIN | linux::EPOLLERR | linux::EPOLLHUP | linux::EPOLLRDHUP))
 		{
 			connection.input.free();
@@ -622,7 +642,7 @@ fn void? server_run_event_loop(Server* self, tcp::TcpServerSocket* listener, Han
 		{
 			if (ready == EPOLL_MAX_EVENTS) break;
 			if (connection.phase == WRITING || !connection.input.len()) continue;
-			bool already_scheduled;
+			bool already_scheduled = false;
 			for (int event_index = 0; event_index < ready; event_index++)
 			{
 				if (events[event_index].data.fd == connection.socket.sock) { already_scheduled = true; break; }
@@ -648,7 +668,7 @@ fn void? server_run_event_loop(Server* self, tcp::TcpServerSocket* listener, Han
 
 			EventedConnection* connection = find_evented_connection(&connections, fd);
 			if (!connection) continue;
-			bool destroy;
+			bool destroy = false;
 			if (event_mask & linux::EPOLLERR) destroy = true;
 			if (event_mask & (linux::EPOLLHUP | linux::EPOLLRDHUP)) connection.peer_eof = true;
 
@@ -667,7 +687,8 @@ fn void? server_run_event_loop(Server* self, tcp::TcpServerSocket* listener, Han
 							connection.phase = READING;
 							connection.deadline = evented_deadline(self.options.timeouts.header_timeout);
 						}
-						connection.input.append(buffer[..count]);
+						ensure_evented_input(self, connection);
+						connection.input.append(buffer[:count]);
 						budget -= (usz)count;
 						continue;
 					}
@@ -712,6 +733,7 @@ fn void? server_run_event_loop(Server* self, tcp::TcpServerSocket* listener, Han
 				}
 				apply_default_connection_policy(self.allocator, &request.headers, &response.headers);
 				connection.close_after_write = connection.peer_eof || should_close_connection(&request.headers) || should_close_connection(&response.headers);
+				ensure_evented_output(self, connection);
 				EventedOutputStream output = { .bytes = &connection.output };
 				if (catch write_error = write_response_impl{EventedOutputStream*}(&output, &response, request.method)) destroy = true;
 				response_free_impl(&response);

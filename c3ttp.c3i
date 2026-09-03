@@ -1,0 +1,178 @@
+module c3ttp;
+
+faultdef
+	INVALID_REQUEST_LINE,
+	INVALID_HEADER,
+	INVALID_VERSION,
+	INVALID_METHOD,
+	INVALID_TARGET,
+	INVALID_CONTENT_LENGTH,
+	DUPLICATE_HEADER,
+	MISSING_HOST,
+	CONFLICTING_BODY_HEADERS,
+	UNSUPPORTED_TRANSFER_ENCODING,
+	REQUEST_LINE_TOO_LARGE,
+	HEADER_LINE_TOO_LARGE,
+	TOO_MANY_HEADERS,
+	HEADERS_TOO_LARGE,
+	BODY_TOO_LARGE,
+	BUFFER_TOO_SMALL,
+	INVALID_INPUT_BUFFER,
+	CONNECTION_CLOSED,
+	BACKEND_UNAVAILABLE;
+
+const usz MAX_VIEW_HEADERS = 64;
+const usz MAX_BODY_CHUNKS = 64;
+
+enum Method : char
+{
+	GET,
+	POST,
+	PUT,
+	DELETE,
+	HEAD,
+	OPTIONS,
+	PATCH,
+	CONNECT,
+	TRACE,
+	OTHER,
+}
+
+enum HeaderId : char
+{
+	UNKNOWN,
+	HOST,
+	CONTENT_LENGTH,
+	CONNECTION,
+	TRANSFER_ENCODING,
+	CONTENT_TYPE,
+	ACCEPT,
+	AUTHORIZATION,
+	COOKIE,
+	USER_AGENT,
+}
+
+enum ParseState : char
+{
+	REQUEST_LINE,
+	HEADERS,
+	BODY_FIXED,
+	CHUNK_SIZE,
+	CHUNK_DATA,
+	TRAILERS,
+	COMPLETE,
+}
+
+enum ParseStatus : char
+{
+	NEED_MORE,
+	COMPLETE,
+}
+
+enum ServerBackend : char
+{
+	AUTO,
+	IO_URING,
+	POLL,
+}
+
+struct Limits
+{
+	usz max_request_line;
+	usz max_header_line;
+	usz max_header_bytes;
+	usz max_body_bytes;
+	usz max_headers;
+}
+
+struct HeaderView
+{
+	String name;
+	String value;
+	HeaderId id;
+}
+
+struct RequestView
+{
+	String method;
+	String target;
+	String version;
+	String body;
+	Method method_id;
+	HeaderView[MAX_VIEW_HEADERS] header_storage;
+	String[MAX_BODY_CHUNKS] chunk_storage;
+	usz header_count;
+	usz chunk_count;
+	usz message_length;
+	usz content_length;
+	usz body_length;
+	bool has_content_length;
+	bool chunked;
+	bool keep_alive;
+}
+
+struct RequestParser
+{
+	Limits limits;
+	ParseState state;
+	RequestView request;
+	usz cursor;
+	usz line_start;
+	usz header_bytes;
+	usz chunk_remaining;
+	uptr buffer_address;
+	usz observed_length;
+	bool saw_host;
+	bool saw_transfer_encoding;
+}
+
+struct ServerOptions
+{
+	ServerBackend backend;
+	Limits limits;
+	uint workers;
+	uint backlog;
+	usz connections_per_worker;
+	usz buffer_size;
+	bool pin_workers;
+	bool tcp_no_delay;
+}
+
+struct ResponseView
+{
+	ushort status;
+	String content_type;
+	String body;
+	bool close;
+}
+
+alias ViewHandler = fn void?(RequestView* request, ResponseView* response, void* context);
+
+macro Limits default_limits() => default_limits_impl();
+macro ServerOptions default_server_options() => default_server_options_impl();
+
+macro RequestParser* RequestParser.init(&self, Limits limits = default_limits())
+	=> request_parser_init_impl(self, limits);
+macro void RequestParser.reset(&self)
+	=> request_parser_reset_impl(self);
+macro ParseStatus? RequestParser.parse(&self, char[] input)
+	=> request_parser_parse_impl(self, input);
+
+macro HeaderView[] RequestView.headers(&self)
+	=> self.header_storage[:self.header_count];
+macro String[] RequestView.body_chunks(&self)
+	=> self.chunk_storage[:self.chunk_count];
+macro String? RequestView.header(&self, HeaderId id)
+	=> request_view_header_impl(self, id);
+macro String? RequestView.header_name(&self, String name)
+	=> request_view_header_name_impl(self, name);
+
+macro void ResponseView.ok(&self, String body = "", String content_type = "text/plain; charset=utf-8")
+	=> response_view_set_impl(self, 200, body, content_type);
+macro void ResponseView.set(&self, ushort status, String body = "", String content_type = "text/plain; charset=utf-8")
+	=> response_view_set_impl(self, status, body, content_type);
+
+macro void? serve(String host, uint port, ViewHandler handler, void* context = null, ServerOptions options = default_server_options())
+	=> serve_impl(host, port, handler, context, options);
+macro bool io_uring_available()
+	=> io_uring_available_impl();

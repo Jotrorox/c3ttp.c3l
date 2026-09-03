@@ -1,1 +1,8 @@
 .idea/
+build/
+build-check/
+testrun
+benchmarkrun
+benchmark/out/
+examples/**/build/
+examples/**/out/

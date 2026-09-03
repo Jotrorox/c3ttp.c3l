@@ -1,0 +1,4 @@
+{
+  "provides" : "c3ttp",
+  "sources" : [ "c3ttp.c3i", "src/**" ]
+}

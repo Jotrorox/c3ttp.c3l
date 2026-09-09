@@ -19,7 +19,8 @@ faultdef
 	BUFFER_TOO_SMALL,
 	INVALID_INPUT_BUFFER,
 	CONNECTION_CLOSED,
-	BACKEND_UNAVAILABLE;
+	BACKEND_UNAVAILABLE,
+	ROUTE_PARAM_NOT_FOUND;
 
 const usz MAX_VIEW_HEADERS = 64;
 const usz MAX_BODY_CHUNKS = 64;
@@ -212,6 +213,19 @@ attrdef @Options(String path) = @tag("c3ttp:route:options", path);
 attrdef @Patch(String path) = @tag("c3ttp:route:patch", path);
 attrdef @Connect(String path) = @tag("c3ttp:route:connect", path);
 attrdef @Trace(String path) = @tag("c3ttp:route:trace", path);
+
+// Capture containers live only for the handler call. Values borrow request.target.
+// Only names[:count] and values[:count] are initialized and may be accessed.
+const usz MAX_ROUTE_PARAMS = 8;
+struct RouteParams
+{
+	String[MAX_ROUTE_PARAMS] names;
+	String[MAX_ROUTE_PARAMS] values;
+	usz count;
+}
+
+// Missing names are explicit faults; no decoding or numeric conversion is implicit.
+macro String? RouteParams.get(&self, String name) => route_param_get_impl(self, name);
 
 struct Server
 {

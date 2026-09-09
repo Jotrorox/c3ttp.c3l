@@ -6,6 +6,18 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CASES = [
+    ('{ Method.GET, "/x/{", &hello }', "Unclosed {"),
+    ('{ Method.GET, "/x/}", &hello }', "Unmatched }"),
+    ('{ Method.GET, "/x/{{a}}", &hello }', "Nested {"),
+    ('{ Method.GET, "/x/{}", &hello }', "names must not be empty"),
+    ('{ Method.GET, "/x/a{id}", &hello }', "whole path segment"),
+    ('{ Method.GET, "/x/{id}.json", &hello }', "whole path segment"),
+    ('{ Method.GET, "/x/{1id}", &hello }', "names must be identifiers"),
+    ('{ Method.GET, "/x/{bad-name}", &hello }', "names must be identifiers"),
+    ('{ Method.GET, "/x/{a/b}", &hello }', "names must be identifiers"),
+    ('{ Method.GET, "/x/{id}/{id}", &hello }', "Duplicate route parameter name"),
+    ('{ Method.GET, "/{a}/{b}/{c}/{d}/{e}/{f}/{g}/{h}/{i}", &hello }', "maximum eight"),
+    ('{ { Method.GET, "/x/{id}", &hello }, { Method.GET, "/x/{other}", &hello } }', "Duplicate route template shape"),
     ("{}", "Route inventories must contain at least one route"),
     ('{ c3ttp::@route(annotated), { Method.GET, "/annotated", &hello } }', "Duplicate route"),
     ('{ c3ttp::@route(annotated) }, { { Method.GET, "/annotated", &hello } }', "Duplicate route"),
@@ -24,7 +36,7 @@ CASES = [
     ('{ Method.GET, "/bad path", &hello }', "whitespace"),
     ('{ Method.GET, "/", &bad_return }', "must return String"),
     ('{ Method.GET, "/", &bad_parameter }', "parameters must be Request*"),
-    ('{ Method.GET, "/", &too_many }', "at most three parameters"),
+    ('{ Method.GET, "/", &too_many }', "at most four parameters"),
     ('{ Method.GET, "/" }', "must be { Method, path, &handler }"),
     ('{ 1, "/", &hello }', "methods must use Method.GET"),
     ("hello", "Handler needs a route annotation"),
@@ -54,7 +66,7 @@ import c3ttp;
 fn String hello() => "hello";
 fn int bad_return() => 1;
 fn String bad_parameter(int id) => "bad";
-fn String too_many(Request* a, Request* b, Request* c, Request* d) => "bad";
+fn String too_many(Request* a, Request* b, Request* c, Request* d, Request* e) => "bad";
 fn String annotated() @Route({ GET, "/annotated" }) => "annotated";
 fn String invalid_path() @Route({ GET, "relative" }) => "bad";
 fn int invalid_return() @Route({ GET, "/return" }) => 1;

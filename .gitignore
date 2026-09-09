@@ -1,11 +1,29 @@
+# Editor files and Python caches
 .idea/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+# C3 build products and standalone test/benchmark executables
 build/
 build-check/
+out/
 testrun
 benchmarkrun
-benchmark/out/
-examples/**/build/
-examples/**/out/
-benchmark/five-way/eclair/build/
-benchmark/five-way/eclair/out/
-__pycache__/
+
+# Transient benchmark workspaces and compiler output.
+# Keep benchmark source, reports, and recorded JSON/SVG/PNG results versioned.
+/benchmark/**/logs/
+/benchmark/**/memory-logs/
+/benchmark/**/tmp/
+/benchmark/**/work/
+/benchmark/**/plot-env/
+/benchmark/**/*.log
+/benchmark/**/*.o
+/benchmark/**/*.a
+/benchmark/**/*.so
+/benchmark/**/*.bc
+/benchmark/**/*.ll
+/benchmark/**/server
+/benchmark/**/parser

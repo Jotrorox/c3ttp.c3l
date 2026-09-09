@@ -12,6 +12,7 @@ Requires C3 0.8.3 or later.
 - **SIMD delimiter scanning**: 32-byte vector operations accelerate delimiter scanning and header validation.
 - **Linux `io_uring` & `epoll`**: Uses `io_uring` by default for asynchronous I/O and falls back cleanly to `epoll` when unavailable.
 - **Multi-worker architecture**: Multi-process worker model via `SO_REUSEPORT` with CPU affinity pinning and cache-line aligned connection states.
+- **Templated routes**: Compile whole-segment placeholders such as `/get-number-back/{number}` into allocation-free matching and borrowed parameter values.
 - **Route inventories**: Combine `@Route` handlers with explicit route tuples in a compile-time inventory, with simple string-returning handlers and no runtime route registry.
 - **Zero steady-state allocations**: Connection and buffer pools are allocated once at startup per worker.
 - **Strict HTTP/1.1 validation**: Handles chunked transfer encoding, trailers, pipelining, keep-alive, and guards against malformed or conflicting framing headers.
@@ -104,7 +105,7 @@ Each inventory is a nonempty, flat list of triples. Compose inventories as separ
 Duplicate method/path pairs are checked across the complete registration, including
 module boundaries. Registration order is preserved. Inventories add no runtime
 router objects, allocation, or function-pointer lookup beyond the existing server
-callback. They do not add path prefixes or dynamic parameter extraction.
+callback. Inventories support the templated paths described below; they do not add path prefixes.
 
 A single inventory avoids recursive collection per handler. The mixed 100-route
 module test passes; a 1,000-route trial reaches the compiler's default memory
@@ -176,8 +177,9 @@ All route metadata and function references must be compile-time constants.
 This experimental annotation API takes inspiration from
 [Eclair](https://github.com/Ecoral360/eclair.c3l). Registration remains a single
 `@server(...)` call so the compiler can emit the complete dispatcher. Eclair's
-incremental `new_server()` / `server.@add_route()` API, automatic parameter
-extraction, and automatic JSON serialization are not implemented here.
+incremental `new_server()` / `server.@add_route()` API and automatic JSON
+serialization are not implemented here. This branch adds explicit `RouteParams*`
+extraction, described below.
 
 Handlers can return `String` (200 with a plain-text body), `String?`, `void`, or
 `void?`. Use a `void` handler to set a custom status or content type. Faults from
@@ -185,7 +187,7 @@ optional handlers use the engine's existing 500 response and close the connectio
 Handlers must be public (C3's default visibility): the generated dispatcher lives
 in the library module. Private callbacks are not supported by this macro on C3 0.8.3.
 
-Take only the parameters you need, in any order, up to three parameters:
+Take only the parameters you need, in any order, up to four parameters (`Request*`, `Response*`, `void*`, and `RouteParams*`):
 
 ```c3
 fn String echo(Request* request) @Post("/echo")
@@ -209,12 +211,12 @@ worker count, and buffer limits. `server.listen()` defaults to `0.0.0.0:8080`
 and blocks while serving, just like `serve()`. Construct servers with `@server`
 to initialize the handler and default options.
 
-Routing matches the exact, case-sensitive path and method. The query string is
+Literal routing matches the exact, case-sensitive path and method. The query string is
 ignored for matching: `/status?verbose=1` matches `/status`. A trailing slash is
 significant. An unregistered path or method returns 404; register `HEAD` and
 `OPTIONS` explicitly if needed. `"*"` is a literal target for e.g. `OPTIONS *`,
-not a wildcard. Parameters, wildcards, decoding, and automatic 405/Allow responses
-are not provided.
+not a wildcard. Wildcards, decoding, and automatic 405/Allow responses are not
+provided. Whole-segment parameters use the syntax below.
 
 `request.path()` and `request.query()` expose raw, borrowed strings without
 allocation or URL decoding. `request.target` retains the full original target.
@@ -229,6 +231,59 @@ handler when setting status and body independently.
 identical layouts and lifetime rules. The original `serve()`, `ViewHandler`,
 parser API, and `response.ok()` / `response.set()` remain available. Existing
 three-argument `ViewHandler` functions can also be registered directly as routes.
+
+### Templated routes (experiment)
+
+```c3
+fn String? number(RouteParams* params) @Get("/get-number-back/{number}")
+{
+    return params.get("number");
+}
+
+// In main:
+Server server = c3ttp::@server(number);
+// GET /get-number-back/5         -> 200, body "5"
+// GET /get-number-back/0005?q=x  -> 200, body "0005"
+```
+
+Templates work with method annotations, `@Route`, explicit triples, and composed
+inventories. For example, `{ Method.GET, "/users/{user}/posts/{post}", &handler }`
+exposes two values through `params.get("user")` and `params.get("post")`.
+Handlers can request `RouteParams*` alongside the other supported arguments in
+any order, or omit it when they do not need the captured values.
+
+- A placeholder occupies an entire segment and matches exactly one nonempty raw
+  segment. `/get-number-back/`, `/get-number-back/5/`, and
+  `/get-number-back/5/6` do not match the example.
+- Names are case-sensitive ASCII identifiers (`[A-Za-z_][A-Za-z0-9_]*`). At most
+  eight distinct names are allowed per route. Invalid braces, embedded parameters
+  such as `{id}.json`, duplicate names, and duplicate method/template shapes are
+  compile-time errors. `/users/{id}` and `/users/{name}` have the same shape.
+- Matching remains case-sensitive and **first registered match wins**. Put
+  `/users/me` before `/users/{id}` when the literal should take precedence.
+  Other overlaps, such as `/a/{x}` and `/{y}/b`, also follow registration order.
+- Queries are ignored. Values are neither decoded nor converted: `%2F` stays
+  `%2F`, `0005` stays `0005`, and `abc` is valid for `{number}`. Applications own
+  numeric validation and any resulting 400 response.
+- `params.get(name)` returns `String?`, with `c3ttp::ROUTE_PARAM_NOT_FOUND` for an
+  absent name. Literal handlers receive an empty container if they request one.
+  A propagated fault uses the normal 500 handler behavior.
+
+`RouteParams*` and its container exist only during the handler call; do not retain
+that pointer. Returned **values** borrow `request.target`, so they may be used as
+response bodies under the existing receive-buffer lifetime rules. Names refer to
+compile-time strings. The public container holds `count`, `names`, and `values`
+in declaration order; only entries below `count` are initialized and may be read.
+No fields are added to `RequestView` or per-connection
+storage, and there is no per-request heap allocation. Literal-only dispatch uses
+the existing exact-target fast path.
+
+This is an ordered, compile-time dispatcher, not a runtime registry or trie.
+Regex constraints, optional segments, catch-all captures, typed argument binding,
+and URL decoding are outside this experiment. Literal braces in route declarations
+now have template meaning; use percent-encoded paths for literal brace bytes.
+See the [design and benchmark report](benchmark/templates/README.md) for costs,
+limitations, and the comparison against the starting branch and `main`.
 
 ### Installation
 
@@ -312,6 +367,12 @@ If io_uring is unavailable, run the HTTP checks with
 
 ## Performance
 
+The [template experiment](benchmark/templates/README.md) compares literal and
+parameterized dispatch against the starting inventory branch and `main`.
+
+The [memory comparison](benchmark/templates/memory.md) adds idle/load memory,
+connection scaling, sustained-request growth, CPU usage, and descriptor checks.
+
 The [route inventory experiment](benchmark/route-inventories.md) compares this
 hybrid API with the generic `@Route` branch, including generated code, HTTP
 throughput, and the 100/1,000-route compilation trials.
@@ -328,4 +389,4 @@ usability, route-count scaling, and memory growth.
 
 ## Non-Goals
 
-`c3ttp` is intentionally a lean HTTP/1.1 protocol engine and server core, not a full-featured web framework. Dynamic routing, middleware, TLS termination, and compression are out of scope. The optional static route API is a small convenience layer over the original callback engine. In production, TLS and HTTP/2/3 are best terminated by a reverse proxy (such as NGINX, HAProxy, or Envoy) in front of `c3ttp`.
+`c3ttp` is intentionally a lean HTTP/1.1 protocol engine and server core, not a full-featured web framework. Runtime route registration, middleware, TLS termination, and compression are out of scope. The optional compile-time route API, including this experimental template matcher, is a small convenience layer over the original callback engine. In production, TLS and HTTP/2/3 are best terminated by a reverse proxy (such as NGINX, HAProxy, or Envoy) in front of `c3ttp`.

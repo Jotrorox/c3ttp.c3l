@@ -12,10 +12,15 @@ fn void status(Response* response)
 fn String? fail() => TEST_FAILURE~;
 fn String query(Request* request) => request.query();
 
+fn String? number(RouteParams* params) @Route({ GET, "/get-number-back/{number}" }) => params.get("number");
+fn String? post_id(RouteParams* params) => params.get("post");
+
 fn int main(String[] args)
 {
 	Server server = c3ttp::@server({
 		c3ttp::@route(health),
+		c3ttp::@route(number),
+		{ Method.GET, "/users/{user}/posts/{post}", &post_id },
 		{ Method.HEAD, "/health", &health },
 		c3ttp::@route(echo),
 		{ Method.GET, "/status", &status },

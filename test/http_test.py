@@ -47,6 +47,17 @@ with tempfile.TemporaryDirectory(prefix="c3ttp-http-test-") as directory:
                 ("GET", "/missing", None, 404, b"Not Found"),
                 ("GET", "/fail", None, 500, b"Internal Server Error"),
             ]
+            cases[-1:-1] = [
+                ("GET", "/get-number-back/5", None, 200, b"5"),
+                ("GET", "/get-number-back/0005?x=/ignored", None, 200, b"0005"),
+                ("GET", "/get-number-back/%2F", None, 200, b"%2F"),
+                ("GET", "/users/alice/posts/42", None, 200, b"42"),
+                ("GET", "/users/bob/posts/7?foo", None, 200, b"7"),
+                ("GET", "/get-number-back/", None, 404, b"Not Found"),
+                ("GET", "/get-number-back/5/6", None, 404, b"Not Found"),
+                ("POST", "/get-number-back/5", b"", 404, b"Not Found"),
+                ("GET", "/health", None, 200, b"ok"),
+            ]
             for method, target, body, status, expected in cases:
                 client.request(method, target, body=body)
                 response = client.getresponse()
@@ -70,6 +81,16 @@ with tempfile.TemporaryDirectory(prefix="c3ttp-http-test-") as directory:
                 assert wire.count(b"HTTP/1.1 200 OK") == 2, wire
                 assert b"\r\n\r\nhelloHTTP/1.1 200 OK" in wire, wire
                 assert wire.endswith(b"\r\n\r\nok"), wire
+            # Captured response slices survive asynchronous sends and buffer reuse.
+            with socket.create_connection(("127.0.0.1", 8081), timeout=5) as connection:
+                connection.sendall(b"GET /get-number-back/12345 HTTP/1.1\r\nHost: x\r\n\r\n"
+                                   b"GET /get-number-back/7 HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n")
+                wire = b""
+                while data := connection.recv(4096):
+                    wire += data
+                assert wire.count(b"HTTP/1.1 200 OK") == 2, wire
+                assert b"\r\n\r\n12345HTTP/1.1 200 OK" in wire, wire
+                assert wire.endswith(b"\r\n\r\n7"), wire
             print(f"PASS: {backend}: {len(cases)} HTTP cases and borrowed-body pipelining")
         finally:
             server.terminate()

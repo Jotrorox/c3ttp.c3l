@@ -23,6 +23,12 @@ fn String echo(Request* request)
 	return request.body;
 }
 
+// GET /get-number-back/5 returns the raw segment "5" without allocating.
+fn String? number(RouteParams* params) @Route({ GET, "/get-number-back/{number}" })
+{
+	return params.get("number");
+}
+
 fn int main(String[] args)
 {
 	ServerOptions options = c3ttp::default_server_options();
@@ -47,6 +53,7 @@ fn int main(String[] args)
 	Server server = c3ttp::@server({
 		c3ttp::@route(health),
 		c3ttp::@route(hello),
+		c3ttp::@route(number),
 		{ Method.GET, "/status", &api_status },
 		{ Method.POST, "/echo", &echo },
 	});

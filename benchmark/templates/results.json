@@ -1,0 +1,2845 @@
+{
+  "config": {
+    "compiler": "c3c",
+    "wrk": "/tmp/c3ttp-wrk/wrk",
+    "workdir": "/tmp/c3ttp-template-benchmark",
+    "output": "/home/johannes/Projects/c3ttp.c3l/benchmark/templates/results.json",
+    "runs": 5,
+    "seconds": 3,
+    "warmup": 1,
+    "server_cpu": 2,
+    "client_cpus": "4,5",
+    "memory_limit_mb": 2048,
+    "backends": [
+      "epoll",
+      "io-uring"
+    ],
+    "build_only": false
+  },
+  "compiler": "C3 Compiler Version:       0.8.3\nInstalled directory:       /home/johannes/.local/share/c3\nGit Hash:                  1d155ee04d3b607261b99aa15ed5eefd6d7db284\nBackends:                  LLVM\nLLVM version:              22.1.8\nLLVM default target:       x86_64-unknown-linux-gnu\n",
+  "platform": "Linux-7.1.13-200.fc44.x86_64-x86_64-with-glibc2.43",
+  "cpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           46 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  14\nOn-line CPU(s) list:                     0-13\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Core(TM) Ultra 5 125U\nCPU family:                              6\nModel:                                   170\nThread(s) per core:                      2\nCore(s) per socket:                      12\nSocket(s):                               1\nStepping:                                4\nCPU(s) scaling MHz:                      81%\nCPU max MHz:                             4300.0000\nCPU min MHz:                             400.0000\nBogoMIPS:                                5376.00\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb ssbd ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid rdseed adx smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves split_lock_detect user_shstk avx_vnni dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp hwp_pkg_req hfi vnmi umip pku ospke waitpkg gfni vaes vpclmulqdq rdpid bus_lock_detect movdiri movdir64b fsrm md_clear serialize arch_lbr ibt flush_l1d arch_capabilities\nVirtualization:                          VT-x\nL1d cache:                               352 KiB (10 instances)\nL1i cache:                               640 KiB (10 instances)\nL2 cache:                                10 MiB (5 instances)\nL3 cache:                                12 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-13\nVulnerability Gather data sampling:      Not affected\nVulnerability Ghostwrite:                Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Old microcode:             Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; PBRSB-eIBRS Not affected; BHI BHI_DIS_S\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Mitigation; IBPB before exit to userspace\n",
+  "revisions": {
+    "main": "ce049990004207ef47ec6e0cfc01662a316ceb0e",
+    "current": "19fb56da95a626cbe388f9ac391c4d6d569df98e",
+    "templates": "19fb56da95a626cbe388f9ac391c4d6d569df98e + working tree (source hashes recorded)"
+  },
+  "source_hashes": {
+    "main": {
+      "c3ttp.c3i": "64cc184c6c696d0ffdab63b2d244dd15aeb037eb3c24f1f8c5dc74b3b9aa723e",
+      "src/parser.c3": "280a29123dc1c308a8fe3d1e852021403b605c0afd93e89f1089fd485b4aaadd",
+      "src/response.c3": "884d476107a24deabdcb911ce33820b1bc4ddb51f314aacc46c336cbc67d34b6",
+      "src/server.c3": "54032700095c9fc7f8398d9cd49aa46b5bba90eb3aa852bf0d9588bf26f2f07a",
+      "src/uring.c3": "d9d032587f3df000dff6332b4c4f3894767be081bcfbe8cb0c9c20de38e7b4d5"
+    },
+    "current": {
+      "c3ttp.c3i": "7285062666da951365e311b100ff3b419d9827492daa66bdf9d0db77689b3926",
+      "src/parser.c3": "280a29123dc1c308a8fe3d1e852021403b605c0afd93e89f1089fd485b4aaadd",
+      "src/response.c3": "884d476107a24deabdcb911ce33820b1bc4ddb51f314aacc46c336cbc67d34b6",
+      "src/router.c3": "0b33799cca4fb3fa0d625558b735a5a7298991ec36351ec8eb98d85b9234423b",
+      "src/server.c3": "54032700095c9fc7f8398d9cd49aa46b5bba90eb3aa852bf0d9588bf26f2f07a",
+      "src/uring.c3": "d9d032587f3df000dff6332b4c4f3894767be081bcfbe8cb0c9c20de38e7b4d5"
+    },
+    "templates": {
+      "c3ttp.c3i": "c68ae03087d17037e347d43c34927edf962427c5b4338a3fa2a39bef1660fab2",
+      "src/parser.c3": "280a29123dc1c308a8fe3d1e852021403b605c0afd93e89f1089fd485b4aaadd",
+      "src/response.c3": "884d476107a24deabdcb911ce33820b1bc4ddb51f314aacc46c336cbc67d34b6",
+      "src/router.c3": "c87884bb910af8c07cdba4ec84dd5c1e09b9a4942ef23638e911cd93612a54bd",
+      "src/server.c3": "54032700095c9fc7f8398d9cd49aa46b5bba90eb3aa852bf0d9588bf26f2f07a",
+      "src/uring.c3": "d9d032587f3df000dff6332b4c4f3894767be081bcfbe8cb0c9c20de38e7b4d5"
+    }
+  },
+  "builds": [
+    {
+      "label": "main",
+      "kind": "literal",
+      "routes": 4,
+      "binary": "/tmp/c3ttp-template-benchmark/main-literal-4/server",
+      "command": [
+        "c3c",
+        "-O3",
+        "compile",
+        "/tmp/c3ttp-template-benchmark/trees/main/c3ttp.c3i",
+        "/tmp/c3ttp-template-benchmark/trees/main/src",
+        "/tmp/c3ttp-template-benchmark/main-literal-4/main.c3",
+        "-o",
+        "/tmp/c3ttp-template-benchmark/main-literal-4/server"
+      ],
+      "build_seconds": 2.2625730789986847,
+      "passed": true,
+      "log": "Program linked to executable '/tmp/c3ttp-template-benchmark/main-literal-4/server'.\n",
+      "fixture_sha256": "d15634da8c1936b0c1cc3a15b3e340e59ca1bbb791cad74a3e5eaf9ff0a5f966",
+      "binary_bytes": 566032,
+      "binary_sha256": "0ebf2706bcdbac161cdde9b9d8cf01e90920bb74961298d51c7560239971cfbe"
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "binary": "/tmp/c3ttp-template-benchmark/main-mixed-4/server",
+      "command": [
+        "c3c",
+        "-O3",
+        "compile",
+        "/tmp/c3ttp-template-benchmark/trees/main/c3ttp.c3i",
+        "/tmp/c3ttp-template-benchmark/trees/main/src",
+        "/tmp/c3ttp-template-benchmark/main-mixed-4/main.c3",
+        "-o",
+        "/tmp/c3ttp-template-benchmark/main-mixed-4/server"
+      ],
+      "build_seconds": 2.2573125479975715,
+      "passed": true,
+      "log": "Program linked to executable '/tmp/c3ttp-template-benchmark/main-mixed-4/server'.\n",
+      "fixture_sha256": "d442ec543299468ac8b3fa6c758af242744dcb51a5f68aef6acd08b662b21646",
+      "binary_bytes": 575576,
+      "binary_sha256": "ecec751cd6aaf4b69f67cf2bbc9e8ac03a5e25e6f922075f5835b72a179c9366"
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 32,
+      "binary": "/tmp/c3ttp-template-benchmark/main-mixed-32/server",
+      "command": [
+        "c3c",
+        "-O3",
+        "compile",
+        "/tmp/c3ttp-template-benchmark/trees/main/c3ttp.c3i",
+        "/tmp/c3ttp-template-benchmark/trees/main/src",
+        "/tmp/c3ttp-template-benchmark/main-mixed-32/main.c3",
+        "-o",
+        "/tmp/c3ttp-template-benchmark/main-mixed-32/server"
+      ],
+      "build_seconds": 2.454029050997633,
+      "passed": true,
+      "log": "Program linked to executable '/tmp/c3ttp-template-benchmark/main-mixed-32/server'.\n",
+      "fixture_sha256": "20de300d80720a7d45bbaf8766c23d4f9185ada2e438d532d4b907322f95277b",
+      "binary_bytes": 613288,
+      "binary_sha256": "7b1a73a7707c7567b76c03c69c29443e09ac08ac483e15363bda9a1b25ece339"
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 100,
+      "binary": "/tmp/c3ttp-template-benchmark/main-mixed-100/server",
+      "command": [
+        "c3c",
+        "-O3",
+        "compile",
+        "/tmp/c3ttp-template-benchmark/trees/main/c3ttp.c3i",
+        "/tmp/c3ttp-template-benchmark/trees/main/src",
+        "/tmp/c3ttp-template-benchmark/main-mixed-100/main.c3",
+        "-o",
+        "/tmp/c3ttp-template-benchmark/main-mixed-100/server"
+      ],
+      "build_seconds": 3.2312289779983985,
+      "passed": true,
+      "log": "Program linked to executable '/tmp/c3ttp-template-benchmark/main-mixed-100/server'.\n",
+      "fixture_sha256": "d4357ec87a5cbe18697c630ea5b256d63d658da46ff3739b536b12c78f4e8fed",
+      "binary_bytes": 718704,
+      "binary_sha256": "c460fb836a1bebc8e06b46f65ce2cbe22597b70d6b0d1738f836e78eb0136e0e"
+    },
+    {
+      "label": "current",
+      "kind": "literal",
+      "routes": 4,
+      "binary": "/tmp/c3ttp-template-benchmark/current-literal-4/server",
+      "command": [
+        "c3c",
+        "-O3",
+        "compile",
+        "/tmp/c3ttp-template-benchmark/trees/current/c3ttp.c3i",
+        "/tmp/c3ttp-template-benchmark/trees/current/src",
+        "/tmp/c3ttp-template-benchmark/current-literal-4/main.c3",
+        "-o",
+        "/tmp/c3ttp-template-benchmark/current-literal-4/server"
+      ],
+      "build_seconds": 2.180355096999847,
+      "passed": true,
+      "log": "Program linked to executable '/tmp/c3ttp-template-benchmark/current-literal-4/server'.\n",
+      "fixture_sha256": "9dab8f171e113453ecbbf75953d494370ea72804314a3774806a4f4b73991ba8",
+      "binary_bytes": 568232,
+      "binary_sha256": "1bd81dad9cd8bb4f9e99588cc37099b65510a6b27ed16a6acfc349fba55f9ba3"
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "binary": "/tmp/c3ttp-template-benchmark/current-mixed-4/server",
+      "command": [
+        "c3c",
+        "-O3",
+        "compile",
+        "/tmp/c3ttp-template-benchmark/trees/current/c3ttp.c3i",
+        "/tmp/c3ttp-template-benchmark/trees/current/src",
+        "/tmp/c3ttp-template-benchmark/current-mixed-4/main.c3",
+        "-o",
+        "/tmp/c3ttp-template-benchmark/current-mixed-4/server"
+      ],
+      "build_seconds": 2.2122734129989112,
+      "passed": true,
+      "log": "Program linked to executable '/tmp/c3ttp-template-benchmark/current-mixed-4/server'.\n",
+      "fixture_sha256": "b428c9351041a977e53a3bb70bca114a38d908a30b3a0de7cb77d232675357b7",
+      "binary_bytes": 577032,
+      "binary_sha256": "70c4774074664c604ba6aa141dbd389087dcd3661c553c2438a5dfee1da7e100"
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 32,
+      "binary": "/tmp/c3ttp-template-benchmark/current-mixed-32/server",
+      "command": [
+        "c3c",
+        "-O3",
+        "compile",
+        "/tmp/c3ttp-template-benchmark/trees/current/c3ttp.c3i",
+        "/tmp/c3ttp-template-benchmark/trees/current/src",
+        "/tmp/c3ttp-template-benchmark/current-mixed-32/main.c3",
+        "-o",
+        "/tmp/c3ttp-template-benchmark/current-mixed-32/server"
+      ],
+      "build_seconds": 2.5469092759994965,
+      "passed": true,
+      "log": "Program linked to executable '/tmp/c3ttp-template-benchmark/current-mixed-32/server'.\n",
+      "fixture_sha256": "3f09e27414925957c4ed416b88ce512e5e3374f5042b3f53a24c15f70396e9f7",
+      "binary_bytes": 610272,
+      "binary_sha256": "8c992a96d2d1ba4edd55b55ffb87575ca1e72daf1db0f2a8024e6eca61752920"
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 100,
+      "binary": "/tmp/c3ttp-template-benchmark/current-mixed-100/server",
+      "command": [
+        "c3c",
+        "-O3",
+        "compile",
+        "/tmp/c3ttp-template-benchmark/trees/current/c3ttp.c3i",
+        "/tmp/c3ttp-template-benchmark/trees/current/src",
+        "/tmp/c3ttp-template-benchmark/current-mixed-100/main.c3",
+        "-o",
+        "/tmp/c3ttp-template-benchmark/current-mixed-100/server"
+      ],
+      "build_seconds": 3.35395278100259,
+      "passed": true,
+      "log": "Program linked to executable '/tmp/c3ttp-template-benchmark/current-mixed-100/server'.\n",
+      "fixture_sha256": "c45841b736c9c40a1a84f8faa32847d7f011e37610a0e357437110de831a4c89",
+      "binary_bytes": 700440,
+      "binary_sha256": "06b9c19d3dfde834d585ceba4c13a436cece9d96b8e34b8ae8478a71cc12db55"
+    },
+    {
+      "label": "templates",
+      "kind": "literal",
+      "routes": 4,
+      "binary": "/tmp/c3ttp-template-benchmark/templates-literal-4/server",
+      "command": [
+        "c3c",
+        "-O3",
+        "compile",
+        "/tmp/c3ttp-template-benchmark/trees/templates/c3ttp.c3i",
+        "/tmp/c3ttp-template-benchmark/trees/templates/src",
+        "/tmp/c3ttp-template-benchmark/templates-literal-4/main.c3",
+        "-o",
+        "/tmp/c3ttp-template-benchmark/templates-literal-4/server"
+      ],
+      "build_seconds": 2.283251688000746,
+      "passed": true,
+      "log": "Program linked to executable '/tmp/c3ttp-template-benchmark/templates-literal-4/server'.\n",
+      "fixture_sha256": "2cf39799495bac21f8989a748d8c42a8d3eee10a053bb751c46cda6cae70acf8",
+      "binary_bytes": 568600,
+      "binary_sha256": "ffbffa4c00eaa8faeca8aba049faab03bc1647b70a3d0111a9df3b52521e8a0a"
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "binary": "/tmp/c3ttp-template-benchmark/templates-mixed-4/server",
+      "command": [
+        "c3c",
+        "-O3",
+        "compile",
+        "/tmp/c3ttp-template-benchmark/trees/templates/c3ttp.c3i",
+        "/tmp/c3ttp-template-benchmark/trees/templates/src",
+        "/tmp/c3ttp-template-benchmark/templates-mixed-4/main.c3",
+        "-o",
+        "/tmp/c3ttp-template-benchmark/templates-mixed-4/server"
+      ],
+      "build_seconds": 2.2470338000021,
+      "passed": true,
+      "log": "Program linked to executable '/tmp/c3ttp-template-benchmark/templates-mixed-4/server'.\n",
+      "fixture_sha256": "40d05be90f4c5f88dddf5e39a381fc494440fd0f55cbf9e87b7499d59c54adc5",
+      "binary_bytes": 575128,
+      "binary_sha256": "62c6710b6a4f931bc300e5810006739962a0fa0c0964449b9e2b0bc44c73a59f"
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 32,
+      "binary": "/tmp/c3ttp-template-benchmark/templates-mixed-32/server",
+      "command": [
+        "c3c",
+        "-O3",
+        "compile",
+        "/tmp/c3ttp-template-benchmark/trees/templates/c3ttp.c3i",
+        "/tmp/c3ttp-template-benchmark/trees/templates/src",
+        "/tmp/c3ttp-template-benchmark/templates-mixed-32/main.c3",
+        "-o",
+        "/tmp/c3ttp-template-benchmark/templates-mixed-32/server"
+      ],
+      "build_seconds": 2.5788877189988852,
+      "passed": true,
+      "log": "Program linked to executable '/tmp/c3ttp-template-benchmark/templates-mixed-32/server'.\n",
+      "fixture_sha256": "97c4af51e0182930e4492c189290769c6b123f7fb8fd66c373b404ea11601d73",
+      "binary_bytes": 617992,
+      "binary_sha256": "377aea0363cdf9c1c6d228910614c4ad741bc4c34a6932a4a5a73ae08206facf"
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 100,
+      "binary": "/tmp/c3ttp-template-benchmark/templates-mixed-100/server",
+      "command": [
+        "c3c",
+        "-O3",
+        "compile",
+        "/tmp/c3ttp-template-benchmark/trees/templates/c3ttp.c3i",
+        "/tmp/c3ttp-template-benchmark/trees/templates/src",
+        "/tmp/c3ttp-template-benchmark/templates-mixed-100/main.c3",
+        "-o",
+        "/tmp/c3ttp-template-benchmark/templates-mixed-100/server"
+      ],
+      "build_seconds": 3.656473934999667,
+      "passed": true,
+      "log": "Program linked to executable '/tmp/c3ttp-template-benchmark/templates-mixed-100/server'.\n",
+      "fixture_sha256": "828223dad6f3b5d47d75abcb5e357213ca602e7b949603e8fca6aa07822bf331",
+      "binary_bytes": 715848,
+      "binary_sha256": "d48e7f4f3c811229cfd3b67962301a7070f8998bb52a274b11ea5b47115b5e27"
+    }
+  ],
+  "validation": [
+    {
+      "label": "main",
+      "kind": "literal",
+      "routes": 4,
+      "backend": "epoll",
+      "checks": 5052,
+      "rss_before_kib": {
+        "VmHWM": 6848,
+        "VmRSS": 6848
+      },
+      "rss_after_kib": {
+        "VmHWM": 6848,
+        "VmRSS": 6848
+      }
+    },
+    {
+      "label": "main",
+      "kind": "literal",
+      "routes": 4,
+      "backend": "io-uring",
+      "checks": 5052,
+      "rss_before_kib": {
+        "VmHWM": 7316,
+        "VmRSS": 7316
+      },
+      "rss_after_kib": {
+        "VmHWM": 7316,
+        "VmRSS": 7316
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "backend": "epoll",
+      "checks": 5121,
+      "rss_before_kib": {
+        "VmHWM": 6788,
+        "VmRSS": 6788
+      },
+      "rss_after_kib": {
+        "VmHWM": 6788,
+        "VmRSS": 6788
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "backend": "io-uring",
+      "checks": 5121,
+      "rss_before_kib": {
+        "VmHWM": 7264,
+        "VmRSS": 7264
+      },
+      "rss_after_kib": {
+        "VmHWM": 7264,
+        "VmRSS": 7264
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 32,
+      "backend": "epoll",
+      "checks": 5401,
+      "rss_before_kib": {
+        "VmHWM": 6932,
+        "VmRSS": 6932
+      },
+      "rss_after_kib": {
+        "VmHWM": 6932,
+        "VmRSS": 6932
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 32,
+      "backend": "io-uring",
+      "checks": 5401,
+      "rss_before_kib": {
+        "VmHWM": 7268,
+        "VmRSS": 7268
+      },
+      "rss_after_kib": {
+        "VmHWM": 7268,
+        "VmRSS": 7268
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 100,
+      "backend": "epoll",
+      "checks": 6081,
+      "rss_before_kib": {
+        "VmHWM": 6892,
+        "VmRSS": 6892
+      },
+      "rss_after_kib": {
+        "VmHWM": 6892,
+        "VmRSS": 6892
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 100,
+      "backend": "io-uring",
+      "checks": 6081,
+      "rss_before_kib": {
+        "VmHWM": 7304,
+        "VmRSS": 7304
+      },
+      "rss_after_kib": {
+        "VmHWM": 7304,
+        "VmRSS": 7304
+      }
+    },
+    {
+      "label": "current",
+      "kind": "literal",
+      "routes": 4,
+      "backend": "epoll",
+      "checks": 5052,
+      "rss_before_kib": {
+        "VmHWM": 6852,
+        "VmRSS": 6852
+      },
+      "rss_after_kib": {
+        "VmHWM": 6852,
+        "VmRSS": 6852
+      }
+    },
+    {
+      "label": "current",
+      "kind": "literal",
+      "routes": 4,
+      "backend": "io-uring",
+      "checks": 5052,
+      "rss_before_kib": {
+        "VmHWM": 7384,
+        "VmRSS": 7384
+      },
+      "rss_after_kib": {
+        "VmHWM": 7384,
+        "VmRSS": 7384
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "backend": "epoll",
+      "checks": 5121,
+      "rss_before_kib": {
+        "VmHWM": 6792,
+        "VmRSS": 6792
+      },
+      "rss_after_kib": {
+        "VmHWM": 6792,
+        "VmRSS": 6792
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "backend": "io-uring",
+      "checks": 5121,
+      "rss_before_kib": {
+        "VmHWM": 7324,
+        "VmRSS": 7324
+      },
+      "rss_after_kib": {
+        "VmHWM": 7324,
+        "VmRSS": 7324
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 32,
+      "backend": "epoll",
+      "checks": 5401,
+      "rss_before_kib": {
+        "VmHWM": 6868,
+        "VmRSS": 6868
+      },
+      "rss_after_kib": {
+        "VmHWM": 6868,
+        "VmRSS": 6868
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 32,
+      "backend": "io-uring",
+      "checks": 5401,
+      "rss_before_kib": {
+        "VmHWM": 7336,
+        "VmRSS": 7336
+      },
+      "rss_after_kib": {
+        "VmHWM": 7336,
+        "VmRSS": 7336
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 100,
+      "backend": "epoll",
+      "checks": 6081,
+      "rss_before_kib": {
+        "VmHWM": 6884,
+        "VmRSS": 6884
+      },
+      "rss_after_kib": {
+        "VmHWM": 6884,
+        "VmRSS": 6884
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 100,
+      "backend": "io-uring",
+      "checks": 6081,
+      "rss_before_kib": {
+        "VmHWM": 7292,
+        "VmRSS": 7292
+      },
+      "rss_after_kib": {
+        "VmHWM": 7292,
+        "VmRSS": 7292
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "literal",
+      "routes": 4,
+      "backend": "epoll",
+      "checks": 5052,
+      "rss_before_kib": {
+        "VmHWM": 6912,
+        "VmRSS": 6912
+      },
+      "rss_after_kib": {
+        "VmHWM": 6912,
+        "VmRSS": 6912
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "literal",
+      "routes": 4,
+      "backend": "io-uring",
+      "checks": 5052,
+      "rss_before_kib": {
+        "VmHWM": 7260,
+        "VmRSS": 7260
+      },
+      "rss_after_kib": {
+        "VmHWM": 7260,
+        "VmRSS": 7260
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "backend": "epoll",
+      "checks": 5121,
+      "rss_before_kib": {
+        "VmHWM": 6860,
+        "VmRSS": 6860
+      },
+      "rss_after_kib": {
+        "VmHWM": 6860,
+        "VmRSS": 6860
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "backend": "io-uring",
+      "checks": 5121,
+      "rss_before_kib": {
+        "VmHWM": 7324,
+        "VmRSS": 7324
+      },
+      "rss_after_kib": {
+        "VmHWM": 7324,
+        "VmRSS": 7324
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 32,
+      "backend": "epoll",
+      "checks": 5401,
+      "rss_before_kib": {
+        "VmHWM": 6808,
+        "VmRSS": 6808
+      },
+      "rss_after_kib": {
+        "VmHWM": 6808,
+        "VmRSS": 6808
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 32,
+      "backend": "io-uring",
+      "checks": 5401,
+      "rss_before_kib": {
+        "VmHWM": 7268,
+        "VmRSS": 7268
+      },
+      "rss_after_kib": {
+        "VmHWM": 7268,
+        "VmRSS": 7268
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 100,
+      "backend": "epoll",
+      "checks": 6081,
+      "rss_before_kib": {
+        "VmHWM": 6980,
+        "VmRSS": 6980
+      },
+      "rss_after_kib": {
+        "VmHWM": 6980,
+        "VmRSS": 6980
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 100,
+      "backend": "io-uring",
+      "checks": 6081,
+      "rss_before_kib": {
+        "VmHWM": 7332,
+        "VmRSS": 7332
+      },
+      "rss_after_kib": {
+        "VmHWM": 7332,
+        "VmRSS": 7332
+      }
+    }
+  ],
+  "micro": [
+    {
+      "label": "main",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 0,
+      "ns_per_dispatch": 2.21,
+      "checksum": 3130000000
+    },
+    {
+      "label": "current",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 0,
+      "ns_per_dispatch": 2.278,
+      "checksum": 3130000000
+    },
+    {
+      "label": "templates",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 0,
+      "ns_per_dispatch": 2.209,
+      "checksum": 3130000000
+    },
+    {
+      "label": "current",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 1,
+      "ns_per_dispatch": 2.287,
+      "checksum": 3130000000
+    },
+    {
+      "label": "templates",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 1,
+      "ns_per_dispatch": 2.221,
+      "checksum": 3130000000
+    },
+    {
+      "label": "main",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 1,
+      "ns_per_dispatch": 2.233,
+      "checksum": 3130000000
+    },
+    {
+      "label": "templates",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 2,
+      "ns_per_dispatch": 2.235,
+      "checksum": 3130000000
+    },
+    {
+      "label": "main",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 2,
+      "ns_per_dispatch": 2.214,
+      "checksum": 3130000000
+    },
+    {
+      "label": "current",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 2,
+      "ns_per_dispatch": 2.276,
+      "checksum": 3130000000
+    },
+    {
+      "label": "main",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 3,
+      "ns_per_dispatch": 2.225,
+      "checksum": 3130000000
+    },
+    {
+      "label": "current",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 3,
+      "ns_per_dispatch": 2.25,
+      "checksum": 3130000000
+    },
+    {
+      "label": "templates",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 3,
+      "ns_per_dispatch": 2.215,
+      "checksum": 3130000000
+    },
+    {
+      "label": "current",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 4,
+      "ns_per_dispatch": 2.263,
+      "checksum": 3130000000
+    },
+    {
+      "label": "templates",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 4,
+      "ns_per_dispatch": 2.215,
+      "checksum": 3130000000
+    },
+    {
+      "label": "main",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 4,
+      "ns_per_dispatch": 2.227,
+      "checksum": 3130000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 0,
+      "ns_per_dispatch": 2.283,
+      "checksum": 3130000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 0,
+      "ns_per_dispatch": 3.75,
+      "checksum": 3130000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 0,
+      "ns_per_dispatch": 2.477,
+      "checksum": 3130000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 1,
+      "ns_per_dispatch": 3.708,
+      "checksum": 3130000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 1,
+      "ns_per_dispatch": 2.469,
+      "checksum": 3130000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 1,
+      "ns_per_dispatch": 2.287,
+      "checksum": 3130000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 2,
+      "ns_per_dispatch": 2.472,
+      "checksum": 3130000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 2,
+      "ns_per_dispatch": 2.281,
+      "checksum": 3130000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 2,
+      "ns_per_dispatch": 3.795,
+      "checksum": 3130000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 3,
+      "ns_per_dispatch": 2.271,
+      "checksum": 3130000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 3,
+      "ns_per_dispatch": 3.72,
+      "checksum": 3130000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 3,
+      "ns_per_dispatch": 2.467,
+      "checksum": 3130000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 4,
+      "ns_per_dispatch": 3.717,
+      "checksum": 3130000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 4,
+      "ns_per_dispatch": 2.497,
+      "checksum": 3130000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "repeat": 4,
+      "ns_per_dispatch": 2.309,
+      "checksum": 3130000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "repeat": 0,
+      "ns_per_dispatch": 5.457,
+      "checksum": 2540000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "repeat": 0,
+      "ns_per_dispatch": 3.997,
+      "checksum": 2540000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "repeat": 0,
+      "ns_per_dispatch": 4.511,
+      "checksum": 2540000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "repeat": 1,
+      "ns_per_dispatch": 3.984,
+      "checksum": 2540000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "repeat": 1,
+      "ns_per_dispatch": 4.691,
+      "checksum": 2540000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "repeat": 1,
+      "ns_per_dispatch": 5.463,
+      "checksum": 2540000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "repeat": 2,
+      "ns_per_dispatch": 4.605,
+      "checksum": 2540000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "repeat": 2,
+      "ns_per_dispatch": 5.52,
+      "checksum": 2540000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "repeat": 2,
+      "ns_per_dispatch": 4.015,
+      "checksum": 2540000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "repeat": 3,
+      "ns_per_dispatch": 5.515,
+      "checksum": 2540000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "repeat": 3,
+      "ns_per_dispatch": 3.976,
+      "checksum": 2540000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "repeat": 3,
+      "ns_per_dispatch": 4.87,
+      "checksum": 2540000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "repeat": 4,
+      "ns_per_dispatch": 4.007,
+      "checksum": 2540000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "repeat": 4,
+      "ns_per_dispatch": 4.557,
+      "checksum": 2540000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "repeat": 4,
+      "ns_per_dispatch": 5.499,
+      "checksum": 2540000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "repeat": 0,
+      "ns_per_dispatch": 7.798,
+      "checksum": 2540000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "repeat": 0,
+      "ns_per_dispatch": 7.237,
+      "checksum": 2540000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "repeat": 0,
+      "ns_per_dispatch": 10.235,
+      "checksum": 2540000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "repeat": 1,
+      "ns_per_dispatch": 7.097,
+      "checksum": 2540000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "repeat": 1,
+      "ns_per_dispatch": 10.084,
+      "checksum": 2540000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "repeat": 1,
+      "ns_per_dispatch": 7.725,
+      "checksum": 2540000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "repeat": 2,
+      "ns_per_dispatch": 10.253,
+      "checksum": 2540000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "repeat": 2,
+      "ns_per_dispatch": 7.85,
+      "checksum": 2540000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "repeat": 2,
+      "ns_per_dispatch": 7.153,
+      "checksum": 2540000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "repeat": 3,
+      "ns_per_dispatch": 7.789,
+      "checksum": 2540000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "repeat": 3,
+      "ns_per_dispatch": 7.079,
+      "checksum": 2540000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "repeat": 3,
+      "ns_per_dispatch": 10.058,
+      "checksum": 2540000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "repeat": 4,
+      "ns_per_dispatch": 7.185,
+      "checksum": 2540000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "repeat": 4,
+      "ns_per_dispatch": 10.452,
+      "checksum": 2540000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "repeat": 4,
+      "ns_per_dispatch": 7.898,
+      "checksum": 2540000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "repeat": 0,
+      "ns_per_dispatch": 41.339,
+      "checksum": 2540000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "repeat": 0,
+      "ns_per_dispatch": 40.732,
+      "checksum": 2540000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "repeat": 0,
+      "ns_per_dispatch": 43.091,
+      "checksum": 2540000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "repeat": 1,
+      "ns_per_dispatch": 40.872,
+      "checksum": 2540000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "repeat": 1,
+      "ns_per_dispatch": 43.403,
+      "checksum": 2540000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "repeat": 1,
+      "ns_per_dispatch": 41.488,
+      "checksum": 2540000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "repeat": 2,
+      "ns_per_dispatch": 42.741,
+      "checksum": 2540000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "repeat": 2,
+      "ns_per_dispatch": 40.709,
+      "checksum": 2540000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "repeat": 2,
+      "ns_per_dispatch": 40.834,
+      "checksum": 2540000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "repeat": 3,
+      "ns_per_dispatch": 41.078,
+      "checksum": 2540000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "repeat": 3,
+      "ns_per_dispatch": 40.554,
+      "checksum": 2540000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "repeat": 3,
+      "ns_per_dispatch": 42.857,
+      "checksum": 2540000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "repeat": 4,
+      "ns_per_dispatch": 40.508,
+      "checksum": 2540000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "repeat": 4,
+      "ns_per_dispatch": 42.934,
+      "checksum": 2540000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "repeat": 4,
+      "ns_per_dispatch": 40.84,
+      "checksum": 2540000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5/extra",
+      "repeat": 0,
+      "ns_per_dispatch": 41.323,
+      "checksum": 4910000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5/extra",
+      "repeat": 0,
+      "ns_per_dispatch": 40.882,
+      "checksum": 4910000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5/extra",
+      "repeat": 0,
+      "ns_per_dispatch": 41.551,
+      "checksum": 4910000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5/extra",
+      "repeat": 1,
+      "ns_per_dispatch": 41.079,
+      "checksum": 4910000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5/extra",
+      "repeat": 1,
+      "ns_per_dispatch": 42.061,
+      "checksum": 4910000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5/extra",
+      "repeat": 1,
+      "ns_per_dispatch": 41.009,
+      "checksum": 4910000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5/extra",
+      "repeat": 2,
+      "ns_per_dispatch": 43.489,
+      "checksum": 4910000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5/extra",
+      "repeat": 2,
+      "ns_per_dispatch": 40.683,
+      "checksum": 4910000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5/extra",
+      "repeat": 2,
+      "ns_per_dispatch": 40.893,
+      "checksum": 4910000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5/extra",
+      "repeat": 3,
+      "ns_per_dispatch": 40.751,
+      "checksum": 4910000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5/extra",
+      "repeat": 3,
+      "ns_per_dispatch": 40.856,
+      "checksum": 4910000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5/extra",
+      "repeat": 3,
+      "ns_per_dispatch": 41.622,
+      "checksum": 4910000000
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5/extra",
+      "repeat": 4,
+      "ns_per_dispatch": 40.952,
+      "checksum": 4910000000
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5/extra",
+      "repeat": 4,
+      "ns_per_dispatch": 41.486,
+      "checksum": 4910000000
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5/extra",
+      "repeat": 4,
+      "ns_per_dispatch": 40.874,
+      "checksum": 4910000000
+    }
+  ],
+  "results": [
+    {
+      "label": "main",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 0,
+      "rps": 275079.64,
+      "p99_us": 344.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   229.37us   32.79us   1.26ms   90.31%\n    Req/Sec   139.05k     3.91k  145.59k    65.00%\n  Latency Distribution\n     50%  220.00us\n     75%  227.00us\n     90%  249.00us\n     99%  344.00us\n  828149 requests in 3.01s, 82.93MB read\nRequests/sec: 275079.64\nTransfer/sec:     27.55MB\n",
+      "rss_kib": {
+        "VmHWM": 7216,
+        "VmRSS": 7216
+      }
+    },
+    {
+      "label": "current",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 0,
+      "rps": 271061.63,
+      "p99_us": 349.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   229.83us   68.68us   4.07ms   90.75%\n    Req/Sec   138.71k     6.89k  178.04k    93.44%\n  Latency Distribution\n     50%  223.00us\n     75%  228.00us\n     90%  240.00us\n     99%  349.00us\n  840329 requests in 3.10s, 84.15MB read\nRequests/sec: 271061.63\nTransfer/sec:     27.14MB\n",
+      "rss_kib": {
+        "VmHWM": 7112,
+        "VmRSS": 7112
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 0,
+      "rps": 268734.97,
+      "p99_us": 358.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   236.38us   45.69us   2.09ms   92.54%\n    Req/Sec   135.71k     4.55k  144.17k    76.67%\n  Latency Distribution\n     50%  227.00us\n     75%  233.00us\n     90%  248.00us\n     99%  358.00us\n  808132 requests in 3.01s, 80.92MB read\nRequests/sec: 268734.97\nTransfer/sec:     26.91MB\n",
+      "rss_kib": {
+        "VmHWM": 7164,
+        "VmRSS": 7164
+      }
+    },
+    {
+      "label": "current",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 1,
+      "rps": 265521.54,
+      "p99_us": 354.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   233.75us   34.70us 600.00us   91.83%\n    Req/Sec   135.79k     6.94k  183.10k    96.72%\n  Latency Distribution\n     50%  231.00us\n     75%  237.00us\n     90%  246.00us\n     99%  354.00us\n  823185 requests in 3.10s, 82.43MB read\nRequests/sec: 265521.54\nTransfer/sec:     26.59MB\n",
+      "rss_kib": {
+        "VmHWM": 7156,
+        "VmRSS": 7156
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 1,
+      "rps": 269234.8,
+      "p99_us": 354.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   237.79us   81.95us   3.46ms   93.28%\n    Req/Sec   135.91k     5.14k  143.36k    78.33%\n  Latency Distribution\n     50%  227.00us\n     75%  232.00us\n     90%  246.00us\n     99%  354.00us\n  809487 requests in 3.01s, 81.06MB read\nRequests/sec: 269234.80\nTransfer/sec:     26.96MB\n",
+      "rss_kib": {
+        "VmHWM": 7156,
+        "VmRSS": 7156
+      }
+    },
+    {
+      "label": "main",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 1,
+      "rps": 268338.07,
+      "p99_us": 353.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   236.34us   27.13us 590.00us   93.30%\n    Req/Sec   135.33k     2.42k  141.48k    63.33%\n  Latency Distribution\n     50%  229.00us\n     75%  235.00us\n     90%  245.00us\n     99%  353.00us\n  806661 requests in 3.01s, 80.78MB read\nRequests/sec: 268338.07\nTransfer/sec:     26.87MB\n",
+      "rss_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 2,
+      "rps": 268518.79,
+      "p99_us": 359.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   238.86us   87.21us   3.38ms   94.18%\n    Req/Sec   135.64k     5.36k  144.90k    80.00%\n  Latency Distribution\n     50%  227.00us\n     75%  233.00us\n     90%  249.00us\n     99%  359.00us\n  807320 requests in 3.01s, 80.84MB read\nRequests/sec: 268518.79\nTransfer/sec:     26.89MB\n",
+      "rss_kib": {
+        "VmHWM": 7212,
+        "VmRSS": 7212
+      }
+    },
+    {
+      "label": "main",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 2,
+      "rps": 268922.51,
+      "p99_us": 356.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   235.26us   48.65us   2.52ms   91.55%\n    Req/Sec   136.14k     3.61k  141.66k    66.67%\n  Latency Distribution\n     50%  225.00us\n     75%  231.00us\n     90%  252.00us\n     99%  356.00us\n  810448 requests in 3.01s, 81.15MB read\nRequests/sec: 268922.51\nTransfer/sec:     26.93MB\n",
+      "rss_kib": {
+        "VmHWM": 7096,
+        "VmRSS": 7096
+      }
+    },
+    {
+      "label": "current",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 2,
+      "rps": 266804.88,
+      "p99_us": 355.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   232.34us   37.12us   1.21ms   90.72%\n    Req/Sec   136.57k     6.72k  181.03k    93.44%\n  Latency Distribution\n     50%  227.00us\n     75%  233.00us\n     90%  248.00us\n     99%  355.00us\n  827097 requests in 3.10s, 82.82MB read\nRequests/sec: 266804.88\nTransfer/sec:     26.72MB\n",
+      "rss_kib": {
+        "VmHWM": 7108,
+        "VmRSS": 7108
+      }
+    },
+    {
+      "label": "main",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 3,
+      "rps": 269197.74,
+      "p99_us": 359.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   236.96us   83.64us   3.84ms   94.86%\n    Req/Sec   136.00k     2.70k  141.61k    70.00%\n  Latency Distribution\n     50%  228.00us\n     75%  233.00us\n     90%  246.00us\n     99%  359.00us\n  810654 requests in 3.01s, 81.18MB read\nRequests/sec: 269197.74\nTransfer/sec:     26.96MB\n",
+      "rss_kib": {
+        "VmHWM": 7160,
+        "VmRSS": 7160
+      }
+    },
+    {
+      "label": "current",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 3,
+      "rps": 268622.24,
+      "p99_us": 352.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   230.62us   36.81us 731.00us   90.41%\n    Req/Sec   137.53k     7.46k  185.18k    93.44%\n  Latency Distribution\n     50%  226.00us\n     75%  231.00us\n     90%  246.00us\n     99%  352.00us\n  832766 requests in 3.10s, 83.39MB read\nRequests/sec: 268622.24\nTransfer/sec:     26.90MB\n",
+      "rss_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 3,
+      "rps": 269560.2,
+      "p99_us": 361.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   236.20us   81.16us   3.82ms   92.35%\n    Req/Sec   136.23k     4.24k  147.17k    71.67%\n  Latency Distribution\n     50%  225.00us\n     75%  231.00us\n     90%  248.00us\n     99%  361.00us\n  811766 requests in 3.01s, 81.29MB read\nRequests/sec: 269560.20\nTransfer/sec:     26.99MB\n",
+      "rss_kib": {
+        "VmHWM": 7232,
+        "VmRSS": 7232
+      }
+    },
+    {
+      "label": "current",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 4,
+      "rps": 267539.15,
+      "p99_us": 356.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   236.21us   33.04us   1.08ms   90.83%\n    Req/Sec   135.00k     3.27k  141.89k    65.00%\n  Latency Distribution\n     50%  228.00us\n     75%  234.00us\n     90%  252.00us\n     99%  356.00us\n  804422 requests in 3.01s, 80.55MB read\nRequests/sec: 267539.15\nTransfer/sec:     26.79MB\n",
+      "rss_kib": {
+        "VmHWM": 7040,
+        "VmRSS": 7040
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 4,
+      "rps": 260977.3,
+      "p99_us": 422.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   246.04us  106.90us   3.65ms   96.83%\n    Req/Sec   131.68k     6.39k  141.32k    85.00%\n  Latency Distribution\n     50%  228.00us\n     75%  237.00us\n     90%  318.00us\n     99%  422.00us\n  784783 requests in 3.01s, 78.58MB read\nRequests/sec: 260977.30\nTransfer/sec:     26.13MB\n",
+      "rss_kib": {
+        "VmHWM": 7172,
+        "VmRSS": 7172
+      }
+    },
+    {
+      "label": "main",
+      "kind": "literal",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 4,
+      "rps": 263765.05,
+      "p99_us": 358.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   239.71us   31.96us   0.96ms   90.70%\n    Req/Sec   133.31k     3.38k  139.75k    60.00%\n  Latency Distribution\n     50%  232.00us\n     75%  238.00us\n     90%  255.00us\n     99%  358.00us\n  794358 requests in 3.01s, 79.54MB read\nRequests/sec: 263765.05\nTransfer/sec:     26.41MB\n",
+      "rss_kib": {
+        "VmHWM": 7040,
+        "VmRSS": 7040
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 0,
+      "rps": 262431.64,
+      "p99_us": 370.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   241.56us   56.81us   2.77ms   90.73%\n    Req/Sec   132.63k     5.29k  140.70k    68.33%\n  Latency Distribution\n     50%  230.00us\n     75%  237.00us\n     90%  272.00us\n     99%  370.00us\n  789513 requests in 3.01s, 79.06MB read\nRequests/sec: 262431.64\nTransfer/sec:     26.28MB\n",
+      "rss_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 0,
+      "rps": 247587.68,
+      "p99_us": 490.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   254.47us  130.20us   3.79ms   94.77%\n    Req/Sec   126.83k    10.19k  161.82k    70.49%\n  Latency Distribution\n     50%  232.00us\n     75%  245.00us\n     90%  338.00us\n     99%  490.00us\n  767580 requests in 3.10s, 76.86MB read\nRequests/sec: 247587.68\nTransfer/sec:     24.79MB\n",
+      "rss_kib": {
+        "VmHWM": 7176,
+        "VmRSS": 7176
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 0,
+      "rps": 225627.96,
+      "p99_us": 1010.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   292.06us  204.66us   4.26ms   96.85%\n    Req/Sec   114.03k    18.71k  135.89k    61.67%\n  Latency Distribution\n     50%  238.00us\n     75%  320.00us\n     90%  403.00us\n     99%    1.01ms\n  679019 requests in 3.01s, 67.99MB read\nRequests/sec: 225627.96\nTransfer/sec:     22.59MB\n",
+      "rss_kib": {
+        "VmHWM": 7164,
+        "VmRSS": 7164
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 1,
+      "rps": 259699.94,
+      "p99_us": 372.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   245.28us   74.39us   3.49ms   92.09%\n    Req/Sec   131.10k     4.43k  139.82k    81.67%\n  Latency Distribution\n     50%  234.00us\n     75%  241.00us\n     90%  266.00us\n     99%  372.00us\n  780818 requests in 3.01s, 78.19MB read\nRequests/sec: 259699.94\nTransfer/sec:     26.01MB\n",
+      "rss_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 1,
+      "rps": 255158.34,
+      "p99_us": 429.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   245.76us  122.20us   4.26ms   95.30%\n    Req/Sec   130.62k     6.62k  163.96k    81.97%\n  Latency Distribution\n     50%  233.00us\n     75%  241.00us\n     90%  297.00us\n     99%  429.00us\n  791047 requests in 3.10s, 79.21MB read\nRequests/sec: 255158.34\nTransfer/sec:     25.55MB\n",
+      "rss_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 1,
+      "rps": 259555.51,
+      "p99_us": 559.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   248.61us  118.65us   5.34ms   95.72%\n    Req/Sec   131.12k     6.12k  142.02k    70.00%\n  Latency Distribution\n     50%  230.00us\n     75%  238.00us\n     90%  312.00us\n     99%  559.00us\n  780418 requests in 3.01s, 78.15MB read\nRequests/sec: 259555.51\nTransfer/sec:     25.99MB\n",
+      "rss_kib": {
+        "VmHWM": 7164,
+        "VmRSS": 7164
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 2,
+      "rps": 260497.85,
+      "p99_us": 697.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   249.03us  127.49us   3.47ms   95.68%\n    Req/Sec   131.59k     5.69k  140.78k    61.67%\n  Latency Distribution\n     50%  230.00us\n     75%  237.00us\n     90%  300.00us\n     99%  697.00us\n  783341 requests in 3.01s, 78.44MB read\nRequests/sec: 260497.85\nTransfer/sec:     26.09MB\n",
+      "rss_kib": {
+        "VmHWM": 7108,
+        "VmRSS": 7108
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 2,
+      "rps": 249586.71,
+      "p99_us": 1200.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   264.76us  183.12us   3.82ms   95.65%\n    Req/Sec   126.01k     9.99k  142.38k    73.33%\n  Latency Distribution\n     50%  232.00us\n     75%  245.00us\n     90%  338.00us\n     99%    1.20ms\n  750353 requests in 3.01s, 75.14MB read\nRequests/sec: 249586.71\nTransfer/sec:     24.99MB\n",
+      "rss_kib": {
+        "VmHWM": 7164,
+        "VmRSS": 7164
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 2,
+      "rps": 254943.29,
+      "p99_us": 1030.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   251.56us  156.28us   3.73ms   94.88%\n    Req/Sec   128.93k     7.33k  144.06k    60.00%\n  Latency Distribution\n     50%  230.00us\n     75%  243.00us\n     90%  327.00us\n     99%    1.03ms\n  767789 requests in 3.01s, 76.88MB read\nRequests/sec: 254943.29\nTransfer/sec:     25.53MB\n",
+      "rss_kib": {
+        "VmHWM": 7112,
+        "VmRSS": 7112
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 3,
+      "rps": 252713.13,
+      "p99_us": 1200.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   258.97us  188.25us   3.89ms   95.76%\n    Req/Sec   127.57k     8.29k  139.85k    71.67%\n  Latency Distribution\n     50%  229.00us\n     75%  242.00us\n     90%  334.00us\n     99%    1.20ms\n  761036 requests in 3.01s, 76.21MB read\nRequests/sec: 252713.13\nTransfer/sec:     25.31MB\n",
+      "rss_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 3,
+      "rps": 252463.64,
+      "p99_us": 1370.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   266.20us  212.87us   3.93ms   96.34%\n    Req/Sec   127.57k    10.28k  142.98k    76.67%\n  Latency Distribution\n     50%  232.00us\n     75%  242.00us\n     90%  331.00us\n     99%    1.37ms\n  760295 requests in 3.01s, 76.13MB read\nRequests/sec: 252463.64\nTransfer/sec:     25.28MB\n",
+      "rss_kib": {
+        "VmHWM": 7112,
+        "VmRSS": 7112
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 3,
+      "rps": 260465.02,
+      "p99_us": 960.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   250.64us  171.36us   3.88ms   96.81%\n    Req/Sec   131.55k     5.81k  142.42k    65.00%\n  Latency Distribution\n     50%  230.00us\n     75%  238.00us\n     90%  306.00us\n     99%    0.96ms\n  782968 requests in 3.01s, 78.40MB read\nRequests/sec: 260465.02\nTransfer/sec:     26.08MB\n",
+      "rss_kib": {
+        "VmHWM": 7232,
+        "VmRSS": 7232
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 4,
+      "rps": 259671.44,
+      "p99_us": 1170.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   257.82us  208.45us   3.90ms   97.15%\n    Req/Sec   131.28k     5.22k  141.74k    63.33%\n  Latency Distribution\n     50%  228.00us\n     75%  235.00us\n     90%  324.00us\n     99%    1.17ms\n  781979 requests in 3.01s, 78.30MB read\nRequests/sec: 259671.44\nTransfer/sec:     26.00MB\n",
+      "rss_kib": {
+        "VmHWM": 7080,
+        "VmRSS": 7080
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 4,
+      "rps": 257334.95,
+      "p99_us": 1230.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   253.80us  204.68us   3.93ms   96.87%\n    Req/Sec   131.76k     7.68k  159.34k    63.93%\n  Latency Distribution\n     50%  228.00us\n     75%  236.00us\n     90%  318.00us\n     99%    1.23ms\n  797867 requests in 3.10s, 79.90MB read\nRequests/sec: 257334.95\nTransfer/sec:     25.77MB\n",
+      "rss_kib": {
+        "VmHWM": 7160,
+        "VmRSS": 7160
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/health",
+      "backend": "epoll",
+      "repeat": 4,
+      "rps": 260074.62,
+      "p99_us": 794.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   245.62us  111.62us   2.28ms   93.97%\n    Req/Sec   131.06k     6.39k  145.07k    73.33%\n  Latency Distribution\n     50%  230.00us\n     75%  240.00us\n     90%  312.00us\n     99%  794.00us\n  781641 requests in 3.01s, 78.27MB read\nRequests/sec: 260074.62\nTransfer/sec:     26.04MB\n",
+      "rss_kib": {
+        "VmHWM": 7164,
+        "VmRSS": 7164
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "epoll",
+      "repeat": 0,
+      "rps": 257988.15,
+      "p99_us": 370.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   244.90us   57.80us   3.21ms   89.20%\n    Req/Sec   130.42k     3.98k  139.42k    65.00%\n  Latency Distribution\n     50%  232.00us\n     75%  240.00us\n     90%  310.00us\n     99%  370.00us\n  776784 requests in 3.01s, 77.04MB read\nRequests/sec: 257988.15\nTransfer/sec:     25.59MB\n",
+      "rss_kib": {
+        "VmHWM": 7040,
+        "VmRSS": 7040
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "epoll",
+      "repeat": 0,
+      "rps": 258486.57,
+      "p99_us": 377.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   244.13us   39.22us   1.29ms   88.43%\n    Req/Sec   130.59k     4.70k  140.32k    70.00%\n  Latency Distribution\n     50%  233.00us\n     75%  242.00us\n     90%  299.00us\n     99%  377.00us\n  777898 requests in 3.01s, 77.15MB read\nRequests/sec: 258486.57\nTransfer/sec:     25.64MB\n",
+      "rss_kib": {
+        "VmHWM": 7048,
+        "VmRSS": 7048
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "epoll",
+      "repeat": 0,
+      "rps": 256772.06,
+      "p99_us": 403.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   246.70us   83.37us   3.88ms   91.50%\n    Req/Sec   130.15k     4.41k  137.01k    70.00%\n  Latency Distribution\n     50%  233.00us\n     75%  240.00us\n     90%  310.00us\n     99%  403.00us\n  774878 requests in 3.02s, 76.85MB read\nRequests/sec: 256772.06\nTransfer/sec:     25.47MB\n",
+      "rss_kib": {
+        "VmHWM": 7172,
+        "VmRSS": 7172
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "epoll",
+      "repeat": 1,
+      "rps": 260608.53,
+      "p99_us": 375.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   243.74us   65.77us   3.53ms   92.19%\n    Req/Sec   131.55k     5.92k  140.71k    81.67%\n  Latency Distribution\n     50%  233.00us\n     75%  239.00us\n     90%  256.00us\n     99%  375.00us\n  784378 requests in 3.01s, 77.80MB read\nRequests/sec: 260608.53\nTransfer/sec:     25.85MB\n",
+      "rss_kib": {
+        "VmHWM": 7164,
+        "VmRSS": 7164
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "epoll",
+      "repeat": 1,
+      "rps": 264147.51,
+      "p99_us": 359.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   240.16us   57.53us   3.78ms   94.34%\n    Req/Sec   133.59k     2.74k  139.76k    61.67%\n  Latency Distribution\n     50%  233.00us\n     75%  238.00us\n     90%  247.00us\n     99%  359.00us\n  795812 requests in 3.01s, 78.93MB read\nRequests/sec: 264147.51\nTransfer/sec:     26.20MB\n",
+      "rss_kib": {
+        "VmHWM": 7112,
+        "VmRSS": 7112
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "epoll",
+      "repeat": 1,
+      "rps": 263606.82,
+      "p99_us": 364.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   240.97us   71.90us   4.05ms   91.88%\n    Req/Sec   133.24k     4.48k  141.98k    68.33%\n  Latency Distribution\n     50%  230.00us\n     75%  236.00us\n     90%  256.00us\n     99%  364.00us\n  793577 requests in 3.01s, 78.71MB read\nRequests/sec: 263606.82\nTransfer/sec:     26.15MB\n",
+      "rss_kib": {
+        "VmHWM": 7108,
+        "VmRSS": 7108
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "epoll",
+      "repeat": 2,
+      "rps": 262692.45,
+      "p99_us": 364.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   241.45us   80.73us   3.99ms   91.11%\n    Req/Sec   132.78k     3.96k  140.57k    60.00%\n  Latency Distribution\n     50%  228.00us\n     75%  236.00us\n     90%  295.00us\n     99%  364.00us\n  790947 requests in 3.01s, 78.45MB read\nRequests/sec: 262692.45\nTransfer/sec:     26.05MB\n",
+      "rss_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "epoll",
+      "repeat": 2,
+      "rps": 263043.17,
+      "p99_us": 376.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   242.22us   78.17us   3.80ms   91.11%\n    Req/Sec   132.74k     4.18k  141.05k    65.00%\n  Latency Distribution\n     50%  229.00us\n     75%  235.00us\n     90%  286.00us\n     99%  376.00us\n  791111 requests in 3.01s, 78.46MB read\nRequests/sec: 263043.17\nTransfer/sec:     26.09MB\n",
+      "rss_kib": {
+        "VmHWM": 7108,
+        "VmRSS": 7108
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "epoll",
+      "repeat": 2,
+      "rps": 260331.52,
+      "p99_us": 369.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   243.56us   69.62us   3.96ms   89.75%\n    Req/Sec   131.40k     3.64k  139.71k    68.33%\n  Latency Distribution\n     50%  231.00us\n     75%  239.00us\n     90%  307.00us\n     99%  369.00us\n  782845 requests in 3.01s, 77.64MB read\nRequests/sec: 260331.52\nTransfer/sec:     25.82MB\n",
+      "rss_kib": {
+        "VmHWM": 7220,
+        "VmRSS": 7220
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "epoll",
+      "repeat": 3,
+      "rps": 263893.97,
+      "p99_us": 366.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   241.26us   74.79us   3.21ms   92.89%\n    Req/Sec   133.35k     4.67k  141.71k    88.33%\n  Latency Distribution\n     50%  231.00us\n     75%  237.00us\n     90%  249.00us\n     99%  366.00us\n  794229 requests in 3.01s, 78.77MB read\nRequests/sec: 263893.97\nTransfer/sec:     26.17MB\n",
+      "rss_kib": {
+        "VmHWM": 7108,
+        "VmRSS": 7108
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "epoll",
+      "repeat": 3,
+      "rps": 263863.79,
+      "p99_us": 362.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   239.34us   41.78us   1.84ms   89.26%\n    Req/Sec   133.17k     2.98k  139.09k    63.33%\n  Latency Distribution\n     50%  229.00us\n     75%  236.00us\n     90%  275.00us\n     99%  362.00us\n  793383 requests in 3.01s, 78.69MB read\nRequests/sec: 263863.79\nTransfer/sec:     26.17MB\n",
+      "rss_kib": {
+        "VmHWM": 7108,
+        "VmRSS": 7108
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "epoll",
+      "repeat": 3,
+      "rps": 265143.09,
+      "p99_us": 369.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   243.85us  124.89us   4.00ms   98.72%\n    Req/Sec   133.78k     4.41k  142.17k    73.33%\n  Latency Distribution\n     50%  228.00us\n     75%  235.00us\n     90%  261.00us\n     99%  369.00us\n  797149 requests in 3.01s, 79.06MB read\nRequests/sec: 265143.09\nTransfer/sec:     26.30MB\n",
+      "rss_kib": {
+        "VmHWM": 7044,
+        "VmRSS": 7044
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "epoll",
+      "repeat": 4,
+      "rps": 262106.11,
+      "p99_us": 367.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   242.08us   74.00us   3.76ms   89.97%\n    Req/Sec   132.34k     4.11k  141.62k    68.33%\n  Latency Distribution\n     50%  229.00us\n     75%  237.00us\n     90%  306.00us\n     99%  367.00us\n  788568 requests in 3.01s, 78.21MB read\nRequests/sec: 262106.11\nTransfer/sec:     26.00MB\n",
+      "rss_kib": {
+        "VmHWM": 7108,
+        "VmRSS": 7108
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "epoll",
+      "repeat": 4,
+      "rps": 260603.98,
+      "p99_us": 382.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   244.29us   94.15us   3.82ms   93.73%\n    Req/Sec   131.61k     4.17k  139.44k    73.33%\n  Latency Distribution\n     50%  229.00us\n     75%  238.00us\n     90%  320.00us\n     99%  382.00us\n  783749 requests in 3.01s, 77.73MB read\nRequests/sec: 260603.98\nTransfer/sec:     25.85MB\n",
+      "rss_kib": {
+        "VmHWM": 7112,
+        "VmRSS": 7112
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "epoll",
+      "repeat": 4,
+      "rps": 259393.07,
+      "p99_us": 369.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   243.21us   46.98us   2.11ms   88.64%\n    Req/Sec   131.00k     4.04k  139.06k    68.33%\n  Latency Distribution\n     50%  232.00us\n     75%  240.00us\n     90%  304.00us\n     99%  369.00us\n  781101 requests in 3.01s, 77.47MB read\nRequests/sec: 259393.07\nTransfer/sec:     25.73MB\n",
+      "rss_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "io-uring",
+      "repeat": 0,
+      "rps": 335301.47,
+      "p99_us": 227.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   183.19us   49.63us   2.90ms   98.99%\n    Req/Sec   169.62k     4.22k  174.78k    86.67%\n  Latency Distribution\n     50%  181.00us\n     75%  186.00us\n     90%  193.00us\n     99%  227.00us\n  1010607 requests in 3.01s, 100.23MB read\nRequests/sec: 335301.47\nTransfer/sec:     33.26MB\n",
+      "rss_kib": {
+        "VmHWM": 7564,
+        "VmRSS": 7564
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "io-uring",
+      "repeat": 0,
+      "rps": 337454.38,
+      "p99_us": 217.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   183.44us   12.86us   0.99ms   86.43%\n    Req/Sec   170.41k     2.34k  174.92k    66.67%\n  Latency Distribution\n     50%  183.00us\n     75%  188.00us\n     90%  193.00us\n     99%  217.00us\n  1015436 requests in 3.01s, 100.71MB read\nRequests/sec: 337454.38\nTransfer/sec:     33.47MB\n",
+      "rss_kib": {
+        "VmHWM": 7448,
+        "VmRSS": 7448
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "io-uring",
+      "repeat": 0,
+      "rps": 332648.85,
+      "p99_us": 216.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   180.25us   13.22us 648.00us   77.65%\n    Req/Sec   168.03k     1.50k  172.08k    73.33%\n  Latency Distribution\n     50%  180.00us\n     75%  187.00us\n     90%  193.00us\n     99%  216.00us\n  1001615 requests in 3.01s, 99.34MB read\nRequests/sec: 332648.85\nTransfer/sec:     32.99MB\n",
+      "rss_kib": {
+        "VmHWM": 7508,
+        "VmRSS": 7508
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "io-uring",
+      "repeat": 1,
+      "rps": 337928.96,
+      "p99_us": 215.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   182.01us   12.27us 527.00us   84.63%\n    Req/Sec   170.59k     2.16k  174.79k    71.67%\n  Latency Distribution\n     50%  182.00us\n     75%  187.00us\n     90%  192.00us\n     99%  215.00us\n  1016712 requests in 3.01s, 100.84MB read\nRequests/sec: 337928.96\nTransfer/sec:     33.52MB\n",
+      "rss_kib": {
+        "VmHWM": 7444,
+        "VmRSS": 7444
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "io-uring",
+      "repeat": 1,
+      "rps": 334297.98,
+      "p99_us": 231.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   182.31us   82.62us   3.59ms   99.12%\n    Req/Sec   168.64k     5.36k  173.70k    95.00%\n  Latency Distribution\n     50%  179.00us\n     75%  185.00us\n     90%  193.00us\n     99%  231.00us\n  1005107 requests in 3.01s, 99.69MB read\nRequests/sec: 334297.98\nTransfer/sec:     33.16MB\n",
+      "rss_kib": {
+        "VmHWM": 7512,
+        "VmRSS": 7512
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "io-uring",
+      "repeat": 1,
+      "rps": 336853.98,
+      "p99_us": 226.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   180.90us   16.59us   1.11ms   87.91%\n    Req/Sec   169.87k     3.37k  174.75k    71.67%\n  Latency Distribution\n     50%  181.00us\n     75%  186.00us\n     90%  192.00us\n     99%  226.00us\n  1012386 requests in 3.01s, 100.41MB read\nRequests/sec: 336853.98\nTransfer/sec:     33.41MB\n",
+      "rss_kib": {
+        "VmHWM": 7508,
+        "VmRSS": 7508
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "io-uring",
+      "repeat": 2,
+      "rps": 334785.1,
+      "p99_us": 267.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   179.95us   19.66us 653.00us   87.89%\n    Req/Sec   168.92k     3.92k  174.92k    85.00%\n  Latency Distribution\n     50%  179.00us\n     75%  184.00us\n     90%  192.00us\n     99%  267.00us\n  1006595 requests in 3.01s, 99.84MB read\nRequests/sec: 334785.10\nTransfer/sec:     33.20MB\n",
+      "rss_kib": {
+        "VmHWM": 7508,
+        "VmRSS": 7508
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "io-uring",
+      "repeat": 2,
+      "rps": 335846.04,
+      "p99_us": 300.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   184.51us   28.19us   1.80ms   96.69%\n    Req/Sec   169.64k     7.31k  174.81k    93.33%\n  Latency Distribution\n     50%  182.00us\n     75%  187.00us\n     90%  193.00us\n     99%  300.00us\n  1010327 requests in 3.01s, 100.21MB read\nRequests/sec: 335846.04\nTransfer/sec:     33.31MB\n",
+      "rss_kib": {
+        "VmHWM": 7624,
+        "VmRSS": 7624
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "io-uring",
+      "repeat": 2,
+      "rps": 336379.01,
+      "p99_us": 241.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   183.49us   44.48us   2.53ms   98.20%\n    Req/Sec   169.84k     6.55k  175.14k    96.67%\n  Latency Distribution\n     50%  182.00us\n     75%  186.00us\n     90%  192.00us\n     99%  241.00us\n  1011674 requests in 3.01s, 100.34MB read\nRequests/sec: 336379.01\nTransfer/sec:     33.36MB\n",
+      "rss_kib": {
+        "VmHWM": 7516,
+        "VmRSS": 7516
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "io-uring",
+      "repeat": 3,
+      "rps": 336405.41,
+      "p99_us": 218.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   179.82us   56.90us   3.14ms   99.54%\n    Req/Sec   169.76k     2.09k  174.54k    66.67%\n  Latency Distribution\n     50%  179.00us\n     75%  185.00us\n     90%  191.00us\n     99%  218.00us\n  1011928 requests in 3.01s, 100.37MB read\nRequests/sec: 336405.41\nTransfer/sec:     33.37MB\n",
+      "rss_kib": {
+        "VmHWM": 7576,
+        "VmRSS": 7576
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "io-uring",
+      "repeat": 3,
+      "rps": 332416.52,
+      "p99_us": 263.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   180.58us   21.26us   1.40ms   89.71%\n    Req/Sec   167.71k     1.93k  171.11k    68.33%\n  Latency Distribution\n     50%  180.00us\n     75%  186.00us\n     90%  193.00us\n     99%  263.00us\n  999874 requests in 3.01s, 99.17MB read\nRequests/sec: 332416.52\nTransfer/sec:     32.97MB\n",
+      "rss_kib": {
+        "VmHWM": 7568,
+        "VmRSS": 7568
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "io-uring",
+      "repeat": 3,
+      "rps": 336037.0,
+      "p99_us": 221.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   178.67us   14.27us 401.00us   80.59%\n    Req/Sec   169.57k     2.70k  174.32k    58.33%\n  Latency Distribution\n     50%  178.00us\n     75%  185.00us\n     90%  192.00us\n     99%  221.00us\n  1010596 requests in 3.01s, 100.23MB read\nRequests/sec: 336037.00\nTransfer/sec:     33.33MB\n",
+      "rss_kib": {
+        "VmHWM": 7560,
+        "VmRSS": 7560
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "io-uring",
+      "repeat": 4,
+      "rps": 337313.24,
+      "p99_us": 219.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   181.13us   12.08us 384.00us   81.89%\n    Req/Sec   170.34k     1.95k  173.42k    70.00%\n  Latency Distribution\n     50%  181.00us\n     75%  186.00us\n     90%  192.00us\n     99%  219.00us\n  1014844 requests in 3.01s, 100.65MB read\nRequests/sec: 337313.24\nTransfer/sec:     33.46MB\n",
+      "rss_kib": {
+        "VmHWM": 7576,
+        "VmRSS": 7576
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "io-uring",
+      "repeat": 4,
+      "rps": 331182.42,
+      "p99_us": 229.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   181.77us   59.27us   3.19ms   99.04%\n    Req/Sec   167.54k     3.18k  172.29k    88.33%\n  Latency Distribution\n     50%  180.00us\n     75%  186.00us\n     90%  195.00us\n     99%  229.00us\n  999181 requests in 3.02s, 99.10MB read\nRequests/sec: 331182.42\nTransfer/sec:     32.85MB\n",
+      "rss_kib": {
+        "VmHWM": 7576,
+        "VmRSS": 7576
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/get-number-back/5",
+      "backend": "io-uring",
+      "repeat": 4,
+      "rps": 337730.43,
+      "p99_us": 219.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/get-number-back/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   177.67us   12.75us 323.00us   80.53%\n    Req/Sec   170.41k     2.39k  174.32k    55.00%\n  Latency Distribution\n     50%  178.00us\n     75%  184.00us\n     90%  189.00us\n     99%  219.00us\n  1015627 requests in 3.01s, 100.73MB read\nRequests/sec: 337730.43\nTransfer/sec:     33.50MB\n",
+      "rss_kib": {
+        "VmHWM": 7624,
+        "VmRSS": 7624
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "backend": "epoll",
+      "repeat": 0,
+      "rps": 265143.39,
+      "p99_us": 361.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/users/alice/posts/42\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   239.22us   63.76us   3.85ms   90.78%\n    Req/Sec   133.88k     4.57k  141.55k    71.67%\n  Latency Distribution\n     50%  228.00us\n     75%  235.00us\n     90%  265.00us\n     99%  361.00us\n  797353 requests in 3.01s, 79.84MB read\nRequests/sec: 265143.39\nTransfer/sec:     26.55MB\n",
+      "rss_kib": {
+        "VmHWM": 7116,
+        "VmRSS": 7116
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "backend": "epoll",
+      "repeat": 0,
+      "rps": 263083.29,
+      "p99_us": 364.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/users/alice/posts/42\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   241.66us   43.92us   2.97ms   94.42%\n    Req/Sec   132.57k     1.92k  137.13k    65.00%\n  Latency Distribution\n     50%  235.00us\n     75%  240.00us\n     90%  248.00us\n     99%  364.00us\n  791042 requests in 3.01s, 79.21MB read\nRequests/sec: 263083.29\nTransfer/sec:     26.34MB\n",
+      "rss_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "backend": "epoll",
+      "repeat": 0,
+      "rps": 266598.3,
+      "p99_us": 362.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/users/alice/posts/42\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   237.69us   27.70us   1.09ms   93.57%\n    Req/Sec   134.84k     3.11k  140.65k    60.00%\n  Latency Distribution\n     50%  231.00us\n     75%  236.00us\n     90%  247.00us\n     99%  362.00us\n  803097 requests in 3.01s, 80.42MB read\nRequests/sec: 266598.30\nTransfer/sec:     26.70MB\n",
+      "rss_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "backend": "epoll",
+      "repeat": 1,
+      "rps": 264867.35,
+      "p99_us": 358.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/users/alice/posts/42\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   239.33us   33.67us   1.44ms   92.34%\n    Req/Sec   133.68k     3.48k  143.29k    73.33%\n  Latency Distribution\n     50%  232.00us\n     75%  238.00us\n     90%  250.00us\n     99%  358.00us\n  796543 requests in 3.01s, 79.76MB read\nRequests/sec: 264867.35\nTransfer/sec:     26.52MB\n",
+      "rss_kib": {
+        "VmHWM": 7048,
+        "VmRSS": 7048
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "backend": "epoll",
+      "repeat": 1,
+      "rps": 259829.63,
+      "p99_us": 380.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/users/alice/posts/42\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   246.70us  106.83us   4.01ms   97.14%\n    Req/Sec   131.17k     4.08k  138.52k    71.67%\n  Latency Distribution\n     50%  231.00us\n     75%  239.00us\n     90%  315.00us\n     99%  380.00us\n  781210 requests in 3.01s, 78.23MB read\nRequests/sec: 259829.63\nTransfer/sec:     26.02MB\n",
+      "rss_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "backend": "epoll",
+      "repeat": 1,
+      "rps": 264827.32,
+      "p99_us": 357.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/users/alice/posts/42\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   238.03us   37.00us   0.95ms   88.01%\n    Req/Sec   133.72k     4.42k  141.05k    58.33%\n  Latency Distribution\n     50%  227.00us\n     75%  234.00us\n     90%  306.00us\n     99%  357.00us\n  796827 requests in 3.01s, 79.79MB read\nRequests/sec: 264827.32\nTransfer/sec:     26.52MB\n",
+      "rss_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "backend": "epoll",
+      "repeat": 2,
+      "rps": 259014.75,
+      "p99_us": 394.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/users/alice/posts/42\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   245.72us   92.40us   4.05ms   93.07%\n    Req/Sec   130.77k     4.51k  137.82k    78.33%\n  Latency Distribution\n     50%  229.00us\n     75%  240.00us\n     90%  324.00us\n     99%  394.00us\n  778869 requests in 3.01s, 77.99MB read\nRequests/sec: 259014.75\nTransfer/sec:     25.94MB\n",
+      "rss_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "backend": "epoll",
+      "repeat": 2,
+      "rps": 262019.76,
+      "p99_us": 366.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/users/alice/posts/42\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   241.29us   46.55us   1.88ms   88.87%\n    Req/Sec   132.25k     4.03k  140.93k    75.00%\n  Latency Distribution\n     50%  230.00us\n     75%  238.00us\n     90%  300.00us\n     99%  366.00us\n  787699 requests in 3.01s, 78.88MB read\nRequests/sec: 262019.76\nTransfer/sec:     26.24MB\n",
+      "rss_kib": {
+        "VmHWM": 7232,
+        "VmRSS": 7232
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "backend": "epoll",
+      "repeat": 2,
+      "rps": 261969.74,
+      "p99_us": 363.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/users/alice/posts/42\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   240.39us   44.25us   2.27ms   88.28%\n    Req/Sec   132.58k     4.71k  139.27k    85.00%\n  Latency Distribution\n     50%  229.00us\n     75%  237.00us\n     90%  312.00us\n     99%  363.00us\n  790134 requests in 3.02s, 79.12MB read\nRequests/sec: 261969.74\nTransfer/sec:     26.23MB\n",
+      "rss_kib": {
+        "VmHWM": 7040,
+        "VmRSS": 7040
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "backend": "epoll",
+      "repeat": 3,
+      "rps": 262862.57,
+      "p99_us": 357.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/users/alice/posts/42\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   235.67us   37.70us   1.14ms   90.68%\n    Req/Sec   134.56k     6.64k  175.88k    88.52%\n  Latency Distribution\n     50%  231.00us\n     75%  237.00us\n     90%  249.00us\n     99%  357.00us\n  814936 requests in 3.10s, 81.60MB read\nRequests/sec: 262862.57\nTransfer/sec:     26.32MB\n",
+      "rss_kib": {
+        "VmHWM": 7048,
+        "VmRSS": 7048
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "backend": "epoll",
+      "repeat": 3,
+      "rps": 263161.9,
+      "p99_us": 363.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/users/alice/posts/42\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   240.78us   64.93us   3.87ms   90.63%\n    Req/Sec   132.88k     2.44k  138.73k    71.67%\n  Latency Distribution\n     50%  231.00us\n     75%  238.00us\n     90%  266.00us\n     99%  363.00us\n  791551 requests in 3.01s, 79.26MB read\nRequests/sec: 263161.90\nTransfer/sec:     26.35MB\n",
+      "rss_kib": {
+        "VmHWM": 7040,
+        "VmRSS": 7040
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "backend": "epoll",
+      "repeat": 3,
+      "rps": 262039.4,
+      "p99_us": 361.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/users/alice/posts/42\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   240.41us   37.63us   1.15ms   88.29%\n    Req/Sec   132.39k     3.08k  138.93k    71.67%\n  Latency Distribution\n     50%  230.00us\n     75%  238.00us\n     90%  298.00us\n     99%  361.00us\n  788492 requests in 3.01s, 78.96MB read\nRequests/sec: 262039.40\nTransfer/sec:     26.24MB\n",
+      "rss_kib": {
+        "VmHWM": 7044,
+        "VmRSS": 7044
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "backend": "epoll",
+      "repeat": 4,
+      "rps": 251182.34,
+      "p99_us": 499.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/users/alice/posts/42\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   254.51us  119.67us   3.85ms   96.49%\n    Req/Sec   127.19k     6.63k  137.51k    71.67%\n  Latency Distribution\n     50%  232.00us\n     75%  246.00us\n     90%  333.00us\n     99%  499.00us\n  757368 requests in 3.02s, 75.84MB read\nRequests/sec: 251182.34\nTransfer/sec:     25.15MB\n",
+      "rss_kib": {
+        "VmHWM": 7044,
+        "VmRSS": 7044
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "backend": "epoll",
+      "repeat": 4,
+      "rps": 251694.97,
+      "p99_us": 458.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/users/alice/posts/42\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   253.94us  114.80us   4.03ms   96.04%\n    Req/Sec   126.97k     5.75k  135.35k    86.67%\n  Latency Distribution\n     50%  233.00us\n     75%  246.00us\n     90%  335.00us\n     99%  458.00us\n  756585 requests in 3.01s, 75.76MB read\nRequests/sec: 251694.97\nTransfer/sec:     25.20MB\n",
+      "rss_kib": {
+        "VmHWM": 7220,
+        "VmRSS": 7220
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 4,
+      "path": "/users/alice/posts/42",
+      "backend": "epoll",
+      "repeat": 4,
+      "rps": 250300.94,
+      "p99_us": 406.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/users/alice/posts/42\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   254.70us  122.34us   4.95ms   97.43%\n    Req/Sec   126.57k     4.64k  134.85k    58.33%\n  Latency Distribution\n     50%  235.00us\n     75%  249.00us\n     90%  336.00us\n     99%  406.00us\n  753962 requests in 3.01s, 75.50MB read\nRequests/sec: 250300.94\nTransfer/sec:     25.06MB\n",
+      "rss_kib": {
+        "VmHWM": 7044,
+        "VmRSS": 7044
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "backend": "epoll",
+      "repeat": 0,
+      "rps": 252931.38,
+      "p99_us": 381.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/028/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   252.70us   97.46us   3.77ms   94.17%\n    Req/Sec   127.60k     5.34k  136.47k    68.33%\n  Latency Distribution\n     50%  239.00us\n     75%  246.00us\n     90%  274.00us\n     99%  381.00us\n  760012 requests in 3.00s, 75.38MB read\nRequests/sec: 252931.38\nTransfer/sec:     25.09MB\n",
+      "rss_kib": {
+        "VmHWM": 7128,
+        "VmRSS": 7128
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "backend": "epoll",
+      "repeat": 0,
+      "rps": 256170.99,
+      "p99_us": 371.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/028/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   248.04us   69.58us   4.03ms   90.60%\n    Req/Sec   129.27k     3.48k  136.59k    71.67%\n  Latency Distribution\n     50%  236.00us\n     75%  244.00us\n     90%  281.00us\n     99%  371.00us\n  770133 requests in 3.01s, 76.38MB read\nRequests/sec: 256170.99\nTransfer/sec:     25.41MB\n",
+      "rss_kib": {
+        "VmHWM": 7124,
+        "VmRSS": 7124
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "backend": "epoll",
+      "repeat": 0,
+      "rps": 256372.97,
+      "p99_us": 382.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/028/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   248.38us   84.25us   3.65ms   91.47%\n    Req/Sec   129.48k     3.86k  137.00k    63.33%\n  Latency Distribution\n     50%  235.00us\n     75%  243.00us\n     90%  287.00us\n     99%  382.00us\n  771416 requests in 3.01s, 76.51MB read\nRequests/sec: 256372.97\nTransfer/sec:     25.43MB\n",
+      "rss_kib": {
+        "VmHWM": 7168,
+        "VmRSS": 7168
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "backend": "epoll",
+      "repeat": 1,
+      "rps": 250567.04,
+      "p99_us": 445.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/028/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   254.28us  101.04us   3.64ms   94.25%\n    Req/Sec   126.93k     8.96k  138.49k    81.67%\n  Latency Distribution\n     50%  235.00us\n     75%  245.00us\n     90%  334.00us\n     99%  445.00us\n  756509 requests in 3.02s, 75.03MB read\nRequests/sec: 250567.04\nTransfer/sec:     24.85MB\n",
+      "rss_kib": {
+        "VmHWM": 7112,
+        "VmRSS": 7112
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "backend": "epoll",
+      "repeat": 1,
+      "rps": 254273.49,
+      "p99_us": 380.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/028/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   250.33us   89.72us   3.83ms   92.09%\n    Req/Sec   128.58k     3.51k  138.42k    66.67%\n  Latency Distribution\n     50%  237.00us\n     75%  245.00us\n     90%  300.00us\n     99%  380.00us\n  765931 requests in 3.01s, 75.97MB read\nRequests/sec: 254273.49\nTransfer/sec:     25.22MB\n",
+      "rss_kib": {
+        "VmHWM": 7240,
+        "VmRSS": 7240
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "backend": "epoll",
+      "repeat": 1,
+      "rps": 260430.29,
+      "p99_us": 373.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/028/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   246.65us  114.43us   3.82ms   97.76%\n    Req/Sec   131.65k     3.97k  140.00k    66.67%\n  Latency Distribution\n     50%  233.00us\n     75%  239.00us\n     90%  258.00us\n     99%  373.00us\n  783972 requests in 3.01s, 77.76MB read\nRequests/sec: 260430.29\nTransfer/sec:     25.83MB\n",
+      "rss_kib": {
+        "VmHWM": 7116,
+        "VmRSS": 7116
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "backend": "epoll",
+      "repeat": 2,
+      "rps": 259388.53,
+      "p99_us": 369.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/028/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   244.52us   42.67us   2.68ms   92.89%\n    Req/Sec   130.82k     3.94k  138.84k    68.33%\n  Latency Distribution\n     50%  236.00us\n     75%  243.00us\n     90%  255.00us\n     99%  369.00us\n  779807 requests in 3.01s, 77.34MB read\nRequests/sec: 259388.53\nTransfer/sec:     25.73MB\n",
+      "rss_kib": {
+        "VmHWM": 7240,
+        "VmRSS": 7240
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "backend": "epoll",
+      "repeat": 2,
+      "rps": 255716.81,
+      "p99_us": 377.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/028/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   249.45us  102.75us   3.78ms   95.72%\n    Req/Sec   129.04k     3.61k  138.17k    68.33%\n  Latency Distribution\n     50%  235.00us\n     75%  245.00us\n     90%  308.00us\n     99%  377.00us\n  769546 requests in 3.01s, 76.33MB read\nRequests/sec: 255716.81\nTransfer/sec:     25.36MB\n",
+      "rss_kib": {
+        "VmHWM": 7232,
+        "VmRSS": 7232
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "backend": "epoll",
+      "repeat": 2,
+      "rps": 254167.38,
+      "p99_us": 420.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/028/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   250.75us   94.67us   4.36ms   93.14%\n    Req/Sec   128.40k     5.17k  136.94k    78.33%\n  Latency Distribution\n     50%  235.00us\n     75%  244.00us\n     90%  321.00us\n     99%  420.00us\n  764948 requests in 3.01s, 75.87MB read\nRequests/sec: 254167.38\nTransfer/sec:     25.21MB\n",
+      "rss_kib": {
+        "VmHWM": 7188,
+        "VmRSS": 7188
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "backend": "epoll",
+      "repeat": 3,
+      "rps": 262028.71,
+      "p99_us": 365.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/028/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   245.18us  115.01us   3.85ms   98.01%\n    Req/Sec   132.24k     3.04k  139.33k    65.00%\n  Latency Distribution\n     50%  233.00us\n     75%  239.00us\n     90%  250.00us\n     99%  365.00us\n  787837 requests in 3.01s, 78.14MB read\nRequests/sec: 262028.71\nTransfer/sec:     25.99MB\n",
+      "rss_kib": {
+        "VmHWM": 7124,
+        "VmRSS": 7124
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "backend": "epoll",
+      "repeat": 3,
+      "rps": 261572.49,
+      "p99_us": 369.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/028/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   244.51us   93.48us   4.14ms   93.71%\n    Req/Sec   132.03k     4.49k  140.41k    65.00%\n  Latency Distribution\n     50%  232.00us\n     75%  239.00us\n     90%  261.00us\n     99%  369.00us\n  786114 requests in 3.01s, 77.97MB read\nRequests/sec: 261572.49\nTransfer/sec:     25.94MB\n",
+      "rss_kib": {
+        "VmHWM": 7124,
+        "VmRSS": 7124
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "backend": "epoll",
+      "repeat": 3,
+      "rps": 261965.73,
+      "p99_us": 361.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/028/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   241.47us   30.78us 714.00us   92.60%\n    Req/Sec   132.21k     3.96k  140.87k    60.00%\n  Latency Distribution\n     50%  234.00us\n     75%  240.00us\n     90%  249.00us\n     99%  361.00us\n  787814 requests in 3.01s, 78.14MB read\nRequests/sec: 261965.73\nTransfer/sec:     25.98MB\n",
+      "rss_kib": {
+        "VmHWM": 7120,
+        "VmRSS": 7120
+      }
+    },
+    {
+      "label": "current",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "backend": "epoll",
+      "repeat": 4,
+      "rps": 258451.04,
+      "p99_us": 397.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/028/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   247.95us  118.65us   4.66ms   97.65%\n    Req/Sec   130.38k     5.44k  138.62k    78.33%\n  Latency Distribution\n     50%  230.00us\n     75%  241.00us\n     90%  323.00us\n     99%  397.00us\n  777131 requests in 3.01s, 77.08MB read\nRequests/sec: 258451.04\nTransfer/sec:     25.63MB\n",
+      "rss_kib": {
+        "VmHWM": 7180,
+        "VmRSS": 7180
+      }
+    },
+    {
+      "label": "templates",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "backend": "epoll",
+      "repeat": 4,
+      "rps": 256872.03,
+      "p99_us": 373.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/028/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   245.73us   61.69us   2.73ms   88.56%\n    Req/Sec   129.95k     3.81k  140.41k    65.00%\n  Latency Distribution\n     50%  234.00us\n     75%  243.00us\n     90%  311.00us\n     99%  373.00us\n  773697 requests in 3.01s, 76.74MB read\nRequests/sec: 256872.03\nTransfer/sec:     25.48MB\n",
+      "rss_kib": {
+        "VmHWM": 7124,
+        "VmRSS": 7124
+      }
+    },
+    {
+      "label": "main",
+      "kind": "mixed",
+      "routes": 32,
+      "path": "/route/028/5",
+      "backend": "epoll",
+      "repeat": 4,
+      "rps": 260115.33,
+      "p99_us": 367.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/028/5\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   243.82us   65.50us   2.79ms   90.88%\n    Req/Sec   131.35k     3.82k  141.57k    71.67%\n  Latency Distribution\n     50%  234.00us\n     75%  240.00us\n     90%  264.00us\n     99%  367.00us\n  782950 requests in 3.01s, 77.65MB read\nRequests/sec: 260115.33\nTransfer/sec:     25.80MB\n",
+      "rss_kib": {
+        "VmHWM": 7056,
+        "VmRSS": 7056
+      }
+    }
+  ],
+  "failures": []
+}

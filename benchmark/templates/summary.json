@@ -1,0 +1,170 @@
+[
+  {
+    "fixture": [
+      "literal",
+      4,
+      "/health",
+      "epoll"
+    ],
+    "implementations": {
+      "main": {
+        "median_rps": 268922.51,
+        "min_rps": 263765.05,
+        "max_rps": 275079.64,
+        "median_p99_us": 356.0
+      },
+      "current": {
+        "median_rps": 267539.15,
+        "min_rps": 265521.54,
+        "max_rps": 271061.63,
+        "median_p99_us": 354.0
+      },
+      "templates": {
+        "median_rps": 268734.97,
+        "min_rps": 260977.3,
+        "max_rps": 269560.2,
+        "median_p99_us": 359.0
+      }
+    }
+  },
+  {
+    "fixture": [
+      "mixed",
+      4,
+      "/health",
+      "epoll"
+    ],
+    "implementations": {
+      "main": {
+        "median_rps": 259555.51,
+        "min_rps": 249586.71,
+        "max_rps": 262431.64,
+        "median_p99_us": 794.0
+      },
+      "current": {
+        "median_rps": 254943.29,
+        "min_rps": 247587.68,
+        "max_rps": 259699.94,
+        "median_p99_us": 1030.0
+      },
+      "templates": {
+        "median_rps": 257334.95,
+        "min_rps": 225627.96,
+        "max_rps": 260497.85,
+        "median_p99_us": 960.0
+      }
+    }
+  },
+  {
+    "fixture": [
+      "mixed",
+      4,
+      "/get-number-back/5",
+      "epoll"
+    ],
+    "implementations": {
+      "main": {
+        "median_rps": 263043.17,
+        "min_rps": 257988.15,
+        "max_rps": 263893.97,
+        "median_p99_us": 369.0
+      },
+      "current": {
+        "median_rps": 260608.53,
+        "min_rps": 258486.57,
+        "max_rps": 263863.79,
+        "median_p99_us": 369.0
+      },
+      "templates": {
+        "median_rps": 262692.45,
+        "min_rps": 256772.06,
+        "max_rps": 265143.09,
+        "median_p99_us": 369.0
+      }
+    }
+  },
+  {
+    "fixture": [
+      "mixed",
+      4,
+      "/get-number-back/5",
+      "io-uring"
+    ],
+    "implementations": {
+      "main": {
+        "median_rps": 336405.41,
+        "min_rps": 335301.47,
+        "max_rps": 337730.43,
+        "median_p99_us": 226.0
+      },
+      "current": {
+        "median_rps": 337313.24,
+        "min_rps": 332416.52,
+        "max_rps": 337928.96,
+        "median_p99_us": 219.0
+      },
+      "templates": {
+        "median_rps": 334297.98,
+        "min_rps": 331182.42,
+        "max_rps": 336037.0,
+        "median_p99_us": 229.0
+      }
+    }
+  },
+  {
+    "fixture": [
+      "mixed",
+      4,
+      "/users/alice/posts/42",
+      "epoll"
+    ],
+    "implementations": {
+      "main": {
+        "median_rps": 262862.57,
+        "min_rps": 250300.94,
+        "max_rps": 265143.39,
+        "median_p99_us": 361.0
+      },
+      "current": {
+        "median_rps": 263083.29,
+        "min_rps": 251182.34,
+        "max_rps": 264867.35,
+        "median_p99_us": 363.0
+      },
+      "templates": {
+        "median_rps": 259829.63,
+        "min_rps": 251694.97,
+        "max_rps": 266598.3,
+        "median_p99_us": 380.0
+      }
+    }
+  },
+  {
+    "fixture": [
+      "mixed",
+      32,
+      "/route/028/5",
+      "epoll"
+    ],
+    "implementations": {
+      "main": {
+        "median_rps": 260115.33,
+        "min_rps": 252931.38,
+        "max_rps": 262028.71,
+        "median_p99_us": 373.0
+      },
+      "current": {
+        "median_rps": 256170.99,
+        "min_rps": 250567.04,
+        "max_rps": 261572.49,
+        "median_p99_us": 397.0
+      },
+      "templates": {
+        "median_rps": 256872.03,
+        "min_rps": 254273.49,
+        "max_rps": 261965.73,
+        "median_p99_us": 373.0
+      }
+    }
+  }
+]

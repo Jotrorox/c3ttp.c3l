@@ -12,7 +12,7 @@ Requires C3 0.8.3 or later.
 - **SIMD delimiter scanning**: 32-byte vector operations accelerate delimiter scanning and header validation.
 - **Linux `io_uring` & `epoll`**: Uses `io_uring` by default for asynchronous I/O and falls back cleanly to `epoll` when unavailable.
 - **Multi-worker architecture**: Multi-process worker model via `SO_REUSEPORT` with CPU affinity pinning and cache-line aligned connection states.
-- **Method annotations**: `@Get("/")`, `@Post("/items")`, simple string-returning handlers, and compile-time validation without a runtime route registry.
+- **Route inventories**: Combine `@Route` handlers with explicit route tuples in a compile-time inventory, with simple string-returning handlers and no runtime route registry.
 - **Zero steady-state allocations**: Connection and buffer pools are allocated once at startup per worker.
 - **Strict HTTP/1.1 validation**: Handles chunked transfer encoding, trailers, pipelining, keep-alive, and guards against malformed or conflicting framing headers.
 
@@ -25,19 +25,22 @@ module app;
 
 import c3ttp;
 
-fn String hello() @Get("/")
+fn String hello() @Route({ GET, "/" })
 {
     return "Hello world!\n";
 }
 
-fn void status(Request* request, Response* response) @Get("/status")
+fn void status(Request* request, Response* response)
 {
     response.set_body("OK");
 }
 
 fn int main()
 {
-    Server server = c3ttp::@server(hello, status);
+    Server server = c3ttp::@server({
+        c3ttp::@route(hello),
+        { Method.GET, "/status", &status },
+    });
     server.listen("127.0.0.1", 8080)!!;
     return 0;
 }
@@ -54,7 +57,61 @@ c3c run hello_server -- --epoll
 c3c run hello_server -- --workers=2
 ```
 
-### Routes and handlers
+### Route inventories
+
+This branch combines the explicit route API with `@Route` annotations. Use
+`c3ttp::@route(handler)` to read a handler's `@Route({ method, path })` declaration
+into a compile-time `{ Method, path, &handler }` tuple. Put those entries alongside
+ordinary tuples inside **one inventory**, using `@server({ ... })` with braces.
+The inventory is explicit about which handlers are exposed, while annotations
+keep a route's method and path beside its implementation.
+
+```c3
+fn String health() @Route({ GET, "/health" }) => "ok";
+fn String echo(Request* request) => request.body;
+
+// In main:
+Server server = c3ttp::@server({
+    c3ttp::@route(health),
+    { Method.HEAD, "/health", &health },
+    { Method.POST, "/echo", &echo },
+});
+```
+
+An explicit tuple is authoritative: it can reuse an annotated handler at another
+method or path without changing that handler's declaration. `@route(handler)`
+reads exactly its generic `@Route` tag; it does not infer a route from `@Get` or
+expand other method annotations. Use a function name, not `&handler`, with
+`@route`; use `&handler` in explicit tuples. An annotation alone exposes nothing.
+
+Modules can export inventories for larger services:
+
+```c3
+// In module api, with the handlers above:
+macro @routes()
+{
+    return {
+        c3ttp::@route(health),
+        { Method.POST, "/echo", &echo },
+    };
+}
+// In the application, after importing api and admin:
+Server server = c3ttp::@server(api::@routes(), admin::@routes());
+```
+
+Each inventory is a nonempty, flat list of triples. Compose inventories as separate
+`@server(...)` arguments; do not nest an inventory inside another inventory.
+Duplicate method/path pairs are checked across the complete registration, including
+module boundaries. Registration order is preserved. Inventories add no runtime
+router objects, allocation, or function-pointer lookup beyond the existing server
+callback. They do not add path prefixes or dynamic parameter extraction.
+
+A single inventory avoids recursive collection per handler. The mixed 100-route
+module test passes; a 1,000-route trial reaches the compiler's default memory
+limit. See the [experiment results](benchmark/route-inventories.md) for the
+measurements and remaining scaling limits.
+
+### Existing annotation registration
 
 Annotate a function with `@Get("/path")`, `@Post("/path")`, etc., then register its **name**
 in `c3ttp::@server(hello, status)`. The method and path belong to the function;
@@ -98,10 +155,10 @@ annotations, duplicate method/path pairs, malformed paths, and unsupported handl
 signatures produce compiler errors. Routes are checked in registration order;
 keep frequently used routes near the front when using a large list.
 
-The experimental annotation collector currently has a compile-time scaling limit:
-the [five-way comparison](benchmark/five-way/README.md) builds 32 registered
-handlers, but 100 handlers hit C3 0.8.4's macro call-depth limit. The earlier
-explicit-route branch builds the same 100-route fixture.
+Bare function registration still uses the recursive collector: the historical
+[five-way comparison](benchmark/five-way/README.md) builds 32 handlers but hits
+the macro call-depth limit at 100. Use the inventory form above to avoid recursion
+per handler. Supplying hundreds of separate top-level arguments is still unsupported.
 
 The previous `@Route({ GET, "/path" })` annotation and explicit
 `{ method, path, &handler }` API remain supported. All three forms can be mixed,
@@ -247,12 +304,17 @@ Compile-time API diagnostics and HTTP integration checks:
 ```sh
 python3 test/compile_fail.py
 python3 test/http_test.py
+python3 test/route_inventory.py
 ```
 
 If io_uring is unavailable, run the HTTP checks with
 `python3 test/http_test.py --backends epoll`.
 
 ## Performance
+
+The [route inventory experiment](benchmark/route-inventories.md) compares this
+hybrid API with the generic `@Route` branch, including generated code, HTTP
+throughput, and the 100/1,000-route compilation trials.
 
 See [benchmark/README.md](benchmark/README.md) for reproducible before/after
 measurements, raw results, and the workload limits of the comparison.

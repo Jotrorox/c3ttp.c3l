@@ -1,0 +1,18 @@
+{
+  "compiler": "C3 Compiler Version:       0.8.3\nInstalled directory:       /home/johannes/.local/share/c3\nGit Hash:                  1d155ee04d3b607261b99aa15ed5eefd6d7db284\nBackends:                  LLVM\nLLVM version:              22.1.8\nLLVM default target:       x86_64-unknown-linux-gnu\n",
+  "results": [
+    {
+      "routes": 100,
+      "passed": true,
+      "checked_responses": 102,
+      "build_seconds": 2.4292948900001647,
+      "binary_bytes": 481408
+    },
+    {
+      "routes": 1000,
+      "passed": false,
+      "build_seconds": 2.7800145439978223,
+      "error": "\u26a0\ufe0fFatal Error! The compiler ran out of memory: more than 4096 MB was allocated from a single memory arena, exceeding the current maximum limit. Perhaps you called some recursive macro?\n"
+    }
+  ]
+}

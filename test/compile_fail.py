@@ -6,6 +6,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CASES = [
+    ("{}", "Route inventories must contain at least one route"),
+    ('{ c3ttp::@route(annotated), { Method.GET, "/annotated", &hello } }', "Duplicate route"),
+    ('{ c3ttp::@route(annotated) }, { { Method.GET, "/annotated", &hello } }', "Duplicate route"),
+    ("{ c3ttp::@route(hello) }", "@route requires @Route"),
+    ("{ c3ttp::@route(&annotated) }", "@route expects an annotated function name"),
+    ("{ c3ttp::@route(short_get) }", "@route requires @Route"),
+    ("{ c3ttp::@route(invalid_path) }", "must start with /"),
+    ("{ c3ttp::@route(invalid_return) }", "must return String"),
+    ("{ c3ttp::@route(invalid_parameter) }", "parameters must be Request*"),
     ("", "at least one route"),
     ('{ Method.GET, "/", &hello }, { Method.GET, "/", &hello }', "Duplicate route"),
     ('{ Method.GET, "", &hello }', "must not be empty"),

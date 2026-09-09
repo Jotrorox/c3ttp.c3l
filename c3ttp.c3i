@@ -190,6 +190,16 @@ struct RouteConfig
 
 attrdef @Route(RouteConfig config) = @tag("c3ttp:route", config);
 
+// Turn a declaration into an explicit compile-time route triple.
+// Use alongside { Method, path, &handler } in a flat @server registration.
+macro @route(#handler)
+{
+	$assert $defined($reflect(#handler).has_tag("c3ttp:route")) : "@route expects an annotated function name, not a function pointer";
+	$assert $reflect(#handler).has_tag("c3ttp:route") : "@route requires @Route({ method, path }) on the handler";
+	RouteConfig $config = $reflect(#handler).get_tag("c3ttp:route");
+	return { $config.method, $config.path, &#handler };
+}
+
 // C3 custom attributes use type-style names (@Get, not @GET).
 // Distinct tags allow multiple methods on one function. They are normalized
 // to the same compile-time route triples as @Route during registration.

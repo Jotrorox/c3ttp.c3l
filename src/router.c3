@@ -3,7 +3,12 @@ module c3ttp @private;
 macro @route_entries(#entry) @private
 {
 	$if $Typeof(#entry)::kind == UNTYPEDLIST:
-		// Keep the explicit { Method, path, &handler } API available too.
+		// A route inventory is a flat list of normalized triples. Passing it
+		// as one argument avoids recursive collection per handler.
+		$assert #entry.len > 0 : "Route inventories must contain at least one route";
+		$if $Typeof(#entry[0])::kind == UNTYPEDLIST:
+			return #entry;
+		$endif
 		return { #entry };
 	$else
 		$assert $defined($reflect(#entry).has_tag("c3ttp:route")) : "Pass an annotated function name or { Method, path, &handler }";

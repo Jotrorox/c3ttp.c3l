@@ -8,4 +8,4 @@ examples/**/build/
 examples/**/out/
 benchmark/five-way/eclair/build/
 benchmark/five-way/eclair/out/
-benchmark/five-way/__pycache__/
+__pycache__/

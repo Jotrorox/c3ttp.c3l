@@ -1,0 +1,41 @@
+{
+  "symbol": "c3ttp.$server$lambda1",
+  "size": 572,
+  "instruction_count": 146,
+  "before_sha256": "ba887a2fe0f9e8ebd43407caf61905e8dddde5305268e22fff8211d28b2a4582",
+  "after_sha256": "3539f0ccc3311441afa26973efc31f537b732446a7517c6e02b39a9cd1570db9",
+  "identical_bytes": false,
+  "equivalent_except_verified_literal_addresses": true,
+  "relocated_literals": [
+    {
+      "instruction_index": 42,
+      "before": "lea    0x2194a(%rip),%rcx        # 42226b <.emptystr.344+0x17d2>",
+      "after": "lea    0x21aa5(%rip),%rcx        # 4223c6 <.emptystr.344+0x192d>",
+      "literal": "text/plain; charset=utf-8"
+    },
+    {
+      "instruction_index": 77,
+      "before": "lea    0x218b5(%rip),%rcx        # 42226b <.emptystr.344+0x17d2>",
+      "after": "lea    0x21a10(%rip),%rcx        # 4223c6 <.emptystr.344+0x192d>",
+      "literal": "text/plain; charset=utf-8"
+    },
+    {
+      "instruction_index": 90,
+      "before": "lea    0x21887(%rip),%rcx        # 42226b <.emptystr.344+0x17d2>",
+      "after": "lea    0x219e2(%rip),%rcx        # 4223c6 <.emptystr.344+0x192d>",
+      "literal": "text/plain; charset=utf-8"
+    },
+    {
+      "instruction_index": 135,
+      "before": "lea    0x217e5(%rip),%rcx        # 42226b <.emptystr.344+0x17d2>",
+      "after": "lea    0x21940(%rip),%rcx        # 4223c6 <.emptystr.344+0x192d>",
+      "literal": "text/plain; charset=utf-8"
+    },
+    {
+      "instruction_index": 137,
+      "before": "lea    0x21871(%rip),%r8        # 422303 <.emptystr.344+0x186a>",
+      "after": "lea    0x21838(%rip),%r8        # 4222ca <.emptystr.344+0x1831>",
+      "literal": "Not Found"
+    }
+  ]
+}

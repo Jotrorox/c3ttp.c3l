@@ -1,4 +1,11 @@
 {
-  "provides" : "c3ttp",
-  "sources" : [ "c3ttp.c3i", "src/**" ]
+  "provides": "c3ttp",
+  "sources": [
+    "c3ttp.c3i",
+    "src/**"
+  ],
+  "targets": {
+    "linux-x64": {},
+    "linux-aarch64": {}
+  }
 }

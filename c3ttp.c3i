@@ -19,7 +19,8 @@ faultdef
 	BUFFER_TOO_SMALL,
 	INVALID_INPUT_BUFFER,
 	CONNECTION_CLOSED,
-	BACKEND_UNAVAILABLE;
+	BACKEND_UNAVAILABLE,
+	ROUTE_PARAM_NOT_FOUND;
 
 const usz MAX_VIEW_HEADERS = 64;
 const usz MAX_BODY_CHUNKS = 64;
@@ -176,3 +177,88 @@ macro void? serve(String host, uint port, ViewHandler handler, void* context = n
 	=> serve_impl(host, port, handler, context, options);
 macro bool io_uring_available()
 	=> io_uring_available_impl();
+
+// Friendly names retain the exact layout and lifetimes of the zero-copy views.
+alias Request = RequestView;
+alias Response = ResponseView;
+
+// Route metadata is read at compile time; nothing is stored on the request.
+struct RouteConfig
+{
+	Method method;
+	String path;
+}
+
+attrdef @Route(RouteConfig config) = @tag("c3ttp:route", config);
+
+// Turn a declaration into an explicit compile-time route triple.
+// Use alongside { Method, path, &handler } in a flat @server registration.
+macro @route(#handler)
+{
+	$assert $defined($reflect(#handler).has_tag("c3ttp:route")) : "@route expects an annotated function name, not a function pointer";
+	$assert $reflect(#handler).has_tag("c3ttp:route") : "@route requires @Route({ method, path }) on the handler";
+	RouteConfig $config = $reflect(#handler).get_tag("c3ttp:route");
+	return { $config.method, $config.path, &#handler };
+}
+
+// C3 custom attributes use type-style names (@Get, not @GET).
+// Distinct tags allow multiple methods on one function. They are normalized
+// to the same compile-time route triples as @Route during registration.
+attrdef @Get(String path) = @tag("c3ttp:route:get", path);
+attrdef @Post(String path) = @tag("c3ttp:route:post", path);
+attrdef @Put(String path) = @tag("c3ttp:route:put", path);
+attrdef @Delete(String path) = @tag("c3ttp:route:delete", path);
+attrdef @Head(String path) = @tag("c3ttp:route:head", path);
+attrdef @Options(String path) = @tag("c3ttp:route:options", path);
+attrdef @Patch(String path) = @tag("c3ttp:route:patch", path);
+attrdef @Connect(String path) = @tag("c3ttp:route:connect", path);
+attrdef @Trace(String path) = @tag("c3ttp:route:trace", path);
+
+// Capture containers live only for the handler call. Values borrow request.target.
+// Only names[:count] and values[:count] are initialized and may be accessed.
+const usz MAX_ROUTE_PARAMS = 8;
+struct RouteParams
+{
+	String[MAX_ROUTE_PARAMS] names;
+	String[MAX_ROUTE_PARAMS] values;
+	usz count;
+}
+
+// Missing names are explicit faults; no decoding or numeric conversion is implicit.
+macro String? RouteParams.get(&self, String name) => route_param_get_impl(self, name);
+
+struct Server
+{
+	ViewHandler handler;
+	void* context;
+	ServerOptions options;
+}
+
+// Register the entire route set at compile time: no heap-backed route registry.
+macro Server @server(...)
+{
+	$assert $vaarg.len > 0 : "@server requires at least one route";
+	var $routes = @collect_routes(...$vaarg);
+	return {
+		.handler = fn void?(Request* request, Response* response, void* context) {
+			return @dispatch(request, response, context, $routes);
+		},
+		.options = default_server_options(),
+	};
+}
+
+macro void? Server.listen(&self, String host = "0.0.0.0", uint port = 8080)
+	=> serve_impl(host, port, self.handler, self.context, self.options);
+
+// path() and query() borrow the raw target; neither decodes nor allocates.
+macro String RequestView.path(&self) => request_path_impl(self.target);
+macro String RequestView.query(&self) => request_query_impl(self.target);
+macro void ResponseView.text(&self, String body, ushort status = 200)
+	=> response_view_set_impl(self, status, body, "text/plain; charset=utf-8");
+// Accepts already serialized JSON; does not allocate or serialize.
+macro void ResponseView.json(&self, String body, ushort status = 200)
+	=> response_view_set_impl(self, status, body, "application/json");
+
+// Individual setters preserve the other response fields and borrow the body.
+macro void ResponseView.set_body(&self, String body) => self.body = body;
+macro void ResponseView.set_status(&self, ushort status) => self.status = status;

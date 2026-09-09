@@ -1,0 +1,22 @@
+{
+  "langrev": "1",
+  "dependency-search-paths": [
+    "/tmp/c3ttp-five-way/lib"
+  ],
+  "dependencies": [
+    "eclair",
+    "dessert"
+  ],
+  "sources": [
+    "src/**"
+  ],
+  "opt": "O3",
+  "targets": {
+    "eclair_benchmark": {
+      "type": "executable"
+    }
+  },
+  "features": [
+    "FIVE_WAY_ECLAIR"
+  ]
+}

@@ -1,0 +1,5308 @@
+{
+  "config": {
+    "wrk": "/tmp/c3ttp-wrk/wrk",
+    "runs": 5,
+    "seconds": 3,
+    "warmup": 1,
+    "server_cpu": 2,
+    "client_cpus": "4,5",
+    "memory_limit_mb": 2048,
+    "output": "/tmp/c3ttp-five-way/http.json",
+    "validate_only": false
+  },
+  "validation": [
+    {
+      "label": "main",
+      "routes": 4,
+      "backend": "epoll",
+      "fresh_connection_checks": 7,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "13",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "700",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 6956,
+        "VmRSS": 6956
+      }
+    },
+    {
+      "label": "main",
+      "routes": 4,
+      "backend": "io-uring",
+      "fresh_connection_checks": 7,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "13",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "700",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 7188,
+        "VmRSS": 7188
+      }
+    },
+    {
+      "label": "explicit",
+      "routes": 4,
+      "backend": "epoll",
+      "fresh_connection_checks": 7,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "13",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "700",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 6780,
+        "VmRSS": 6780
+      }
+    },
+    {
+      "label": "explicit",
+      "routes": 4,
+      "backend": "io-uring",
+      "fresh_connection_checks": 7,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "13",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "700",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 7300,
+        "VmRSS": 7300
+      }
+    },
+    {
+      "label": "route",
+      "routes": 4,
+      "backend": "epoll",
+      "fresh_connection_checks": 7,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "13",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "700",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 6960,
+        "VmRSS": 6960
+      }
+    },
+    {
+      "label": "route",
+      "routes": 4,
+      "backend": "io-uring",
+      "fresh_connection_checks": 7,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "13",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "700",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 7252,
+        "VmRSS": 7252
+      }
+    },
+    {
+      "label": "methods",
+      "routes": 4,
+      "backend": "epoll",
+      "fresh_connection_checks": 7,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "13",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "700",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 6840,
+        "VmRSS": 6840
+      }
+    },
+    {
+      "label": "methods",
+      "routes": 4,
+      "backend": "io-uring",
+      "fresh_connection_checks": 7,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "13",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "700",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 7252,
+        "VmRSS": 7252
+      }
+    },
+    {
+      "label": "eclair",
+      "routes": 4,
+      "backend": "epoll",
+      "fresh_connection_checks": 7,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Date": "Wed, 09 Sep 2026 11:25:18 GMT",
+            "Content-Length": "2",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": false,
+          "headers": {
+            "Date": "Wed, 09 Sep 2026 11:25:18 GMT",
+            "Content-Length": "2",
+            "Connection": "close"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Date": "Wed, 09 Sep 2026 11:25:18 GMT",
+            "Content-Length": "13",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 404,
+          "body_matches": false,
+          "keep_alive": false,
+          "headers": {
+            "Date": "Wed, 09 Sep 2026 11:25:18 GMT",
+            "Content-Length": "18",
+            "Connection": "close"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Date": "Wed, 09 Sep 2026 11:25:18 GMT",
+            "Content-Length": "700",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Date": "Wed, 09 Sep 2026 11:25:18 GMT",
+        "Content-Length": "2",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 2356,
+        "VmRSS": 2356
+      }
+    },
+    {
+      "label": "main",
+      "routes": 32,
+      "backend": "epoll",
+      "fresh_connection_checks": 35,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "13",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "700",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 6836,
+        "VmRSS": 6836
+      }
+    },
+    {
+      "label": "main",
+      "routes": 32,
+      "backend": "io-uring",
+      "fresh_connection_checks": 35,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "13",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "700",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 7260,
+        "VmRSS": 7260
+      }
+    },
+    {
+      "label": "explicit",
+      "routes": 32,
+      "backend": "epoll",
+      "fresh_connection_checks": 35,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "13",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "700",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 6912,
+        "VmRSS": 6912
+      }
+    },
+    {
+      "label": "explicit",
+      "routes": 32,
+      "backend": "io-uring",
+      "fresh_connection_checks": 35,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "13",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "700",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 7320,
+        "VmRSS": 7320
+      }
+    },
+    {
+      "label": "route",
+      "routes": 32,
+      "backend": "epoll",
+      "fresh_connection_checks": 35,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "13",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "700",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 6964,
+        "VmRSS": 6964
+      }
+    },
+    {
+      "label": "route",
+      "routes": 32,
+      "backend": "io-uring",
+      "fresh_connection_checks": 35,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "13",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "700",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 7300,
+        "VmRSS": 7300
+      }
+    },
+    {
+      "label": "methods",
+      "routes": 32,
+      "backend": "epoll",
+      "fresh_connection_checks": 35,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "13",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "700",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 6860,
+        "VmRSS": 6860
+      }
+    },
+    {
+      "label": "methods",
+      "routes": 32,
+      "backend": "io-uring",
+      "fresh_connection_checks": 35,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "13",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "700",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 7264,
+        "VmRSS": 7264
+      }
+    },
+    {
+      "label": "eclair",
+      "routes": 32,
+      "backend": "epoll",
+      "fresh_connection_checks": 35,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Date": "Wed, 09 Sep 2026 11:25:20 GMT",
+            "Content-Length": "2",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": false,
+          "headers": {
+            "Date": "Wed, 09 Sep 2026 11:25:20 GMT",
+            "Content-Length": "2",
+            "Connection": "close"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Date": "Wed, 09 Sep 2026 11:25:20 GMT",
+            "Content-Length": "13",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 404,
+          "body_matches": false,
+          "keep_alive": false,
+          "headers": {
+            "Date": "Wed, 09 Sep 2026 11:25:20 GMT",
+            "Content-Length": "18",
+            "Connection": "close"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Date": "Wed, 09 Sep 2026 11:25:20 GMT",
+            "Content-Length": "700",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Date": "Wed, 09 Sep 2026 11:25:20 GMT",
+        "Content-Length": "2",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 2452,
+        "VmRSS": 2452
+      }
+    },
+    {
+      "label": "main",
+      "routes": 100,
+      "backend": "epoll",
+      "fresh_connection_checks": 103,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "13",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "700",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 6848,
+        "VmRSS": 6848
+      }
+    },
+    {
+      "label": "main",
+      "routes": 100,
+      "backend": "io-uring",
+      "fresh_connection_checks": 103,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "13",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "700",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 7252,
+        "VmRSS": 7252
+      }
+    },
+    {
+      "label": "explicit",
+      "routes": 100,
+      "backend": "epoll",
+      "fresh_connection_checks": 103,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "13",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "700",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 6992,
+        "VmRSS": 6992
+      }
+    },
+    {
+      "label": "explicit",
+      "routes": 100,
+      "backend": "io-uring",
+      "fresh_connection_checks": 103,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "13",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "2",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Content-Length": "700",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 7260,
+        "VmRSS": 7260
+      }
+    },
+    {
+      "label": "eclair",
+      "routes": 100,
+      "backend": "epoll",
+      "fresh_connection_checks": 103,
+      "mixed_keep_alive": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Date": "Wed, 09 Sep 2026 11:25:22 GMT",
+            "Content-Length": "2",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/health?probe=1",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": false,
+          "headers": {
+            "Date": "Wed, 09 Sep 2026 11:25:22 GMT",
+            "Content-Length": "2",
+            "Connection": "close"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/hello",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Date": "Wed, 09 Sep 2026 11:25:22 GMT",
+            "Content-Length": "13",
+            "Connection": "keep-alive"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/status",
+          "status": 404,
+          "body_matches": false,
+          "keep_alive": false,
+          "headers": {
+            "Date": "Wed, 09 Sep 2026 11:25:22 GMT",
+            "Content-Length": "18",
+            "Connection": "close"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/echo",
+          "status": 200,
+          "body_matches": true,
+          "keep_alive": true,
+          "headers": {
+            "Date": "Wed, 09 Sep 2026 11:25:22 GMT",
+            "Content-Length": "700",
+            "Connection": "keep-alive"
+          }
+        }
+      ],
+      "health_headers": {
+        "Date": "Wed, 09 Sep 2026 11:25:22 GMT",
+        "Content-Length": "2",
+        "Connection": "keep-alive"
+      },
+      "rss_kib": {
+        "VmHWM": 3156,
+        "VmRSS": 3156
+      }
+    }
+  ],
+  "memory": [
+    {
+      "label": "main",
+      "routes": 4,
+      "path": "/health",
+      "samples": [
+        {
+          "requests": 0,
+          "VmHWM": 6976,
+          "VmRSS": 6976
+        },
+        {
+          "requests": 1000,
+          "VmHWM": 6976,
+          "VmRSS": 6976
+        },
+        {
+          "requests": 2000,
+          "VmHWM": 6976,
+          "VmRSS": 6976
+        },
+        {
+          "requests": 3000,
+          "VmHWM": 6976,
+          "VmRSS": 6976
+        },
+        {
+          "requests": 4000,
+          "VmHWM": 6976,
+          "VmRSS": 6976
+        },
+        {
+          "requests": 5000,
+          "VmHWM": 6976,
+          "VmRSS": 6976
+        }
+      ]
+    },
+    {
+      "label": "explicit",
+      "routes": 4,
+      "path": "/health",
+      "samples": [
+        {
+          "requests": 0,
+          "VmHWM": 6780,
+          "VmRSS": 6780
+        },
+        {
+          "requests": 1000,
+          "VmHWM": 6780,
+          "VmRSS": 6780
+        },
+        {
+          "requests": 2000,
+          "VmHWM": 6780,
+          "VmRSS": 6780
+        },
+        {
+          "requests": 3000,
+          "VmHWM": 6780,
+          "VmRSS": 6780
+        },
+        {
+          "requests": 4000,
+          "VmHWM": 6780,
+          "VmRSS": 6780
+        },
+        {
+          "requests": 5000,
+          "VmHWM": 6780,
+          "VmRSS": 6780
+        }
+      ]
+    },
+    {
+      "label": "route",
+      "routes": 4,
+      "path": "/health",
+      "samples": [
+        {
+          "requests": 0,
+          "VmHWM": 6904,
+          "VmRSS": 6904
+        },
+        {
+          "requests": 1000,
+          "VmHWM": 6904,
+          "VmRSS": 6904
+        },
+        {
+          "requests": 2000,
+          "VmHWM": 6904,
+          "VmRSS": 6904
+        },
+        {
+          "requests": 3000,
+          "VmHWM": 6904,
+          "VmRSS": 6904
+        },
+        {
+          "requests": 4000,
+          "VmHWM": 6904,
+          "VmRSS": 6904
+        },
+        {
+          "requests": 5000,
+          "VmHWM": 6904,
+          "VmRSS": 6904
+        }
+      ]
+    },
+    {
+      "label": "methods",
+      "routes": 4,
+      "path": "/health",
+      "samples": [
+        {
+          "requests": 0,
+          "VmHWM": 6904,
+          "VmRSS": 6904
+        },
+        {
+          "requests": 1000,
+          "VmHWM": 6904,
+          "VmRSS": 6904
+        },
+        {
+          "requests": 2000,
+          "VmHWM": 6904,
+          "VmRSS": 6904
+        },
+        {
+          "requests": 3000,
+          "VmHWM": 6904,
+          "VmRSS": 6904
+        },
+        {
+          "requests": 4000,
+          "VmHWM": 6904,
+          "VmRSS": 6904
+        },
+        {
+          "requests": 5000,
+          "VmHWM": 6904,
+          "VmRSS": 6904
+        }
+      ]
+    },
+    {
+      "label": "eclair",
+      "routes": 4,
+      "path": "/health",
+      "samples": [
+        {
+          "requests": 0,
+          "VmHWM": 2464,
+          "VmRSS": 2464
+        },
+        {
+          "requests": 1000,
+          "VmHWM": 2996,
+          "VmRSS": 2996
+        },
+        {
+          "requests": 2000,
+          "VmHWM": 3528,
+          "VmRSS": 3528
+        },
+        {
+          "requests": 3000,
+          "VmHWM": 4056,
+          "VmRSS": 4056
+        },
+        {
+          "requests": 4000,
+          "VmHWM": 4592,
+          "VmRSS": 4592
+        },
+        {
+          "requests": 5000,
+          "VmHWM": 5120,
+          "VmRSS": 5120
+        }
+      ]
+    },
+    {
+      "label": "main",
+      "routes": 32,
+      "path": "/route/027",
+      "samples": [
+        {
+          "requests": 0,
+          "VmHWM": 6972,
+          "VmRSS": 6972
+        },
+        {
+          "requests": 1000,
+          "VmHWM": 6972,
+          "VmRSS": 6972
+        },
+        {
+          "requests": 2000,
+          "VmHWM": 6972,
+          "VmRSS": 6972
+        },
+        {
+          "requests": 3000,
+          "VmHWM": 6972,
+          "VmRSS": 6972
+        },
+        {
+          "requests": 4000,
+          "VmHWM": 6972,
+          "VmRSS": 6972
+        },
+        {
+          "requests": 5000,
+          "VmHWM": 6972,
+          "VmRSS": 6972
+        }
+      ]
+    },
+    {
+      "label": "explicit",
+      "routes": 32,
+      "path": "/route/027",
+      "samples": [
+        {
+          "requests": 0,
+          "VmHWM": 6844,
+          "VmRSS": 6844
+        },
+        {
+          "requests": 1000,
+          "VmHWM": 6844,
+          "VmRSS": 6844
+        },
+        {
+          "requests": 2000,
+          "VmHWM": 6844,
+          "VmRSS": 6844
+        },
+        {
+          "requests": 3000,
+          "VmHWM": 6844,
+          "VmRSS": 6844
+        },
+        {
+          "requests": 4000,
+          "VmHWM": 6844,
+          "VmRSS": 6844
+        },
+        {
+          "requests": 5000,
+          "VmHWM": 6844,
+          "VmRSS": 6844
+        }
+      ]
+    },
+    {
+      "label": "route",
+      "routes": 32,
+      "path": "/route/027",
+      "samples": [
+        {
+          "requests": 0,
+          "VmHWM": 6852,
+          "VmRSS": 6852
+        },
+        {
+          "requests": 1000,
+          "VmHWM": 6852,
+          "VmRSS": 6852
+        },
+        {
+          "requests": 2000,
+          "VmHWM": 6852,
+          "VmRSS": 6852
+        },
+        {
+          "requests": 3000,
+          "VmHWM": 6852,
+          "VmRSS": 6852
+        },
+        {
+          "requests": 4000,
+          "VmHWM": 6852,
+          "VmRSS": 6852
+        },
+        {
+          "requests": 5000,
+          "VmHWM": 6852,
+          "VmRSS": 6852
+        }
+      ]
+    },
+    {
+      "label": "methods",
+      "routes": 32,
+      "path": "/route/027",
+      "samples": [
+        {
+          "requests": 0,
+          "VmHWM": 6964,
+          "VmRSS": 6964
+        },
+        {
+          "requests": 1000,
+          "VmHWM": 6964,
+          "VmRSS": 6964
+        },
+        {
+          "requests": 2000,
+          "VmHWM": 6964,
+          "VmRSS": 6964
+        },
+        {
+          "requests": 3000,
+          "VmHWM": 6964,
+          "VmRSS": 6964
+        },
+        {
+          "requests": 4000,
+          "VmHWM": 6964,
+          "VmRSS": 6964
+        },
+        {
+          "requests": 5000,
+          "VmHWM": 6964,
+          "VmRSS": 6964
+        }
+      ]
+    },
+    {
+      "label": "eclair",
+      "routes": 32,
+      "path": "/route/027",
+      "samples": [
+        {
+          "requests": 0,
+          "VmHWM": 2496,
+          "VmRSS": 2496
+        },
+        {
+          "requests": 1000,
+          "VmHWM": 7248,
+          "VmRSS": 7248
+        },
+        {
+          "requests": 2000,
+          "VmHWM": 11996,
+          "VmRSS": 11996
+        },
+        {
+          "requests": 3000,
+          "VmHWM": 16744,
+          "VmRSS": 16744
+        },
+        {
+          "requests": 4000,
+          "VmHWM": 21500,
+          "VmRSS": 21500
+        },
+        {
+          "requests": 5000,
+          "VmHWM": 26248,
+          "VmRSS": 26248
+        }
+      ]
+    },
+    {
+      "label": "main",
+      "routes": 100,
+      "path": "/route/095",
+      "samples": [
+        {
+          "requests": 0,
+          "VmHWM": 6912,
+          "VmRSS": 6912
+        },
+        {
+          "requests": 1000,
+          "VmHWM": 6912,
+          "VmRSS": 6912
+        },
+        {
+          "requests": 2000,
+          "VmHWM": 6912,
+          "VmRSS": 6912
+        },
+        {
+          "requests": 3000,
+          "VmHWM": 6912,
+          "VmRSS": 6912
+        },
+        {
+          "requests": 4000,
+          "VmHWM": 6912,
+          "VmRSS": 6912
+        },
+        {
+          "requests": 5000,
+          "VmHWM": 6912,
+          "VmRSS": 6912
+        }
+      ]
+    },
+    {
+      "label": "explicit",
+      "routes": 100,
+      "path": "/route/095",
+      "samples": [
+        {
+          "requests": 0,
+          "VmHWM": 6916,
+          "VmRSS": 6916
+        },
+        {
+          "requests": 1000,
+          "VmHWM": 6916,
+          "VmRSS": 6916
+        },
+        {
+          "requests": 2000,
+          "VmHWM": 6916,
+          "VmRSS": 6916
+        },
+        {
+          "requests": 3000,
+          "VmHWM": 6916,
+          "VmRSS": 6916
+        },
+        {
+          "requests": 4000,
+          "VmHWM": 6916,
+          "VmRSS": 6916
+        },
+        {
+          "requests": 5000,
+          "VmHWM": 6916,
+          "VmRSS": 6916
+        }
+      ]
+    },
+    {
+      "label": "eclair",
+      "routes": 100,
+      "path": "/route/095",
+      "samples": [
+        {
+          "requests": 0,
+          "VmHWM": 2396,
+          "VmRSS": 2396
+        },
+        {
+          "requests": 1000,
+          "VmHWM": 16712,
+          "VmRSS": 16712
+        },
+        {
+          "requests": 2000,
+          "VmHWM": 31024,
+          "VmRSS": 31024
+        },
+        {
+          "requests": 3000,
+          "VmHWM": 45336,
+          "VmRSS": 45336
+        },
+        {
+          "requests": 4000,
+          "VmHWM": 59652,
+          "VmRSS": 59652
+        },
+        {
+          "requests": 5000,
+          "VmHWM": 73964,
+          "VmRSS": 73964
+        }
+      ]
+    }
+  ],
+  "results": [
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 1,
+      "rps": 156474.26,
+      "p99_us": 17.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    15.33us   71.85us   2.97ms   99.63%\n    Req/Sec    78.73k     2.07k   81.04k    93.55%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   17.00us\n  485025 requests in 3.10s, 48.57MB read\nRequests/sec: 156474.26\nTransfer/sec:     15.67MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6844,
+        "VmRSS": 6844
+      },
+      "rss_warm_kib": {
+        "VmHWM": 6848,
+        "VmRSS": 6848
+      },
+      "rss_final_kib": {
+        "VmHWM": 6848,
+        "VmRSS": 6848
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 1,
+      "rps": 158634.31,
+      "p99_us": 15.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.00us    3.65us 514.00us   99.10%\n    Req/Sec    79.80k   827.32    81.15k    80.65%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   12.00us\n     99%   15.00us\n  491658 requests in 3.10s, 49.23MB read\nRequests/sec: 158634.31\nTransfer/sec:     15.88MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6840,
+        "VmRSS": 6840
+      },
+      "rss_warm_kib": {
+        "VmHWM": 6844,
+        "VmRSS": 6844
+      },
+      "rss_final_kib": {
+        "VmHWM": 6844,
+        "VmRSS": 6844
+      }
+    },
+    {
+      "label": "route",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 1,
+      "rps": 156761.99,
+      "p99_us": 17.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    13.78us   49.39us   3.23ms   99.70%\n    Req/Sec    78.92k     2.27k   81.71k    79.03%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   17.00us\n  485907 requests in 3.10s, 48.66MB read\nRequests/sec: 156761.99\nTransfer/sec:     15.70MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6852,
+        "VmRSS": 6852
+      },
+      "rss_warm_kib": {
+        "VmHWM": 6856,
+        "VmRSS": 6856
+      },
+      "rss_final_kib": {
+        "VmHWM": 6856,
+        "VmRSS": 6856
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 1,
+      "rps": 158123.5,
+      "p99_us": 16.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.08us    4.39us 452.00us   99.16%\n    Req/Sec    79.59k     1.70k   81.61k    79.03%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   16.00us\n  490109 requests in 3.10s, 49.08MB read\nRequests/sec: 158123.50\nTransfer/sec:     15.83MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6904,
+        "VmRSS": 6904
+      },
+      "rss_warm_kib": {
+        "VmHWM": 6908,
+        "VmRSS": 6908
+      },
+      "rss_final_kib": {
+        "VmHWM": 6908,
+        "VmRSS": 6908
+      }
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 1,
+      "rps": 21735.34,
+      "p99_us": 239.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    93.62us   53.48us   0.97ms   72.48%\n    Req/Sec    10.92k     7.21k   39.97k    90.32%\n  Latency Distribution\n     50%   93.00us\n     75%  124.00us\n     90%  149.00us\n     99%  239.00us\n  67371 requests in 3.10s, 6.49MB read\nRequests/sec:  21735.34\nTransfer/sec:      2.09MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 2344,
+        "VmRSS": 2344
+      },
+      "rss_warm_kib": {
+        "VmHWM": 20832,
+        "VmRSS": 17448
+      },
+      "rss_final_kib": {
+        "VmHWM": 51076,
+        "VmRSS": 47980
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 2,
+      "rps": 158694.42,
+      "p99_us": 16.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.01us    4.24us 466.00us   99.04%\n    Req/Sec    79.85k   671.00    80.96k    74.19%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   16.00us\n  491897 requests in 3.10s, 49.26MB read\nRequests/sec: 158694.42\nTransfer/sec:     15.89MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6900,
+        "VmRSS": 6900
+      },
+      "rss_warm_kib": {
+        "VmHWM": 6904,
+        "VmRSS": 6904
+      },
+      "rss_final_kib": {
+        "VmHWM": 6904,
+        "VmRSS": 6904
+      }
+    },
+    {
+      "label": "route",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 2,
+      "rps": 157532.31,
+      "p99_us": 17.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.11us    3.95us 419.00us   98.92%\n    Req/Sec    79.30k     0.90k   81.73k    77.42%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   17.00us\n  488327 requests in 3.10s, 48.90MB read\nRequests/sec: 157532.31\nTransfer/sec:     15.77MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6844,
+        "VmRSS": 6844
+      },
+      "rss_warm_kib": {
+        "VmHWM": 6848,
+        "VmRSS": 6848
+      },
+      "rss_final_kib": {
+        "VmHWM": 6848,
+        "VmRSS": 6848
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 2,
+      "rps": 155967.31,
+      "p99_us": 18.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.99us   29.81us   1.98ms   99.77%\n    Req/Sec    78.50k     1.86k   80.63k    90.32%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   18.00us\n  483382 requests in 3.10s, 48.40MB read\nRequests/sec: 155967.31\nTransfer/sec:     15.62MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6788,
+        "VmRSS": 6788
+      },
+      "rss_warm_kib": {
+        "VmHWM": 6792,
+        "VmRSS": 6792
+      },
+      "rss_final_kib": {
+        "VmHWM": 6792,
+        "VmRSS": 6792
+      }
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 2,
+      "rps": 20915.41,
+      "p99_us": 206.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    95.67us   48.90us   0.88ms   67.00%\n    Req/Sec    10.52k     6.24k   37.70k    93.55%\n  Latency Distribution\n     50%   93.00us\n     75%  127.00us\n     90%  161.00us\n     99%  206.00us\n  64830 requests in 3.10s, 6.24MB read\nRequests/sec:  20915.41\nTransfer/sec:      2.01MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 2356,
+        "VmRSS": 2356
+      },
+      "rss_warm_kib": {
+        "VmHWM": 18476,
+        "VmRSS": 15548
+      },
+      "rss_final_kib": {
+        "VmHWM": 47860,
+        "VmRSS": 41884
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 2,
+      "rps": 154048.88,
+      "p99_us": 19.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    14.66us   47.81us   2.25ms   99.51%\n    Req/Sec    77.57k     1.71k   79.31k    87.10%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   19.00us\n  477562 requests in 3.10s, 47.82MB read\nRequests/sec: 154048.88\nTransfer/sec:     15.43MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6908,
+        "VmRSS": 6908
+      },
+      "rss_warm_kib": {
+        "VmHWM": 6912,
+        "VmRSS": 6912
+      },
+      "rss_final_kib": {
+        "VmHWM": 6912,
+        "VmRSS": 6912
+      }
+    },
+    {
+      "label": "route",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 3,
+      "rps": 154209.39,
+      "p99_us": 17.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.63us   14.03us   1.15ms   99.70%\n    Req/Sec    77.61k   833.92    79.19k    69.35%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   17.00us\n  478063 requests in 3.10s, 47.87MB read\nRequests/sec: 154209.39\nTransfer/sec:     15.44MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6972,
+        "VmRSS": 6972
+      },
+      "rss_warm_kib": {
+        "VmHWM": 6976,
+        "VmRSS": 6976
+      },
+      "rss_final_kib": {
+        "VmHWM": 6976,
+        "VmRSS": 6976
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 3,
+      "rps": 156086.76,
+      "p99_us": 16.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.22us    4.02us 414.00us   99.08%\n    Req/Sec    78.51k     1.07k   80.97k    64.52%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   16.00us\n  483851 requests in 3.10s, 48.45MB read\nRequests/sec: 156086.76\nTransfer/sec:     15.63MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6904,
+        "VmRSS": 6904
+      },
+      "rss_warm_kib": {
+        "VmHWM": 6908,
+        "VmRSS": 6908
+      },
+      "rss_final_kib": {
+        "VmHWM": 6908,
+        "VmRSS": 6908
+      }
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 3,
+      "rps": 21065.67,
+      "p99_us": 220.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    95.22us   51.68us   0.94ms   63.03%\n    Req/Sec    10.59k     6.99k   40.47k    90.32%\n  Latency Distribution\n     50%   90.00us\n     75%  132.00us\n     90%  163.00us\n     99%  220.00us\n  65290 requests in 3.10s, 6.29MB read\nRequests/sec:  21065.67\nTransfer/sec:      2.03MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 2344,
+        "VmRSS": 2344
+      },
+      "rss_warm_kib": {
+        "VmHWM": 20192,
+        "VmRSS": 16904
+      },
+      "rss_final_kib": {
+        "VmHWM": 49508,
+        "VmRSS": 46492
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 3,
+      "rps": 156328.78,
+      "p99_us": 17.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.60us   17.00us   1.29ms   99.69%\n    Req/Sec    78.64k     1.47k   80.79k    74.19%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   17.00us\n  484499 requests in 3.10s, 48.52MB read\nRequests/sec: 156328.78\nTransfer/sec:     15.65MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6972,
+        "VmRSS": 6972
+      },
+      "rss_warm_kib": {
+        "VmHWM": 6976,
+        "VmRSS": 6976
+      },
+      "rss_final_kib": {
+        "VmHWM": 6976,
+        "VmRSS": 6976
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 3,
+      "rps": 157732.29,
+      "p99_us": 16.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.21us    9.80us   0.93ms   99.78%\n    Req/Sec    79.35k     0.85k   81.24k    74.19%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   16.00us\n  488919 requests in 3.10s, 48.96MB read\nRequests/sec: 157732.29\nTransfer/sec:     15.79MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6844,
+        "VmRSS": 6844
+      },
+      "rss_warm_kib": {
+        "VmHWM": 6848,
+        "VmRSS": 6848
+      },
+      "rss_final_kib": {
+        "VmHWM": 6848,
+        "VmRSS": 6848
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 4,
+      "rps": 157628.86,
+      "p99_us": 16.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.10us    3.22us 369.00us   98.84%\n    Req/Sec    79.33k   798.02    81.38k    77.42%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   16.00us\n  488608 requests in 3.10s, 48.93MB read\nRequests/sec: 157628.86\nTransfer/sec:     15.78MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6852,
+        "VmRSS": 6852
+      },
+      "rss_warm_kib": {
+        "VmHWM": 6856,
+        "VmRSS": 6856
+      },
+      "rss_final_kib": {
+        "VmHWM": 6856,
+        "VmRSS": 6856
+      }
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 4,
+      "rps": 20509.94,
+      "p99_us": 228.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    98.94us   57.79us   1.01ms   73.17%\n    Req/Sec    10.31k     5.49k   32.22k    90.32%\n  Latency Distribution\n     50%   96.00us\n     75%  127.00us\n     90%  164.00us\n     99%  228.00us\n  63572 requests in 3.10s, 6.12MB read\nRequests/sec:  20509.94\nTransfer/sec:      1.98MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 2344,
+        "VmRSS": 2344
+      },
+      "rss_warm_kib": {
+        "VmHWM": 18016,
+        "VmRSS": 18016
+      },
+      "rss_final_kib": {
+        "VmHWM": 46780,
+        "VmRSS": 40900
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 4,
+      "rps": 155214.92,
+      "p99_us": 17.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.46us    6.51us 421.00us   99.33%\n    Req/Sec    78.11k     1.38k   79.87k    87.10%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   17.00us\n  481086 requests in 3.10s, 48.17MB read\nRequests/sec: 155214.92\nTransfer/sec:     15.54MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6892,
+        "VmRSS": 6892
+      },
+      "rss_warm_kib": {
+        "VmHWM": 6896,
+        "VmRSS": 6896
+      },
+      "rss_final_kib": {
+        "VmHWM": 6896,
+        "VmRSS": 6896
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 4,
+      "rps": 156136.66,
+      "p99_us": 16.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.40us    9.64us 686.00us   99.71%\n    Req/Sec    78.50k     1.00k   79.87k    80.65%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   16.00us\n  484033 requests in 3.10s, 48.47MB read\nRequests/sec: 156136.66\nTransfer/sec:     15.63MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6848,
+        "VmRSS": 6848
+      },
+      "rss_warm_kib": {
+        "VmHWM": 6852,
+        "VmRSS": 6852
+      },
+      "rss_final_kib": {
+        "VmHWM": 6852,
+        "VmRSS": 6852
+      }
+    },
+    {
+      "label": "route",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 4,
+      "rps": 155066.37,
+      "p99_us": 18.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    15.40us   79.11us   3.84ms   99.71%\n    Req/Sec    78.06k     2.19k   81.04k    88.71%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   18.00us\n  480671 requests in 3.10s, 48.13MB read\nRequests/sec: 155066.37\nTransfer/sec:     15.53MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6776,
+        "VmRSS": 6776
+      },
+      "rss_warm_kib": {
+        "VmHWM": 6780,
+        "VmRSS": 6780
+      },
+      "rss_final_kib": {
+        "VmHWM": 6780,
+        "VmRSS": 6780
+      }
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 5,
+      "rps": 20930.35,
+      "p99_us": 228.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    96.20us   55.45us   1.31ms   63.77%\n    Req/Sec    10.53k     6.67k   38.03k    87.10%\n  Latency Distribution\n     50%   92.00us\n     75%  134.00us\n     90%  170.00us\n     99%  228.00us\n  64881 requests in 3.10s, 6.25MB read\nRequests/sec:  20930.35\nTransfer/sec:      2.02MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 2420,
+        "VmRSS": 2420
+      },
+      "rss_warm_kib": {
+        "VmHWM": 20780,
+        "VmRSS": 17376
+      },
+      "rss_final_kib": {
+        "VmHWM": 49724,
+        "VmRSS": 46780
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 5,
+      "rps": 155552.85,
+      "p99_us": 18.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    13.58us   36.04us   1.85ms   99.65%\n    Req/Sec    78.30k     1.85k   80.23k    91.94%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   18.00us\n  482139 requests in 3.10s, 48.28MB read\nRequests/sec: 155552.85\nTransfer/sec:     15.58MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6840,
+        "VmRSS": 6840
+      },
+      "rss_warm_kib": {
+        "VmHWM": 6844,
+        "VmRSS": 6844
+      },
+      "rss_final_kib": {
+        "VmHWM": 6844,
+        "VmRSS": 6844
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 5,
+      "rps": 156239.05,
+      "p99_us": 16.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.22us    5.25us 702.00us   99.43%\n    Req/Sec    78.58k   764.05    80.17k    74.19%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   16.00us\n  484272 requests in 3.10s, 48.49MB read\nRequests/sec: 156239.05\nTransfer/sec:     15.65MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6908,
+        "VmRSS": 6908
+      },
+      "rss_warm_kib": {
+        "VmHWM": 6912,
+        "VmRSS": 6912
+      },
+      "rss_final_kib": {
+        "VmHWM": 6912,
+        "VmRSS": 6912
+      }
+    },
+    {
+      "label": "route",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 5,
+      "rps": 154080.87,
+      "p99_us": 17.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.58us    8.32us 597.00us   99.54%\n    Req/Sec    77.55k     0.95k   79.26k    67.74%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   17.00us\n  477598 requests in 3.10s, 47.82MB read\nRequests/sec: 154080.87\nTransfer/sec:     15.43MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6840,
+        "VmRSS": 6840
+      },
+      "rss_warm_kib": {
+        "VmHWM": 6844,
+        "VmRSS": 6844
+      },
+      "rss_final_kib": {
+        "VmHWM": 6844,
+        "VmRSS": 6844
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "epoll",
+      "scenario": "small-first-c2",
+      "routes": 4,
+      "connections": 2,
+      "repeat": 5,
+      "rps": 156059.11,
+      "p99_us": 16.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.23us    3.91us 440.00us   99.23%\n    Req/Sec    78.53k     1.34k   81.29k    64.52%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   16.00us\n  483745 requests in 3.10s, 48.44MB read\nRequests/sec: 156059.11\nTransfer/sec:     15.63MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6784,
+        "VmRSS": 6784
+      },
+      "rss_warm_kib": {
+        "VmHWM": 6788,
+        "VmRSS": 6788
+      },
+      "rss_final_kib": {
+        "VmHWM": 6788,
+        "VmRSS": 6788
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 1,
+      "rps": 272139.16,
+      "p99_us": 354.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   235.74us  114.49us   3.88ms   98.23%\n    Req/Sec   137.29k     3.22k  145.52k    66.67%\n  Latency Distribution\n     50%  222.00us\n     75%  229.00us\n     90%  258.00us\n     99%  354.00us\n  818363 requests in 3.01s, 81.95MB read\nRequests/sec: 272139.16\nTransfer/sec:     27.25MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6844,
+        "VmRSS": 6844
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7096,
+        "VmRSS": 7096
+      },
+      "rss_final_kib": {
+        "VmHWM": 7096,
+        "VmRSS": 7096
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 1,
+      "rps": 271325.3,
+      "p99_us": 369.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   238.58us  140.67us   5.63ms   98.75%\n    Req/Sec   136.94k     5.52k  147.34k    76.67%\n  Latency Distribution\n     50%  220.00us\n     75%  228.00us\n     90%  306.00us\n     99%  369.00us\n  815876 requests in 3.01s, 81.70MB read\nRequests/sec: 271325.30\nTransfer/sec:     27.17MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6904,
+        "VmRSS": 6904
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7156,
+        "VmRSS": 7156
+      },
+      "rss_final_kib": {
+        "VmHWM": 7156,
+        "VmRSS": 7156
+      }
+    },
+    {
+      "label": "route",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 1,
+      "rps": 272406.14,
+      "p99_us": 350.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   232.82us   79.49us   3.77ms   90.92%\n    Req/Sec   137.53k     3.81k  144.93k    65.00%\n  Latency Distribution\n     50%  222.00us\n     75%  228.00us\n     90%  262.00us\n     99%  350.00us\n  819496 requests in 3.01s, 82.06MB read\nRequests/sec: 272406.14\nTransfer/sec:     27.28MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6856,
+        "VmRSS": 6856
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7108,
+        "VmRSS": 7108
+      },
+      "rss_final_kib": {
+        "VmHWM": 7108,
+        "VmRSS": 7108
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 1,
+      "rps": 271098.55,
+      "p99_us": 360.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   237.12us  110.64us   4.17ms   97.99%\n    Req/Sec   136.90k     4.59k  145.48k    75.00%\n  Latency Distribution\n     50%  223.00us\n     75%  230.00us\n     90%  256.00us\n     99%  360.00us\n  814964 requests in 3.01s, 81.61MB read\nRequests/sec: 271098.55\nTransfer/sec:     27.15MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6784,
+        "VmRSS": 6784
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7036,
+        "VmRSS": 7036
+      },
+      "rss_final_kib": {
+        "VmHWM": 7036,
+        "VmRSS": 7036
+      }
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 1,
+      "rps": 65795.11,
+      "p99_us": 1960.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     0.97ms  482.08us   4.55ms   64.50%\n    Req/Sec    33.24k    17.82k   84.97k    80.00%\n  Latency Distribution\n     50%    0.88ms\n     75%    1.38ms\n     90%    1.68ms\n     99%    1.96ms\n  198099 requests in 3.01s, 19.08MB read\nRequests/sec:  65795.11\nTransfer/sec:      6.34MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 2476,
+        "VmRSS": 2476
+      },
+      "rss_warm_kib": {
+        "VmHWM": 57956,
+        "VmRSS": 57628
+      },
+      "rss_final_kib": {
+        "VmHWM": 162040,
+        "VmRSS": 158928
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 2,
+      "rps": 270810.02,
+      "p99_us": 350.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   232.24us   47.09us   2.32ms   88.06%\n    Req/Sec   136.98k     4.57k  148.09k    61.67%\n  Latency Distribution\n     50%  221.00us\n     75%  229.00us\n     90%  302.00us\n     99%  350.00us\n  816112 requests in 3.01s, 81.72MB read\nRequests/sec: 270810.02\nTransfer/sec:     27.12MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6900,
+        "VmRSS": 6900
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7152,
+        "VmRSS": 7152
+      },
+      "rss_final_kib": {
+        "VmHWM": 7152,
+        "VmRSS": 7152
+      }
+    },
+    {
+      "label": "route",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 2,
+      "rps": 269122.7,
+      "p99_us": 353.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   235.53us   68.60us   3.74ms   90.80%\n    Req/Sec   136.06k     5.66k  145.04k    56.67%\n  Latency Distribution\n     50%  224.00us\n     75%  231.00us\n     90%  262.00us\n     99%  353.00us\n  810329 requests in 3.01s, 81.14MB read\nRequests/sec: 269122.70\nTransfer/sec:     26.95MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6908,
+        "VmRSS": 6908
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7160,
+        "VmRSS": 7160
+      },
+      "rss_final_kib": {
+        "VmHWM": 7160,
+        "VmRSS": 7160
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 2,
+      "rps": 264540.49,
+      "p99_us": 416.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   238.24us   42.76us   1.20ms   87.73%\n    Req/Sec   133.80k     6.34k  142.85k    65.00%\n  Latency Distribution\n     50%  226.00us\n     75%  234.00us\n     90%  312.00us\n     99%  416.00us\n  796333 requests in 3.01s, 79.74MB read\nRequests/sec: 264540.49\nTransfer/sec:     26.49MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6964,
+        "VmRSS": 6964
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7216,
+        "VmRSS": 7216
+      },
+      "rss_final_kib": {
+        "VmHWM": 7216,
+        "VmRSS": 7216
+      }
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 2,
+      "rps": 66235.61,
+      "p99_us": 1990.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     0.97ms  474.54us   4.83ms   64.48%\n    Req/Sec    33.46k    17.54k   83.89k    80.00%\n  Latency Distribution\n     50%    0.89ms\n     75%    1.35ms\n     90%    1.63ms\n     99%    1.99ms\n  199307 requests in 3.01s, 19.20MB read\nRequests/sec:  66235.61\nTransfer/sec:      6.38MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 2476,
+        "VmRSS": 2476
+      },
+      "rss_warm_kib": {
+        "VmHWM": 57952,
+        "VmRSS": 57904
+      },
+      "rss_final_kib": {
+        "VmHWM": 162912,
+        "VmRSS": 159532
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 2,
+      "rps": 269317.7,
+      "p99_us": 357.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   236.05us   85.00us   3.74ms   91.83%\n    Req/Sec   135.77k     5.26k  144.02k    68.33%\n  Latency Distribution\n     50%  223.00us\n     75%  230.00us\n     90%  286.00us\n     99%  357.00us\n  809813 requests in 3.01s, 81.09MB read\nRequests/sec: 269317.70\nTransfer/sec:     26.97MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6900,
+        "VmRSS": 6900
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7152,
+        "VmRSS": 7152
+      },
+      "rss_final_kib": {
+        "VmHWM": 7152,
+        "VmRSS": 7152
+      }
+    },
+    {
+      "label": "route",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 3,
+      "rps": 269451.76,
+      "p99_us": 358.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   238.22us  112.73us   3.87ms   97.88%\n    Req/Sec   136.05k     4.14k  143.82k    55.00%\n  Latency Distribution\n     50%  224.00us\n     75%  231.00us\n     90%  261.00us\n     99%  358.00us\n  810180 requests in 3.01s, 81.13MB read\nRequests/sec: 269451.76\nTransfer/sec:     26.98MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6788,
+        "VmRSS": 6788
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7040,
+        "VmRSS": 7040
+      },
+      "rss_final_kib": {
+        "VmHWM": 7040,
+        "VmRSS": 7040
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 3,
+      "rps": 266673.86,
+      "p99_us": 368.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   239.10us   96.07us   3.72ms   94.71%\n    Req/Sec   134.77k     5.35k  142.76k    75.00%\n  Latency Distribution\n     50%  225.00us\n     75%  232.00us\n     90%  293.00us\n     99%  368.00us\n  803107 requests in 3.01s, 80.42MB read\nRequests/sec: 266673.86\nTransfer/sec:     26.70MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6848,
+        "VmRSS": 6848
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      },
+      "rss_final_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      }
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 3,
+      "rps": 66123.19,
+      "p99_us": 2130.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     0.97ms  483.06us   3.77ms   64.99%\n    Req/Sec    33.36k    17.47k   82.00k    80.00%\n  Latency Distribution\n     50%  797.00us\n     75%    1.40ms\n     90%    1.65ms\n     99%    2.13ms\n  198893 requests in 3.01s, 19.16MB read\nRequests/sec:  66123.19\nTransfer/sec:      6.37MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 2420,
+        "VmRSS": 2420
+      },
+      "rss_warm_kib": {
+        "VmHWM": 57132,
+        "VmRSS": 56812
+      },
+      "rss_final_kib": {
+        "VmHWM": 161736,
+        "VmRSS": 158656
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 3,
+      "rps": 267816.14,
+      "p99_us": 356.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   236.35us   70.79us   3.88ms   90.00%\n    Req/Sec   135.27k     4.62k  143.63k    58.33%\n  Latency Distribution\n     50%  226.00us\n     75%  232.00us\n     90%  272.00us\n     99%  356.00us\n  806084 requests in 3.01s, 80.72MB read\nRequests/sec: 267816.14\nTransfer/sec:     26.82MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6908,
+        "VmRSS": 6908
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7160,
+        "VmRSS": 7160
+      },
+      "rss_final_kib": {
+        "VmHWM": 7160,
+        "VmRSS": 7160
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 3,
+      "rps": 268387.01,
+      "p99_us": 360.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   236.49us   71.05us   3.59ms   90.41%\n    Req/Sec   135.53k     2.91k  141.11k    63.33%\n  Latency Distribution\n     50%  225.00us\n     75%  232.00us\n     90%  266.00us\n     99%  360.00us\n  807058 requests in 3.01s, 80.82MB read\nRequests/sec: 268387.01\nTransfer/sec:     26.88MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6780,
+        "VmRSS": 6780
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7032,
+        "VmRSS": 7032
+      },
+      "rss_final_kib": {
+        "VmHWM": 7032,
+        "VmRSS": 7032
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 4,
+      "rps": 266743.92,
+      "p99_us": 358.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   238.55us   89.56us   4.88ms   93.13%\n    Req/Sec   134.77k     3.88k  141.69k    63.33%\n  Latency Distribution\n     50%  227.00us\n     75%  233.00us\n     90%  259.00us\n     99%  358.00us\n  803099 requests in 3.01s, 80.42MB read\nRequests/sec: 266743.92\nTransfer/sec:     26.71MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6784,
+        "VmRSS": 6784
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7036,
+        "VmRSS": 7036
+      },
+      "rss_final_kib": {
+        "VmHWM": 7036,
+        "VmRSS": 7036
+      }
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 4,
+      "rps": 65984.16,
+      "p99_us": 2490.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     0.98ms  477.75us   3.79ms   69.59%\n    Req/Sec    33.32k    16.75k   80.28k    76.67%\n  Latency Distribution\n     50%    0.87ms\n     75%    1.35ms\n     90%    1.64ms\n     99%    2.49ms\n  198496 requests in 3.01s, 19.12MB read\nRequests/sec:  65984.16\nTransfer/sec:      6.36MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 2360,
+        "VmRSS": 2360
+      },
+      "rss_warm_kib": {
+        "VmHWM": 57260,
+        "VmRSS": 57200
+      },
+      "rss_final_kib": {
+        "VmHWM": 161804,
+        "VmRSS": 158404
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 4,
+      "rps": 266214.76,
+      "p99_us": 370.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   241.52us  110.25us   3.86ms   97.78%\n    Req/Sec   134.50k     4.96k  142.89k    83.33%\n  Latency Distribution\n     50%  227.00us\n     75%  233.00us\n     90%  272.00us\n     99%  370.00us\n  800819 requests in 3.01s, 80.19MB read\nRequests/sec: 266214.76\nTransfer/sec:     26.66MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6852,
+        "VmRSS": 6852
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      },
+      "rss_final_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 4,
+      "rps": 266819.03,
+      "p99_us": 361.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   239.15us   84.78us   3.78ms   92.57%\n    Req/Sec   134.68k     3.92k  142.82k    65.00%\n  Latency Distribution\n     50%  227.00us\n     75%  233.00us\n     90%  265.00us\n     99%  361.00us\n  802284 requests in 3.01s, 80.34MB read\nRequests/sec: 266819.03\nTransfer/sec:     26.72MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6784,
+        "VmRSS": 6784
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7036,
+        "VmRSS": 7036
+      },
+      "rss_final_kib": {
+        "VmHWM": 7036,
+        "VmRSS": 7036
+      }
+    },
+    {
+      "label": "route",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 4,
+      "rps": 268312.43,
+      "p99_us": 358.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   237.85us   83.64us   3.74ms   92.57%\n    Req/Sec   135.41k     3.85k  144.10k    66.67%\n  Latency Distribution\n     50%  227.00us\n     75%  233.00us\n     90%  253.00us\n     99%  358.00us\n  806607 requests in 3.01s, 80.77MB read\nRequests/sec: 268312.43\nTransfer/sec:     26.87MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6908,
+        "VmRSS": 6908
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7160,
+        "VmRSS": 7160
+      },
+      "rss_final_kib": {
+        "VmHWM": 7160,
+        "VmRSS": 7160
+      }
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 5,
+      "rps": 66260.96,
+      "p99_us": 2540.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     0.97ms  503.99us   5.32ms   68.70%\n    Req/Sec    33.47k    17.87k   84.14k    80.00%\n  Latency Distribution\n     50%  827.00us\n     75%    1.39ms\n     90%    1.65ms\n     99%    2.54ms\n  199513 requests in 3.01s, 19.22MB read\nRequests/sec:  66260.96\nTransfer/sec:      6.38MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 2424,
+        "VmRSS": 2424
+      },
+      "rss_warm_kib": {
+        "VmHWM": 57772,
+        "VmRSS": 57332
+      },
+      "rss_final_kib": {
+        "VmHWM": 162896,
+        "VmRSS": 160084
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 5,
+      "rps": 265979.72,
+      "p99_us": 361.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   241.14us  103.20us   3.67ms   96.39%\n    Req/Sec   134.23k     4.44k  142.54k    61.67%\n  Latency Distribution\n     50%  228.00us\n     75%  234.00us\n     90%  260.00us\n     99%  361.00us\n  799838 requests in 3.01s, 80.09MB read\nRequests/sec: 265979.72\nTransfer/sec:     26.63MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6788,
+        "VmRSS": 6788
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7040,
+        "VmRSS": 7040
+      },
+      "rss_final_kib": {
+        "VmHWM": 7040,
+        "VmRSS": 7040
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 5,
+      "rps": 266303.26,
+      "p99_us": 364.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   239.24us   91.55us   3.86ms   93.38%\n    Req/Sec   134.67k     4.30k  141.79k    68.33%\n  Latency Distribution\n     50%  227.00us\n     75%  233.00us\n     90%  266.00us\n     99%  364.00us\n  802319 requests in 3.01s, 80.34MB read\nRequests/sec: 266303.26\nTransfer/sec:     26.67MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6844,
+        "VmRSS": 6844
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7096,
+        "VmRSS": 7096
+      },
+      "rss_final_kib": {
+        "VmHWM": 7096,
+        "VmRSS": 7096
+      }
+    },
+    {
+      "label": "route",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 5,
+      "rps": 266021.15,
+      "p99_us": 361.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   239.29us   81.45us   3.89ms   92.20%\n    Req/Sec   134.44k     4.36k  141.82k    60.00%\n  Latency Distribution\n     50%  228.00us\n     75%  234.00us\n     90%  256.00us\n     99%  361.00us\n  800613 requests in 3.01s, 80.17MB read\nRequests/sec: 266021.15\nTransfer/sec:     26.64MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6900,
+        "VmRSS": 6900
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7152,
+        "VmRSS": 7152
+      },
+      "rss_final_kib": {
+        "VmHWM": 7152,
+        "VmRSS": 7152
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "epoll",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 5,
+      "rps": 264519.65,
+      "p99_us": 374.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   244.08us  120.47us   4.08ms   98.18%\n    Req/Sec   133.42k     4.64k  140.39k    71.67%\n  Latency Distribution\n     50%  229.00us\n     75%  235.00us\n     90%  259.00us\n     99%  374.00us\n  795295 requests in 3.01s, 79.64MB read\nRequests/sec: 264519.65\nTransfer/sec:     26.49MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6904,
+        "VmRSS": 6904
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7156,
+        "VmRSS": 7156
+      },
+      "rss_final_kib": {
+        "VmHWM": 7156,
+        "VmRSS": 7156
+      }
+    },
+    {
+      "label": "main",
+      "backend": "io-uring",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 1,
+      "rps": 342206.53,
+      "p99_us": 218.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   178.78us   13.21us 814.00us   88.60%\n    Req/Sec   172.50k     2.29k  176.24k    71.67%\n  Latency Distribution\n     50%  179.00us\n     75%  183.00us\n     90%  188.00us\n     99%  218.00us\n  1028911 requests in 3.01s, 103.03MB read\nRequests/sec: 342206.53\nTransfer/sec:     34.27MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 7316,
+        "VmRSS": 7316
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7568,
+        "VmRSS": 7568
+      },
+      "rss_final_kib": {
+        "VmHWM": 7568,
+        "VmRSS": 7568
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "io-uring",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 1,
+      "rps": 338744.05,
+      "p99_us": 244.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   184.95us  117.32us   6.25ms   99.44%\n    Req/Sec   170.96k     4.51k  175.24k    93.33%\n  Latency Distribution\n     50%  179.00us\n     75%  184.00us\n     90%  190.00us\n     99%  244.00us\n  1018747 requests in 3.01s, 102.01MB read\nRequests/sec: 338744.05\nTransfer/sec:     33.92MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 7384,
+        "VmRSS": 7384
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7636,
+        "VmRSS": 7636
+      },
+      "rss_final_kib": {
+        "VmHWM": 7636,
+        "VmRSS": 7636
+      }
+    },
+    {
+      "label": "route",
+      "backend": "io-uring",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 1,
+      "rps": 340697.32,
+      "p99_us": 212.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   178.52us   12.72us 707.00us   85.58%\n    Req/Sec   171.76k     1.75k  175.02k    78.33%\n  Latency Distribution\n     50%  179.00us\n     75%  184.00us\n     90%  189.00us\n     99%  212.00us\n  1024345 requests in 3.01s, 102.57MB read\nRequests/sec: 340697.32\nTransfer/sec:     34.12MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 7260,
+        "VmRSS": 7260
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7512,
+        "VmRSS": 7512
+      },
+      "rss_final_kib": {
+        "VmHWM": 7512,
+        "VmRSS": 7512
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "io-uring",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 1,
+      "rps": 339227.68,
+      "p99_us": 239.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   182.90us   89.45us   3.91ms   99.12%\n    Req/Sec   171.28k     4.52k  175.37k    96.67%\n  Latency Distribution\n     50%  179.00us\n     75%  184.00us\n     90%  189.00us\n     99%  239.00us\n  1021173 requests in 3.01s, 102.26MB read\nRequests/sec: 339227.68\nTransfer/sec:     33.97MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 7304,
+        "VmRSS": 7304
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7556,
+        "VmRSS": 7556
+      },
+      "rss_final_kib": {
+        "VmHWM": 7556,
+        "VmRSS": 7556
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "io-uring",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 2,
+      "rps": 338197.42,
+      "p99_us": 234.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   183.99us   74.95us   3.11ms   98.74%\n    Req/Sec   170.75k     1.80k  173.89k    70.00%\n  Latency Distribution\n     50%  181.00us\n     75%  185.00us\n     90%  191.00us\n     99%  234.00us\n  1017982 requests in 3.01s, 101.94MB read\nRequests/sec: 338197.42\nTransfer/sec:     33.87MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 7380,
+        "VmRSS": 7380
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7632,
+        "VmRSS": 7632
+      },
+      "rss_final_kib": {
+        "VmHWM": 7632,
+        "VmRSS": 7632
+      }
+    },
+    {
+      "label": "route",
+      "backend": "io-uring",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 2,
+      "rps": 337213.67,
+      "p99_us": 272.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   185.10us   95.39us   3.74ms   98.89%\n    Req/Sec   170.21k     6.17k  174.66k    93.33%\n  Latency Distribution\n     50%  180.00us\n     75%  185.00us\n     90%  191.00us\n     99%  272.00us\n  1014074 requests in 3.01s, 101.55MB read\nRequests/sec: 337213.67\nTransfer/sec:     33.77MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 7244,
+        "VmRSS": 7244
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7496,
+        "VmRSS": 7496
+      },
+      "rss_final_kib": {
+        "VmHWM": 7496,
+        "VmRSS": 7496
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "io-uring",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 2,
+      "rps": 339209.22,
+      "p99_us": 230.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   182.59us   61.31us   3.91ms   99.07%\n    Req/Sec   171.52k     2.29k  175.02k    75.00%\n  Latency Distribution\n     50%  180.00us\n     75%  185.00us\n     90%  190.00us\n     99%  230.00us\n  1022593 requests in 3.01s, 102.40MB read\nRequests/sec: 339209.22\nTransfer/sec:     33.97MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 7188,
+        "VmRSS": 7188
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7440,
+        "VmRSS": 7440
+      },
+      "rss_final_kib": {
+        "VmHWM": 7440,
+        "VmRSS": 7440
+      }
+    },
+    {
+      "label": "main",
+      "backend": "io-uring",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 2,
+      "rps": 341648.55,
+      "p99_us": 221.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   180.56us   30.12us   2.17ms   98.11%\n    Req/Sec   172.52k     1.57k  176.06k    73.33%\n  Latency Distribution\n     50%  180.00us\n     75%  184.00us\n     90%  189.00us\n     99%  221.00us\n  1028220 requests in 3.01s, 102.96MB read\nRequests/sec: 341648.55\nTransfer/sec:     34.21MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 7368,
+        "VmRSS": 7368
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7620,
+        "VmRSS": 7620
+      },
+      "rss_final_kib": {
+        "VmHWM": 7620,
+        "VmRSS": 7620
+      }
+    },
+    {
+      "label": "route",
+      "backend": "io-uring",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 3,
+      "rps": 342070.67,
+      "p99_us": 214.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   179.71us   51.96us   3.95ms   99.27%\n    Req/Sec   172.44k     1.58k  174.61k    66.67%\n  Latency Distribution\n     50%  179.00us\n     75%  184.00us\n     90%  189.00us\n     99%  214.00us\n  1028613 requests in 3.01s, 103.00MB read\nRequests/sec: 342070.67\nTransfer/sec:     34.25MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 7244,
+        "VmRSS": 7244
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7496,
+        "VmRSS": 7496
+      },
+      "rss_final_kib": {
+        "VmHWM": 7496,
+        "VmRSS": 7496
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "io-uring",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 3,
+      "rps": 337356.65,
+      "p99_us": 261.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   183.01us   65.20us   3.30ms   98.37%\n    Req/Sec   170.07k     5.80k  174.13k    95.00%\n  Latency Distribution\n     50%  179.00us\n     75%  185.00us\n     90%  191.00us\n     99%  261.00us\n  1014450 requests in 3.01s, 101.58MB read\nRequests/sec: 337356.65\nTransfer/sec:     33.78MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 7380,
+        "VmRSS": 7380
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7632,
+        "VmRSS": 7632
+      },
+      "rss_final_kib": {
+        "VmHWM": 7632,
+        "VmRSS": 7632
+      }
+    },
+    {
+      "label": "main",
+      "backend": "io-uring",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 3,
+      "rps": 341445.74,
+      "p99_us": 217.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   179.59us   30.85us   2.32ms   98.12%\n    Req/Sec   172.54k     1.98k  175.34k    80.00%\n  Latency Distribution\n     50%  179.00us\n     75%  184.00us\n     90%  188.00us\n     99%  217.00us\n  1028453 requests in 3.01s, 102.98MB read\nRequests/sec: 341445.74\nTransfer/sec:     34.19MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 7292,
+        "VmRSS": 7292
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7544,
+        "VmRSS": 7544
+      },
+      "rss_final_kib": {
+        "VmHWM": 7544,
+        "VmRSS": 7544
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "io-uring",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 3,
+      "rps": 340294.17,
+      "p99_us": 221.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   179.83us   19.44us   1.27ms   94.67%\n    Req/Sec   171.59k     2.46k  174.32k    88.33%\n  Latency Distribution\n     50%  179.00us\n     75%  184.00us\n     90%  189.00us\n     99%  221.00us\n  1023709 requests in 3.01s, 102.51MB read\nRequests/sec: 340294.17\nTransfer/sec:     34.08MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 7304,
+        "VmRSS": 7304
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7556,
+        "VmRSS": 7556
+      },
+      "rss_final_kib": {
+        "VmHWM": 7556,
+        "VmRSS": 7556
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "io-uring",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 4,
+      "rps": 339765.05,
+      "p99_us": 222.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   181.51us   23.41us   1.88ms   96.76%\n    Req/Sec   171.20k     1.70k  173.86k    71.67%\n  Latency Distribution\n     50%  181.00us\n     75%  186.00us\n     90%  191.00us\n     99%  222.00us\n  1021030 requests in 3.01s, 102.24MB read\nRequests/sec: 339765.05\nTransfer/sec:     34.02MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 7260,
+        "VmRSS": 7260
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7512,
+        "VmRSS": 7512
+      },
+      "rss_final_kib": {
+        "VmHWM": 7512,
+        "VmRSS": 7512
+      }
+    },
+    {
+      "label": "main",
+      "backend": "io-uring",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 4,
+      "rps": 339284.79,
+      "p99_us": 217.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   181.60us   36.22us   2.55ms   98.56%\n    Req/Sec   171.17k     1.37k  173.52k    71.67%\n  Latency Distribution\n     50%  181.00us\n     75%  185.00us\n     90%  190.00us\n     99%  217.00us\n  1020646 requests in 3.01s, 102.20MB read\nRequests/sec: 339284.79\nTransfer/sec:     33.97MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 7304,
+        "VmRSS": 7304
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7556,
+        "VmRSS": 7556
+      },
+      "rss_final_kib": {
+        "VmHWM": 7556,
+        "VmRSS": 7556
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "io-uring",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 4,
+      "rps": 340235.1,
+      "p99_us": 218.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   182.58us   86.05us   4.44ms   99.34%\n    Req/Sec   171.57k     1.71k  174.26k    81.67%\n  Latency Distribution\n     50%  180.00us\n     75%  184.00us\n     90%  190.00us\n     99%  218.00us\n  1023254 requests in 3.01s, 102.46MB read\nRequests/sec: 340235.10\nTransfer/sec:     34.07MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 7192,
+        "VmRSS": 7192
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7444,
+        "VmRSS": 7444
+      },
+      "rss_final_kib": {
+        "VmHWM": 7444,
+        "VmRSS": 7444
+      }
+    },
+    {
+      "label": "route",
+      "backend": "io-uring",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 4,
+      "rps": 338642.14,
+      "p99_us": 236.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   185.10us   85.27us   3.80ms   98.93%\n    Req/Sec   170.77k     3.32k  173.87k    91.67%\n  Latency Distribution\n     50%  181.00us\n     75%  186.00us\n     90%  191.00us\n     99%  236.00us\n  1018472 requests in 3.01s, 101.99MB read\nRequests/sec: 338642.14\nTransfer/sec:     33.91MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 7196,
+        "VmRSS": 7196
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7448,
+        "VmRSS": 7448
+      },
+      "rss_final_kib": {
+        "VmHWM": 7448,
+        "VmRSS": 7448
+      }
+    },
+    {
+      "label": "main",
+      "backend": "io-uring",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 5,
+      "rps": 335960.48,
+      "p99_us": 236.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   182.49us   45.60us   3.39ms   98.56%\n    Req/Sec   169.78k     3.30k  174.04k    76.67%\n  Latency Distribution\n     50%  181.00us\n     75%  186.00us\n     90%  192.00us\n     99%  236.00us\n  1013068 requests in 3.02s, 101.44MB read\nRequests/sec: 335960.48\nTransfer/sec:     33.64MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 7244,
+        "VmRSS": 7244
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7496,
+        "VmRSS": 7496
+      },
+      "rss_final_kib": {
+        "VmHWM": 7496,
+        "VmRSS": 7496
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "io-uring",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 5,
+      "rps": 338411.51,
+      "p99_us": 224.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   182.52us   52.00us   3.12ms   98.78%\n    Req/Sec   170.76k     2.03k  173.84k    73.33%\n  Latency Distribution\n     50%  181.00us\n     75%  186.00us\n     90%  190.00us\n     99%  224.00us\n  1017176 requests in 3.01s, 101.86MB read\nRequests/sec: 338411.51\nTransfer/sec:     33.89MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 7244,
+        "VmRSS": 7244
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7496,
+        "VmRSS": 7496
+      },
+      "rss_final_kib": {
+        "VmHWM": 7496,
+        "VmRSS": 7496
+      }
+    },
+    {
+      "label": "route",
+      "backend": "io-uring",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 5,
+      "rps": 337432.0,
+      "p99_us": 224.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   182.04us   60.72us   3.88ms   98.96%\n    Req/Sec   170.39k     2.56k  174.28k    65.00%\n  Latency Distribution\n     50%  180.00us\n     75%  185.00us\n     90%  191.00us\n     99%  224.00us\n  1015315 requests in 3.01s, 101.67MB read\nRequests/sec: 337432.00\nTransfer/sec:     33.79MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 7256,
+        "VmRSS": 7256
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7508,
+        "VmRSS": 7508
+      },
+      "rss_final_kib": {
+        "VmHWM": 7508,
+        "VmRSS": 7508
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "io-uring",
+      "scenario": "small-first-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 5,
+      "rps": 335563.02,
+      "p99_us": 269.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   186.14us   94.69us   3.79ms   98.91%\n    Req/Sec   169.20k     6.04k  173.79k    90.00%\n  Latency Distribution\n     50%  181.00us\n     75%  186.00us\n     90%  192.00us\n     99%  269.00us\n  1008385 requests in 3.01s, 100.98MB read\nRequests/sec: 335563.02\nTransfer/sec:     33.60MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 7304,
+        "VmRSS": 7304
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7556,
+        "VmRSS": 7556
+      },
+      "rss_final_kib": {
+        "VmHWM": 7556,
+        "VmRSS": 7556
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 1,
+      "rps": 255692.62,
+      "p99_us": 368.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   243.12us   78.21us   3.84ms   88.80%\n    Req/Sec   130.84k     7.33k  177.06k    95.08%\n  Latency Distribution\n     50%  235.00us\n     75%  241.00us\n     90%  268.00us\n     99%  368.00us\n  792653 requests in 3.10s, 272.89MB read\nRequests/sec: 255692.62\nTransfer/sec:     88.03MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6848,
+        "VmRSS": 6848
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      },
+      "rss_final_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 1,
+      "rps": 259233.75,
+      "p99_us": 370.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   245.82us   82.71us   3.83ms   91.89%\n    Req/Sec   130.81k     3.91k  138.08k    61.67%\n  Latency Distribution\n     50%  234.00us\n     75%  240.00us\n     90%  261.00us\n     99%  370.00us\n  779358 requests in 3.01s, 268.31MB read\nRequests/sec: 259233.75\nTransfer/sec:     89.25MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6844,
+        "VmRSS": 6844
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7096,
+        "VmRSS": 7096
+      },
+      "rss_final_kib": {
+        "VmHWM": 7096,
+        "VmRSS": 7096
+      }
+    },
+    {
+      "label": "route",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 1,
+      "rps": 258038.74,
+      "p99_us": 380.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   247.74us  100.68us   3.99ms   95.30%\n    Req/Sec   130.32k     4.96k  139.33k    68.33%\n  Latency Distribution\n     50%  233.00us\n     75%  240.00us\n     90%  281.00us\n     99%  380.00us\n  775770 requests in 3.01s, 267.08MB read\nRequests/sec: 258038.74\nTransfer/sec:     88.84MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6788,
+        "VmRSS": 6788
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7040,
+        "VmRSS": 7040
+      },
+      "rss_final_kib": {
+        "VmHWM": 7040,
+        "VmRSS": 7040
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 1,
+      "rps": 262089.47,
+      "p99_us": 360.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   242.22us   80.72us   3.77ms   90.24%\n    Req/Sec   132.30k     5.02k  140.72k    55.00%\n  Latency Distribution\n     50%  230.00us\n     75%  236.00us\n     90%  283.00us\n     99%  360.00us\n  787723 requests in 3.01s, 271.19MB read\nRequests/sec: 262089.47\nTransfer/sec:     90.23MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6848,
+        "VmRSS": 6848
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      },
+      "rss_final_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      }
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 1,
+      "rps": 46707.67,
+      "p99_us": 2810.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     1.37ms  657.39us   4.97ms   56.54%\n    Req/Sec    23.56k    13.66k   72.54k    86.67%\n  Latency Distribution\n     50%    1.35ms\n     75%    1.91ms\n     90%    2.23ms\n     99%    2.81ms\n  140458 requests in 3.01s, 47.82MB read\nRequests/sec:  46707.67\nTransfer/sec:     15.90MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 2476,
+        "VmRSS": 2476
+      },
+      "rss_warm_kib": {
+        "VmHWM": 46368,
+        "VmRSS": 46104
+      },
+      "rss_final_kib": {
+        "VmHWM": 130100,
+        "VmRSS": 124524
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 2,
+      "rps": 261701.76,
+      "p99_us": 364.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   244.34us  100.18us   3.74ms   95.66%\n    Req/Sec   132.09k     4.04k  141.28k    60.00%\n  Latency Distribution\n     50%  231.00us\n     75%  238.00us\n     90%  267.00us\n     99%  364.00us\n  786832 requests in 3.01s, 270.89MB read\nRequests/sec: 261701.76\nTransfer/sec:     90.10MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6844,
+        "VmRSS": 6844
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7096,
+        "VmRSS": 7096
+      },
+      "rss_final_kib": {
+        "VmHWM": 7096,
+        "VmRSS": 7096
+      }
+    },
+    {
+      "label": "route",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 2,
+      "rps": 261110.43,
+      "p99_us": 363.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   241.73us   51.46us   2.25ms   89.94%\n    Req/Sec   131.82k     4.48k  139.74k    56.67%\n  Latency Distribution\n     50%  231.00us\n     75%  238.00us\n     90%  273.00us\n     99%  363.00us\n  786127 requests in 3.01s, 270.64MB read\nRequests/sec: 261110.43\nTransfer/sec:     89.89MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6980,
+        "VmRSS": 6980
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7232,
+        "VmRSS": 7232
+      },
+      "rss_final_kib": {
+        "VmHWM": 7232,
+        "VmRSS": 7232
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 2,
+      "rps": 262007.84,
+      "p99_us": 364.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   242.23us   85.47us   3.73ms   91.16%\n    Req/Sec   132.28k     4.48k  141.29k    58.33%\n  Latency Distribution\n     50%  230.00us\n     75%  236.00us\n     90%  284.00us\n     99%  364.00us\n  788805 requests in 3.01s, 271.57MB read\nRequests/sec: 262007.84\nTransfer/sec:     90.20MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6788,
+        "VmRSS": 6788
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7040,
+        "VmRSS": 7040
+      },
+      "rss_final_kib": {
+        "VmHWM": 7040,
+        "VmRSS": 7040
+      }
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 2,
+      "rps": 47087.01,
+      "p99_us": 2490.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     1.36ms  641.91us   4.66ms   57.18%\n    Req/Sec    23.75k    13.74k   73.03k    86.67%\n  Latency Distribution\n     50%    1.37ms\n     75%    1.90ms\n     90%    2.24ms\n     99%    2.49ms\n  141559 requests in 3.01s, 48.20MB read\nRequests/sec:  47087.01\nTransfer/sec:     16.03MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 2476,
+        "VmRSS": 2476
+      },
+      "rss_warm_kib": {
+        "VmHWM": 46436,
+        "VmRSS": 45932
+      },
+      "rss_final_kib": {
+        "VmHWM": 130888,
+        "VmRSS": 126704
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 2,
+      "rps": 257781.35,
+      "p99_us": 475.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   251.45us  136.37us   3.81ms   97.58%\n    Req/Sec   130.06k     9.24k  140.01k    88.33%\n  Latency Distribution\n     50%  230.00us\n     75%  239.00us\n     90%  325.00us\n     99%  475.00us\n  774709 requests in 3.01s, 266.71MB read\nRequests/sec: 257781.35\nTransfer/sec:     88.75MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6844,
+        "VmRSS": 6844
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7096,
+        "VmRSS": 7096
+      },
+      "rss_final_kib": {
+        "VmHWM": 7096,
+        "VmRSS": 7096
+      }
+    },
+    {
+      "label": "route",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 3,
+      "rps": 261898.35,
+      "p99_us": 363.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   241.57us   64.04us   3.80ms   90.55%\n    Req/Sec   132.17k     4.33k  142.15k    56.67%\n  Latency Distribution\n     50%  231.00us\n     75%  238.00us\n     90%  267.00us\n     99%  363.00us\n  787466 requests in 3.01s, 271.11MB read\nRequests/sec: 261898.35\nTransfer/sec:     90.17MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6900,
+        "VmRSS": 6900
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7152,
+        "VmRSS": 7152
+      },
+      "rss_final_kib": {
+        "VmHWM": 7152,
+        "VmRSS": 7152
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 3,
+      "rps": 260100.07,
+      "p99_us": 370.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   241.27us  108.56us   3.78ms   94.66%\n    Req/Sec   133.14k     8.14k  177.78k    93.44%\n  Latency Distribution\n     50%  230.00us\n     75%  236.00us\n     90%  261.00us\n     99%  370.00us\n  806330 requests in 3.10s, 277.60MB read\nRequests/sec: 260100.07\nTransfer/sec:     89.55MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6852,
+        "VmRSS": 6852
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      },
+      "rss_final_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      }
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 3,
+      "rps": 47164.17,
+      "p99_us": 2500.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     1.36ms  656.67us   4.63ms   54.49%\n    Req/Sec    23.76k    13.90k   71.19k    86.67%\n  Latency Distribution\n     50%    1.35ms\n     75%    1.94ms\n     90%    2.26ms\n     99%    2.50ms\n  141772 requests in 3.01s, 48.27MB read\nRequests/sec:  47164.17\nTransfer/sec:     16.06MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 2356,
+        "VmRSS": 2356
+      },
+      "rss_warm_kib": {
+        "VmHWM": 47336,
+        "VmRSS": 47076
+      },
+      "rss_final_kib": {
+        "VmHWM": 132160,
+        "VmRSS": 129216
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 3,
+      "rps": 261397.25,
+      "p99_us": 369.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   246.39us  125.28us   3.84ms   98.40%\n    Req/Sec   131.99k     3.92k  139.44k    65.00%\n  Latency Distribution\n     50%  232.00us\n     75%  239.00us\n     90%  264.00us\n     99%  369.00us\n  786153 requests in 3.01s, 270.65MB read\nRequests/sec: 261397.25\nTransfer/sec:     89.99MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6844,
+        "VmRSS": 6844
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7096,
+        "VmRSS": 7096
+      },
+      "rss_final_kib": {
+        "VmHWM": 7096,
+        "VmRSS": 7096
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 3,
+      "rps": 257563.15,
+      "p99_us": 434.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   246.42us  133.93us   3.99ms   96.62%\n    Req/Sec   131.74k     7.30k  157.58k    81.97%\n  Latency Distribution\n     50%  230.00us\n     75%  237.00us\n     90%  280.00us\n     99%  434.00us\n  798471 requests in 3.10s, 274.89MB read\nRequests/sec: 257563.15\nTransfer/sec:     88.67MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6904,
+        "VmRSS": 6904
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7156,
+        "VmRSS": 7156
+      },
+      "rss_final_kib": {
+        "VmHWM": 7156,
+        "VmRSS": 7156
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 4,
+      "rps": 261999.43,
+      "p99_us": 366.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   241.99us   75.79us   3.83ms   89.39%\n    Req/Sec   132.25k     4.15k  141.28k    63.33%\n  Latency Distribution\n     50%  228.00us\n     75%  236.00us\n     90%  317.00us\n     99%  366.00us\n  787564 requests in 3.01s, 271.14MB read\nRequests/sec: 261999.43\nTransfer/sec:     90.20MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6980,
+        "VmRSS": 6980
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7232,
+        "VmRSS": 7232
+      },
+      "rss_final_kib": {
+        "VmHWM": 7232,
+        "VmRSS": 7232
+      }
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 4,
+      "rps": 46610.97,
+      "p99_us": 2540.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     1.35ms  648.96us   3.65ms   55.90%\n    Req/Sec    23.84k    14.05k   82.57k    86.89%\n  Latency Distribution\n     50%    1.31ms\n     75%    1.94ms\n     90%    2.26ms\n     99%    2.54ms\n  144501 requests in 3.10s, 49.20MB read\nRequests/sec:  46610.97\nTransfer/sec:     15.87MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 2284,
+        "VmRSS": 2284
+      },
+      "rss_warm_kib": {
+        "VmHWM": 46884,
+        "VmRSS": 46708
+      },
+      "rss_final_kib": {
+        "VmHWM": 133200,
+        "VmRSS": 132112
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 4,
+      "rps": 262472.33,
+      "p99_us": 364.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   242.60us   93.77us   3.95ms   93.57%\n    Req/Sec   132.50k     4.69k  140.74k    58.33%\n  Latency Distribution\n     50%  230.00us\n     75%  236.00us\n     90%  284.00us\n     99%  364.00us\n  789427 requests in 3.01s, 271.78MB read\nRequests/sec: 262472.33\nTransfer/sec:     90.36MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6852,
+        "VmRSS": 6852
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      },
+      "rss_final_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 4,
+      "rps": 262825.17,
+      "p99_us": 360.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   240.34us   58.73us   3.52ms   90.21%\n    Req/Sec   132.80k     5.32k  141.14k    55.00%\n  Latency Distribution\n     50%  229.00us\n     75%  236.00us\n     90%  272.00us\n     99%  360.00us\n  790960 requests in 3.01s, 272.31MB read\nRequests/sec: 262825.17\nTransfer/sec:     90.48MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6780,
+        "VmRSS": 6780
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7032,
+        "VmRSS": 7032
+      },
+      "rss_final_kib": {
+        "VmHWM": 7032,
+        "VmRSS": 7032
+      }
+    },
+    {
+      "label": "route",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 4,
+      "rps": 260770.81,
+      "p99_us": 364.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   238.14us   79.99us   3.59ms   88.34%\n    Req/Sec   133.59k     8.61k  179.99k    93.44%\n  Latency Distribution\n     50%  228.00us\n     75%  235.00us\n     90%  296.00us\n     99%  364.00us\n  808377 requests in 3.10s, 278.31MB read\nRequests/sec: 260770.81\nTransfer/sec:     89.78MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6844,
+        "VmRSS": 6844
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7096,
+        "VmRSS": 7096
+      },
+      "rss_final_kib": {
+        "VmHWM": 7096,
+        "VmRSS": 7096
+      }
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 5,
+      "rps": 47067.52,
+      "p99_us": 2640.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     1.36ms  662.37us   4.88ms   55.09%\n    Req/Sec    23.77k    14.20k   73.89k    86.67%\n  Latency Distribution\n     50%    1.32ms\n     75%    1.94ms\n     90%    2.24ms\n     99%    2.64ms\n  141702 requests in 3.01s, 48.24MB read\nRequests/sec:  47067.52\nTransfer/sec:     16.02MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 2356,
+        "VmRSS": 2356
+      },
+      "rss_warm_kib": {
+        "VmHWM": 47148,
+        "VmRSS": 42688
+      },
+      "rss_final_kib": {
+        "VmHWM": 127164,
+        "VmRSS": 123460
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 5,
+      "rps": 260216.32,
+      "p99_us": 363.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   238.53us   78.69us   3.71ms   88.33%\n    Req/Sec   133.10k     7.96k  182.00k    91.80%\n  Latency Distribution\n     50%  230.00us\n     75%  237.00us\n     90%  275.00us\n     99%  363.00us\n  806738 requests in 3.10s, 277.74MB read\nRequests/sec: 260216.32\nTransfer/sec:     89.59MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6840,
+        "VmRSS": 6840
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7092,
+        "VmRSS": 7092
+      },
+      "rss_final_kib": {
+        "VmHWM": 7092,
+        "VmRSS": 7092
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 5,
+      "rps": 262541.93,
+      "p99_us": 359.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   240.13us   65.90us   3.61ms   90.05%\n    Req/Sec   133.03k     4.71k  141.28k    56.67%\n  Latency Distribution\n     50%  228.00us\n     75%  235.00us\n     90%  279.00us\n     99%  359.00us\n  792455 requests in 3.02s, 272.82MB read\nRequests/sec: 262541.93\nTransfer/sec:     90.39MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6784,
+        "VmRSS": 6784
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7036,
+        "VmRSS": 7036
+      },
+      "rss_final_kib": {
+        "VmHWM": 7036,
+        "VmRSS": 7036
+      }
+    },
+    {
+      "label": "route",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 5,
+      "rps": 259106.24,
+      "p99_us": 418.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   250.25us  138.99us   3.91ms   97.99%\n    Req/Sec   130.81k     5.83k  141.51k    71.67%\n  Latency Distribution\n     50%  230.00us\n     75%  237.00us\n     90%  323.00us\n     99%  418.00us\n  779062 requests in 3.01s, 268.21MB read\nRequests/sec: 259106.24\nTransfer/sec:     89.20MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6840,
+        "VmRSS": 6840
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7092,
+        "VmRSS": 7092
+      },
+      "rss_final_kib": {
+        "VmHWM": 7092,
+        "VmRSS": 7092
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "epoll",
+      "scenario": "small-post-c64",
+      "routes": 4,
+      "connections": 64,
+      "repeat": 5,
+      "rps": 261123.35,
+      "p99_us": 366.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/echo\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   244.18us   94.06us   3.81ms   93.38%\n    Req/Sec   131.69k     4.63k  139.83k    78.33%\n  Latency Distribution\n     50%  231.00us\n     75%  238.00us\n     90%  267.00us\n     99%  366.00us\n  785382 requests in 3.01s, 270.39MB read\nRequests/sec: 261123.35\nTransfer/sec:     89.90MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6840,
+        "VmRSS": 6840
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7092,
+        "VmRSS": 7092
+      },
+      "rss_final_kib": {
+        "VmHWM": 7092,
+        "VmRSS": 7092
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 1,
+      "rps": 266830.89,
+      "p99_us": 360.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   239.40us   95.33us   3.88ms   94.56%\n    Req/Sec   134.70k     4.88k  143.63k    63.33%\n  Latency Distribution\n     50%  226.00us\n     75%  233.00us\n     90%  272.00us\n     99%  360.00us\n  802107 requests in 3.01s, 80.32MB read\nRequests/sec: 266830.89\nTransfer/sec:     26.72MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6896,
+        "VmRSS": 6896
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7148,
+        "VmRSS": 7148
+      },
+      "rss_final_kib": {
+        "VmHWM": 7148,
+        "VmRSS": 7148
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 1,
+      "rps": 268578.45,
+      "p99_us": 359.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   237.97us   97.37us   3.77ms   95.82%\n    Req/Sec   135.53k     5.32k  145.21k    68.33%\n  Latency Distribution\n     50%  223.00us\n     75%  231.00us\n     90%  307.00us\n     99%  359.00us\n  807494 requests in 3.01s, 80.86MB read\nRequests/sec: 268578.45\nTransfer/sec:     26.89MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6852,
+        "VmRSS": 6852
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      },
+      "rss_final_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      }
+    },
+    {
+      "label": "route",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 1,
+      "rps": 269950.28,
+      "p99_us": 351.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   234.29us   64.11us   3.72ms   90.22%\n    Req/Sec   136.51k     4.87k  145.60k    60.00%\n  Latency Distribution\n     50%  223.00us\n     75%  230.00us\n     90%  267.00us\n     99%  351.00us\n  812620 requests in 3.01s, 81.37MB read\nRequests/sec: 269950.28\nTransfer/sec:     27.03MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6980,
+        "VmRSS": 6980
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7232,
+        "VmRSS": 7232
+      },
+      "rss_final_kib": {
+        "VmHWM": 7232,
+        "VmRSS": 7232
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 1,
+      "rps": 270607.97,
+      "p99_us": 351.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   234.78us   83.97us   3.79ms   91.82%\n    Req/Sec   136.61k     4.55k  144.97k    58.33%\n  Latency Distribution\n     50%  222.00us\n     75%  229.00us\n     90%  272.00us\n     99%  351.00us\n  814054 requests in 3.01s, 81.52MB read\nRequests/sec: 270607.97\nTransfer/sec:     27.10MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6848,
+        "VmRSS": 6848
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      },
+      "rss_final_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      }
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 1,
+      "rps": 60965.03,
+      "p99_us": 2540.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     1.06ms  440.88us   4.07ms   68.92%\n    Req/Sec    30.75k    12.57k   61.63k    68.33%\n  Latency Distribution\n     50%    0.96ms\n     75%    1.41ms\n     90%    1.65ms\n     99%    2.54ms\n  183350 requests in 3.01s, 17.66MB read\nRequests/sec:  60965.03\nTransfer/sec:      5.87MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 2364,
+        "VmRSS": 2364
+      },
+      "rss_warm_kib": {
+        "VmHWM": 432612,
+        "VmRSS": 431216
+      },
+      "rss_final_kib": {
+        "VmHWM": 1302472,
+        "VmRSS": 1299580
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 2,
+      "rps": 269096.96,
+      "p99_us": 356.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   236.50us   81.39us   3.45ms   91.77%\n    Req/Sec   135.84k     5.83k  144.95k    68.33%\n  Latency Distribution\n     50%  224.00us\n     75%  231.00us\n     90%  264.00us\n     99%  356.00us\n  808927 requests in 3.01s, 81.00MB read\nRequests/sec: 269096.96\nTransfer/sec:     26.95MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6904,
+        "VmRSS": 6904
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7156,
+        "VmRSS": 7156
+      },
+      "rss_final_kib": {
+        "VmHWM": 7156,
+        "VmRSS": 7156
+      }
+    },
+    {
+      "label": "route",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 2,
+      "rps": 269350.37,
+      "p99_us": 714.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   241.29us  141.51us   3.83ms   97.03%\n    Req/Sec   136.09k     5.54k  145.23k    61.67%\n  Latency Distribution\n     50%  222.00us\n     75%  229.00us\n     90%  306.00us\n     99%  714.00us\n  809828 requests in 3.01s, 81.09MB read\nRequests/sec: 269350.37\nTransfer/sec:     26.97MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6908,
+        "VmRSS": 6908
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7160,
+        "VmRSS": 7160
+      },
+      "rss_final_kib": {
+        "VmHWM": 7160,
+        "VmRSS": 7160
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 2,
+      "rps": 267691.73,
+      "p99_us": 796.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   243.56us  154.20us   3.84ms   97.06%\n    Req/Sec   135.11k     2.89k  141.33k    66.67%\n  Latency Distribution\n     50%  223.00us\n     75%  231.00us\n     90%  298.00us\n     99%  796.00us\n  804820 requests in 3.01s, 80.59MB read\nRequests/sec: 267691.73\nTransfer/sec:     26.81MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6848,
+        "VmRSS": 6848
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      },
+      "rss_final_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      }
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 2,
+      "rps": 61092.28,
+      "p99_us": 1840.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     1.04ms  405.40us   2.94ms   63.68%\n    Req/Sec    30.81k    12.06k   62.81k    68.33%\n  Latency Distribution\n     50%    0.94ms\n     75%    1.39ms\n     90%    1.64ms\n     99%    1.84ms\n  183734 requests in 3.01s, 17.70MB read\nRequests/sec:  61092.28\nTransfer/sec:      5.88MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 2500,
+        "VmRSS": 2500
+      },
+      "rss_warm_kib": {
+        "VmHWM": 425192,
+        "VmRSS": 424060
+      },
+      "rss_final_kib": {
+        "VmHWM": 1296724,
+        "VmRSS": 1292348
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 2,
+      "rps": 267742.95,
+      "p99_us": 767.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   242.12us  140.17us   3.90ms   96.86%\n    Req/Sec   135.48k     5.14k  146.14k    63.33%\n  Latency Distribution\n     50%  223.00us\n     75%  230.00us\n     90%  311.00us\n     99%  767.00us\n  806898 requests in 3.01s, 80.80MB read\nRequests/sec: 267742.95\nTransfer/sec:     26.81MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6848,
+        "VmRSS": 6848
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      },
+      "rss_final_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      }
+    },
+    {
+      "label": "route",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 3,
+      "rps": 265796.32,
+      "p99_us": 707.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   243.24us  128.35us   3.35ms   96.49%\n    Req/Sec   134.37k     5.57k  142.88k    76.67%\n  Latency Distribution\n     50%  223.00us\n     75%  232.00us\n     90%  311.00us\n     99%  707.00us\n  800557 requests in 3.01s, 80.16MB read\nRequests/sec: 265796.32\nTransfer/sec:     26.62MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6784,
+        "VmRSS": 6784
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7036,
+        "VmRSS": 7036
+      },
+      "rss_final_kib": {
+        "VmHWM": 7036,
+        "VmRSS": 7036
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 3,
+      "rps": 265989.07,
+      "p99_us": 817.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   245.58us  149.86us   3.90ms   96.94%\n    Req/Sec   134.21k     5.28k  141.28k    75.00%\n  Latency Distribution\n     50%  224.00us\n     75%  231.00us\n     90%  312.00us\n     99%  817.00us\n  799461 requests in 3.01s, 80.05MB read\nRequests/sec: 265989.07\nTransfer/sec:     26.64MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6856,
+        "VmRSS": 6856
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7108,
+        "VmRSS": 7108
+      },
+      "rss_final_kib": {
+        "VmHWM": 7108,
+        "VmRSS": 7108
+      }
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 3,
+      "rps": 60743.9,
+      "p99_us": 2070.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     1.05ms  418.73us   3.10ms   66.80%\n    Req/Sec    30.66k    12.15k   61.81k    66.67%\n  Latency Distribution\n     50%    0.94ms\n     75%    1.39ms\n     90%    1.68ms\n     99%    2.07ms\n  182688 requests in 3.01s, 17.60MB read\nRequests/sec:  60743.90\nTransfer/sec:      5.85MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 2496,
+        "VmRSS": 2496
+      },
+      "rss_warm_kib": {
+        "VmHWM": 429416,
+        "VmRSS": 427616
+      },
+      "rss_final_kib": {
+        "VmHWM": 1295416,
+        "VmRSS": 1292776
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 3,
+      "rps": 268061.96,
+      "p99_us": 828.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   243.96us  155.83us   3.86ms   97.36%\n    Req/Sec   135.33k     5.39k  144.94k    68.33%\n  Latency Distribution\n     50%  224.00us\n     75%  230.00us\n     90%  282.00us\n     99%  828.00us\n  807000 requests in 3.01s, 80.81MB read\nRequests/sec: 268061.96\nTransfer/sec:     26.84MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6976,
+        "VmRSS": 6976
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7228,
+        "VmRSS": 7228
+      },
+      "rss_final_kib": {
+        "VmHWM": 7228,
+        "VmRSS": 7228
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 3,
+      "rps": 270476.57,
+      "p99_us": 542.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   237.95us  110.69us   3.90ms   96.25%\n    Req/Sec   136.47k     3.51k  145.00k    70.00%\n  Latency Distribution\n     50%  223.00us\n     75%  229.00us\n     90%  272.00us\n     99%  542.00us\n  813055 requests in 3.01s, 81.42MB read\nRequests/sec: 270476.57\nTransfer/sec:     27.08MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6852,
+        "VmRSS": 6852
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      },
+      "rss_final_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 4,
+      "rps": 269372.32,
+      "p99_us": 536.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   238.54us  111.27us   3.77ms   96.08%\n    Req/Sec   135.78k     3.70k  143.71k    73.33%\n  Latency Distribution\n     50%  223.00us\n     75%  231.00us\n     90%  277.00us\n     99%  536.00us\n  809741 requests in 3.01s, 81.08MB read\nRequests/sec: 269372.32\nTransfer/sec:     26.97MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6848,
+        "VmRSS": 6848
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      },
+      "rss_final_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      }
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 4,
+      "rps": 59748.33,
+      "p99_us": 2490.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     1.08ms  479.49us   3.51ms   73.34%\n    Req/Sec    30.16k    12.91k   61.16k    66.67%\n  Latency Distribution\n     50%    0.94ms\n     75%    1.36ms\n     90%    1.69ms\n     99%    2.49ms\n  179759 requests in 3.01s, 17.31MB read\nRequests/sec:  59748.33\nTransfer/sec:      5.76MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 2500,
+        "VmRSS": 2500
+      },
+      "rss_warm_kib": {
+        "VmHWM": 433512,
+        "VmRSS": 433280
+      },
+      "rss_final_kib": {
+        "VmHWM": 1288152,
+        "VmRSS": 1284820
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 4,
+      "rps": 268821.06,
+      "p99_us": 778.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   241.73us  140.24us   3.92ms   96.59%\n    Req/Sec   135.69k     3.95k  142.87k    60.00%\n  Latency Distribution\n     50%  223.00us\n     75%  230.00us\n     90%  301.00us\n     99%  778.00us\n  808278 requests in 3.01s, 80.94MB read\nRequests/sec: 268821.06\nTransfer/sec:     26.92MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6852,
+        "VmRSS": 6852
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      },
+      "rss_final_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 4,
+      "rps": 268269.21,
+      "p99_us": 980.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   246.48us  177.52us   3.85ms   97.84%\n    Req/Sec   135.47k     4.89k  143.57k    73.33%\n  Latency Distribution\n     50%  223.00us\n     75%  230.00us\n     90%  288.00us\n     99%    0.98ms\n  806733 requests in 3.01s, 80.78MB read\nRequests/sec: 268269.21\nTransfer/sec:     26.86MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6908,
+        "VmRSS": 6908
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7160,
+        "VmRSS": 7160
+      },
+      "rss_final_kib": {
+        "VmHWM": 7160,
+        "VmRSS": 7160
+      }
+    },
+    {
+      "label": "route",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 4,
+      "rps": 270858.63,
+      "p99_us": 560.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   237.11us  116.49us   3.74ms   96.19%\n    Req/Sec   136.89k     5.50k  146.79k    58.33%\n  Latency Distribution\n     50%  221.00us\n     75%  228.00us\n     90%  298.00us\n     99%  560.00us\n  815668 requests in 3.01s, 81.68MB read\nRequests/sec: 270858.63\nTransfer/sec:     27.12MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6852,
+        "VmRSS": 6852
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      },
+      "rss_final_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      }
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 5,
+      "rps": 61060.2,
+      "p99_us": 1930.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     1.05ms  414.38us   3.27ms   64.27%\n    Req/Sec    30.80k    12.31k   61.40k    68.33%\n  Latency Distribution\n     50%    0.94ms\n     75%    1.39ms\n     90%    1.65ms\n     99%    1.93ms\n  183625 requests in 3.01s, 17.69MB read\nRequests/sec:  61060.20\nTransfer/sec:      5.88MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 2496,
+        "VmRSS": 2496
+      },
+      "rss_warm_kib": {
+        "VmHWM": 432488,
+        "VmRSS": 432092
+      },
+      "rss_final_kib": {
+        "VmHWM": 1304884,
+        "VmRSS": 1300904
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 5,
+      "rps": 263271.3,
+      "p99_us": 1220.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   254.13us  206.01us   4.06ms   97.10%\n    Req/Sec   133.38k     6.49k  142.64k    78.33%\n  Latency Distribution\n     50%  224.00us\n     75%  232.00us\n     90%  312.00us\n     99%    1.22ms\n  794304 requests in 3.02s, 79.54MB read\nRequests/sec: 263271.30\nTransfer/sec:     26.36MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6852,
+        "VmRSS": 6852
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      },
+      "rss_final_kib": {
+        "VmHWM": 7104,
+        "VmRSS": 7104
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 5,
+      "rps": 266858.9,
+      "p99_us": 980.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   243.19us  128.95us   3.67ms   93.90%\n    Req/Sec   134.83k     7.28k  144.75k    50.00%\n  Latency Distribution\n     50%  225.00us\n     75%  232.00us\n     90%  292.00us\n     99%    0.98ms\n  803399 requests in 3.01s, 80.45MB read\nRequests/sec: 266858.90\nTransfer/sec:     26.72MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6848,
+        "VmRSS": 6848
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      },
+      "rss_final_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      }
+    },
+    {
+      "label": "route",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 5,
+      "rps": 267721.47,
+      "p99_us": 1080.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   246.80us  170.25us   3.89ms   96.38%\n    Req/Sec   135.20k     6.78k  145.84k    55.00%\n  Latency Distribution\n     50%  224.00us\n     75%  231.00us\n     90%  300.00us\n     99%    1.08ms\n  804956 requests in 3.01s, 80.60MB read\nRequests/sec: 267721.47\nTransfer/sec:     26.81MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6788,
+        "VmRSS": 6788
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7040,
+        "VmRSS": 7040
+      },
+      "rss_final_kib": {
+        "VmHWM": 7040,
+        "VmRSS": 7040
+      }
+    },
+    {
+      "label": "methods",
+      "backend": "epoll",
+      "scenario": "medium-last-c64",
+      "routes": 32,
+      "connections": 64,
+      "repeat": 5,
+      "rps": 266805.79,
+      "p99_us": 900.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/027\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   242.54us  113.86us   2.08ms   94.34%\n    Req/Sec   134.66k     6.59k  145.71k    53.33%\n  Latency Distribution\n     50%  227.00us\n     75%  233.00us\n     90%  261.00us\n     99%    0.90ms\n  802285 requests in 3.01s, 80.34MB read\nRequests/sec: 266805.79\nTransfer/sec:     26.72MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6900,
+        "VmRSS": 6900
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7152,
+        "VmRSS": 7152
+      },
+      "rss_final_kib": {
+        "VmHWM": 7152,
+        "VmRSS": 7152
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "large-last-c64",
+      "routes": 100,
+      "connections": 64,
+      "repeat": 1,
+      "rps": 264544.5,
+      "p99_us": 910.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/095\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   245.55us  130.17us   3.96ms   95.02%\n    Req/Sec   133.51k     5.96k  144.60k    63.33%\n  Latency Distribution\n     50%  228.00us\n     75%  235.00us\n     90%  271.00us\n     99%    0.91ms\n  795425 requests in 3.01s, 79.65MB read\nRequests/sec: 264544.50\nTransfer/sec:     26.49MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6724,
+        "VmRSS": 6724
+      },
+      "rss_warm_kib": {
+        "VmHWM": 6976,
+        "VmRSS": 6976
+      },
+      "rss_final_kib": {
+        "VmHWM": 6976,
+        "VmRSS": 6976
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "large-last-c64",
+      "routes": 100,
+      "connections": 64,
+      "repeat": 1,
+      "rps": 264252.8,
+      "p99_us": 1070.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/095\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   250.15us  172.54us   3.87ms   96.55%\n    Req/Sec   133.44k     7.10k  144.34k    78.33%\n  Latency Distribution\n     50%  226.00us\n     75%  232.00us\n     90%  309.00us\n     99%    1.07ms\n  795189 requests in 3.01s, 79.63MB read\nRequests/sec: 264252.80\nTransfer/sec:     26.46MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6924,
+        "VmRSS": 6924
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7176,
+        "VmRSS": 7176
+      },
+      "rss_final_kib": {
+        "VmHWM": 7176,
+        "VmRSS": 7176
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "large-last-c64",
+      "routes": 100,
+      "connections": 64,
+      "repeat": 2,
+      "rps": 270944.99,
+      "p99_us": 639.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/095\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   239.83us  137.08us   3.84ms   97.15%\n    Req/Sec   137.10k     5.51k  147.02k    58.33%\n  Latency Distribution\n     50%  221.00us\n     75%  229.00us\n     90%  282.00us\n     99%  639.00us\n  816008 requests in 3.01s, 81.71MB read\nRequests/sec: 270944.99\nTransfer/sec:     27.13MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6804,
+        "VmRSS": 6804
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7056,
+        "VmRSS": 7056
+      },
+      "rss_final_kib": {
+        "VmHWM": 7056,
+        "VmRSS": 7056
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "large-last-c64",
+      "routes": 100,
+      "connections": 64,
+      "repeat": 2,
+      "rps": 266972.9,
+      "p99_us": 540.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/095\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   240.95us  105.77us   3.87ms   95.06%\n    Req/Sec   134.88k     3.65k  142.05k    63.33%\n  Latency Distribution\n     50%  227.00us\n     75%  234.00us\n     90%  258.00us\n     99%  540.00us\n  803377 requests in 3.01s, 80.45MB read\nRequests/sec: 266972.90\nTransfer/sec:     26.73MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6844,
+        "VmRSS": 6844
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7096,
+        "VmRSS": 7096
+      },
+      "rss_final_kib": {
+        "VmHWM": 7096,
+        "VmRSS": 7096
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "large-last-c64",
+      "routes": 100,
+      "connections": 64,
+      "repeat": 3,
+      "rps": 267792.01,
+      "p99_us": 558.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/095\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   240.13us  103.42us   3.50ms   95.05%\n    Req/Sec   135.43k     6.03k  145.94k    76.67%\n  Latency Distribution\n     50%  225.00us\n     75%  232.00us\n     90%  264.00us\n     99%  558.00us\n  806352 requests in 3.01s, 80.74MB read\nRequests/sec: 267792.01\nTransfer/sec:     26.82MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6848,
+        "VmRSS": 6848
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      },
+      "rss_final_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "large-last-c64",
+      "routes": 100,
+      "connections": 64,
+      "repeat": 3,
+      "rps": 266397.36,
+      "p99_us": 556.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/095\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   238.67us  136.15us   3.87ms   95.54%\n    Req/Sec   136.33k     6.66k  178.17k    90.16%\n  Latency Distribution\n     50%  225.00us\n     75%  232.00us\n     90%  255.00us\n     99%  556.00us\n  825912 requests in 3.10s, 82.70MB read\nRequests/sec: 266397.36\nTransfer/sec:     26.68MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6928,
+        "VmRSS": 6928
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7180,
+        "VmRSS": 7180
+      },
+      "rss_final_kib": {
+        "VmHWM": 7180,
+        "VmRSS": 7180
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "large-last-c64",
+      "routes": 100,
+      "connections": 64,
+      "repeat": 4,
+      "rps": 269463.2,
+      "p99_us": 423.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/095\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   238.51us  101.93us   3.78ms   95.07%\n    Req/Sec   135.96k     3.48k  144.07k    75.00%\n  Latency Distribution\n     50%  225.00us\n     75%  231.00us\n     90%  261.00us\n     99%  423.00us\n  810015 requests in 3.01s, 81.11MB read\nRequests/sec: 269463.20\nTransfer/sec:     26.98MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6980,
+        "VmRSS": 6980
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7232,
+        "VmRSS": 7232
+      },
+      "rss_final_kib": {
+        "VmHWM": 7232,
+        "VmRSS": 7232
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "large-last-c64",
+      "routes": 100,
+      "connections": 64,
+      "repeat": 4,
+      "rps": 267653.91,
+      "p99_us": 806.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/095\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   244.74us  160.73us   3.84ms   97.62%\n    Req/Sec   135.41k     3.67k  142.95k    71.67%\n  Latency Distribution\n     50%  224.00us\n     75%  231.00us\n     90%  276.00us\n     99%  806.00us\n  806381 requests in 3.01s, 80.75MB read\nRequests/sec: 267653.91\nTransfer/sec:     26.80MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6864,
+        "VmRSS": 6864
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7116,
+        "VmRSS": 7116
+      },
+      "rss_final_kib": {
+        "VmHWM": 7116,
+        "VmRSS": 7116
+      }
+    },
+    {
+      "label": "explicit",
+      "backend": "epoll",
+      "scenario": "large-last-c64",
+      "routes": 100,
+      "connections": 64,
+      "repeat": 5,
+      "rps": 270826.51,
+      "p99_us": 656.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/095\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   240.07us  136.44us   3.86ms   97.07%\n    Req/Sec   136.68k     4.15k  146.07k    71.67%\n  Latency Distribution\n     50%  222.00us\n     75%  229.00us\n     90%  282.00us\n     99%  656.00us\n  814160 requests in 3.01s, 81.53MB read\nRequests/sec: 270826.51\nTransfer/sec:     27.12MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6856,
+        "VmRSS": 6856
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7108,
+        "VmRSS": 7108
+      },
+      "rss_final_kib": {
+        "VmHWM": 7108,
+        "VmRSS": 7108
+      }
+    },
+    {
+      "label": "main",
+      "backend": "epoll",
+      "scenario": "large-last-c64",
+      "routes": 100,
+      "connections": 64,
+      "repeat": 5,
+      "rps": 269303.5,
+      "p99_us": 456.0,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/route/095\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   238.94us  101.56us   2.70ms   94.66%\n    Req/Sec   136.02k     6.34k  144.32k    73.33%\n  Latency Distribution\n     50%  224.00us\n     75%  231.00us\n     90%  273.00us\n     99%  456.00us\n  809717 requests in 3.01s, 81.08MB read\nRequests/sec: 269303.50\nTransfer/sec:     26.97MB\n",
+      "rss_initial_kib": {
+        "VmHWM": 6848,
+        "VmRSS": 6848
+      },
+      "rss_warm_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      },
+      "rss_final_kib": {
+        "VmHWM": 7100,
+        "VmRSS": 7100
+      }
+    }
+  ],
+  "failures": [
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "large-last-c64",
+      "routes": 100,
+      "connections": 64,
+      "repeat": 1,
+      "error": "Failed wrk sample (server exit=-4):\nRunning 3s test @ http://127.0.0.1:8080/route/095\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     0.98ms  224.03us   5.14ms   87.27%\n    Req/Sec    30.82k     8.34k   40.06k    84.62%\n  Latency Distribution\n     50%    0.93ms\n     75%    1.02ms\n     90%    1.20ms\n     99%    1.87ms\n  79653 requests in 3.01s, 7.67MB read\n  Socket errors: connect 0, read 90, write 191496, timeout 0\nRequests/sec:  26462.45\nTransfer/sec:      2.55MB\n"
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "large-last-c64",
+      "routes": 100,
+      "connections": 64,
+      "repeat": 2,
+      "error": "Failed wrk sample (server exit=-4):\nRunning 3s test @ http://127.0.0.1:8080/route/095\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     0.94ms  123.68us   2.58ms   75.76%\n    Req/Sec    33.08k     6.14k   39.53k    83.33%\n  Latency Distribution\n     50%    0.91ms\n     75%    1.01ms\n     90%    1.09ms\n     99%    1.31ms\n  78945 requests in 3.00s, 7.60MB read\n  Socket errors: connect 0, read 76, write 198734, timeout 0\nRequests/sec:  26272.42\nTransfer/sec:      2.53MB\n"
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "large-last-c64",
+      "routes": 100,
+      "connections": 64,
+      "repeat": 3,
+      "error": "Failed wrk sample (server exit=-4):\nRunning 3s test @ http://127.0.0.1:8080/route/095\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     0.98ms  134.89us   3.52ms   80.33%\n    Req/Sec    32.38k     4.07k   39.46k    83.33%\n  Latency Distribution\n     50%    0.97ms\n     75%    1.03ms\n     90%    1.11ms\n     99%    1.40ms\n  77249 requests in 3.01s, 7.44MB read\n  Socket errors: connect 0, read 83, write 198327, timeout 0\nRequests/sec:  25667.72\nTransfer/sec:      2.47MB\n"
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "large-last-c64",
+      "routes": 100,
+      "connections": 64,
+      "repeat": 4,
+      "error": "Failed wrk sample (server exit=-4):\nRunning 3s test @ http://127.0.0.1:8080/route/095\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     0.98ms  106.63us   2.40ms   71.91%\n    Req/Sec    30.96k     6.94k   37.90k    92.31%\n  Latency Distribution\n     50%    0.99ms\n     75%    1.04ms\n     90%    1.11ms\n     99%    1.24ms\n  80000 requests in 3.01s, 7.71MB read\n  Socket errors: connect 0, read 72, write 190574, timeout 0\nRequests/sec:  26600.35\nTransfer/sec:      2.56MB\n"
+    },
+    {
+      "label": "eclair",
+      "backend": "epoll",
+      "scenario": "large-last-c64",
+      "routes": 100,
+      "connections": 64,
+      "repeat": 5,
+      "error": "Failed wrk sample (server exit=-4):\nRunning 3s test @ http://127.0.0.1:8080/route/095\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     0.95ms  113.76us   2.46ms   67.86%\n    Req/Sec    32.09k     6.58k   39.23k    83.33%\n  Latency Distribution\n     50%    0.98ms\n     75%    1.02ms\n     90%    1.07ms\n     99%    1.20ms\n  76676 requests in 3.01s, 7.39MB read\n  Socket errors: connect 0, read 83, write 197401, timeout 0\nRequests/sec:  25501.64\nTransfer/sec:      2.46MB\n"
+    }
+  ]
+}

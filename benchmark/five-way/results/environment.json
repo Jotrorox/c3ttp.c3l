@@ -1,0 +1,14 @@
+{
+  "measured_date": "2026-09-09",
+  "wrk_commit": "a211dd5a7050b1f9e8a9870b95513060e72ac4a0",
+  "wrk_binary_sha256": "4208362c8f0bf8d4e27e1aeb4e1cc4b1de2afbbcd984b656897b004fe2a954ad",
+  "wrk_version": "wrk 4.2.0 [epoll] Copyright (C) 2012 Will Glozer\nUsage: wrk <options> <url>                            \n  Options:                                            \n    -c, --connections <N>  Connections to keep open   \n    -d, --duration    <T>  Duration of test           \n    -t, --threads     <N>  Number of threads to use   \n                                                      \n    -s, --script      <S>  Load Lua script file       \n    -H, --header      <H>  Add header to request      \n        --latency          Print latency statistics   \n        --timeout     <T>  Socket/request timeout     \n    -v, --version          Print version details      \n                                                      \n  Numeric arguments may include a SI unit (1k, 1M, 1G)\n  Time arguments may include a time unit (2s, 2m, 2h)",
+  "cpu_governor": "performance",
+  "server_cpu": 2,
+  "client_cpus": [
+    4,
+    5
+  ],
+  "memory_limit_mb": 2048,
+  "timed_concurrent_compilation": false
+}

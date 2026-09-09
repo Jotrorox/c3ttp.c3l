@@ -1,5 +1,9 @@
 # API performance comparison
 
+For all four API versions versus Eclair, see the
+[five-way comparison](five-way/README.md), including a runnable Eclair project,
+larger route sets, memory measurements, and usability ratings.
+
 The benchmark compares the original callback server at
 `ce049990004207ef47ec6e0cfc01662a316ceb0e` with the new static route API. Both
 serve `GET /health` as HTTP 200 with the same two-byte `ok` body and headers.

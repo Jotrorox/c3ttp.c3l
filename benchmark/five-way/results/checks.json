@@ -1,0 +1,15 @@
+{
+  "c3_0.8.3_optimized_unit_tests": {
+    "passed": 27,
+    "failed": 0
+  },
+  "c3_0.8.4_optimized_unit_tests": {
+    "passed": 27,
+    "failed": 0
+  },
+  "http_configurations": 23,
+  "fresh_http_checks": 893,
+  "repeated_http_checks": 6000,
+  "mixed_keep_alive": "c3ttp passed; Eclair failed /status after /hello on a persistent connection",
+  "standalone_eclair_project": "built and verified; results in eclair-project-validation.json"
+}

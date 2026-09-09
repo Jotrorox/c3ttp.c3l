@@ -1,0 +1,16 @@
+{
+  "symbol": "c3ttp.$server$lambda1",
+  "before": {
+    "binary": "/tmp/c3ttp-five-way/explicit-4/server",
+    "size": 299,
+    "sha256": "3144b15c5d2b965b235a5f590e6f477a9a08eb27960f6bb5a7eb87a9e126e73d"
+  },
+  "after": {
+    "binary": "/tmp/c3ttp-five-way/route-4/server",
+    "size": 299,
+    "sha256": "3144b15c5d2b965b235a5f590e6f477a9a08eb27960f6bb5a7eb87a9e126e73d"
+  },
+  "identical_dispatcher": true,
+  "identical_text_section": true,
+  "text_differing_bytes": 0
+}

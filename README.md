@@ -98,6 +98,11 @@ annotations, duplicate method/path pairs, malformed paths, and unsupported handl
 signatures produce compiler errors. Routes are checked in registration order;
 keep frequently used routes near the front when using a large list.
 
+The experimental annotation collector currently has a compile-time scaling limit:
+the [five-way comparison](benchmark/five-way/README.md) builds 32 registered
+handlers, but 100 handlers hit C3 0.8.4's macro call-depth limit. The earlier
+explicit-route branch builds the same 100-route fixture.
+
 The previous `@Route({ GET, "/path" })` annotation and explicit
 `{ method, path, &handler }` API remain supported. All three forms can be mixed,
 for example to reuse a handler at another path:
@@ -255,6 +260,9 @@ The [annotation experiment](benchmark/annotations.md) separately compares this
 API with the previous explicit route API, including a machine-code comparison.
 The [method annotation experiment](benchmark/method-annotations.md) compares
 `@Get` / `@Post` with `@Route`, including generated code and HTTP measurements.
+The [five-way comparison](benchmark/five-way/README.md) benchmarks all four
+branches against a runnable Eclair project and evaluates API readability,
+usability, route-count scaling, and memory growth.
 
 ## Non-Goals
 

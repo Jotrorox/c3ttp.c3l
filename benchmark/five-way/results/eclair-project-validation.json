@@ -1,0 +1,89 @@
+{
+  "label": "eclair-project",
+  "routes": 4,
+  "backend": "epoll",
+  "fresh_connection_checks": 7,
+  "repeated_keep_alive": [
+    {
+      "method": "GET",
+      "path": "/health",
+      "checked_requests": 100
+    },
+    {
+      "method": "POST",
+      "path": "/echo",
+      "checked_requests": 100
+    }
+  ],
+  "mixed_keep_alive": [
+    {
+      "method": "GET",
+      "path": "/health",
+      "status": 200,
+      "body_matches": true,
+      "keep_alive": true,
+      "headers": {
+        "Date": "Wed, 09 Sep 2026 11:36:28 GMT",
+        "Content-Length": "2",
+        "Connection": "keep-alive"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/health?probe=1",
+      "status": 200,
+      "body_matches": true,
+      "keep_alive": false,
+      "headers": {
+        "Date": "Wed, 09 Sep 2026 11:36:28 GMT",
+        "Content-Length": "2",
+        "Connection": "close"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/hello",
+      "status": 200,
+      "body_matches": true,
+      "keep_alive": true,
+      "headers": {
+        "Date": "Wed, 09 Sep 2026 11:36:28 GMT",
+        "Content-Length": "13",
+        "Connection": "keep-alive"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/status",
+      "status": 404,
+      "body_matches": false,
+      "keep_alive": false,
+      "headers": {
+        "Date": "Wed, 09 Sep 2026 11:36:28 GMT",
+        "Content-Length": "18",
+        "Connection": "close"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/echo",
+      "status": 200,
+      "body_matches": true,
+      "keep_alive": true,
+      "headers": {
+        "Date": "Wed, 09 Sep 2026 11:36:28 GMT",
+        "Content-Length": "700",
+        "Connection": "keep-alive"
+      }
+    }
+  ],
+  "health_headers": {
+    "Date": "Wed, 09 Sep 2026 11:36:28 GMT",
+    "Content-Length": "2",
+    "Connection": "keep-alive"
+  },
+  "rss_kib": {
+    "VmHWM": 2536,
+    "VmRSS": 2536
+  }
+}

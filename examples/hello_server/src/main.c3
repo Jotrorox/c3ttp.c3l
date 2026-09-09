@@ -3,14 +3,24 @@ module hello_server;
 import c3ttp;
 import std::io;
 
-fn void? hello(RequestView* request, ResponseView* response, void* context)
+fn String hello()
 {
-	if (request.target == "/health")
-	{
-		c3ttp::ResponseView.ok(response, "ok");
-		return;
-	}
-	c3ttp::ResponseView.set(response, 200, "Hello from c3ttp\n");
+	return "Hello from c3ttp\n";
+}
+
+fn String health()
+{
+	return "ok";
+}
+
+fn void api_status(Response* response)
+{
+	response.json("{\"status\":\"ok\"}");
+}
+
+fn String echo(Request* request)
+{
+	return request.body;
 }
 
 fn int main(String[] args)
@@ -34,6 +44,13 @@ fn int main(String[] args)
 	{
 		io::printfn("c3ttp listening on http://127.0.0.1:8080 (%s, all allowed CPUs)", backend);
 	}
-	c3ttp::serve("127.0.0.1", 8080, &hello, options: options)!!;
+	Server server = c3ttp::@server(
+		{ Method.GET, "/health", &health },
+		{ Method.GET, "/", &hello },
+		{ Method.GET, "/status", &api_status },
+		{ Method.POST, "/echo", &echo },
+	);
+	server.options = options;
+	server.listen("127.0.0.1", 8080)!!;
 	return 0;
 }

@@ -176,3 +176,39 @@ macro void? serve(String host, uint port, ViewHandler handler, void* context = n
 	=> serve_impl(host, port, handler, context, options);
 macro bool io_uring_available()
 	=> io_uring_available_impl();
+
+// Friendly names retain the exact layout and lifetimes of the zero-copy views.
+alias Request = RequestView;
+alias Response = ResponseView;
+
+struct Server
+{
+	ViewHandler handler;
+	void* context;
+	ServerOptions options;
+}
+
+// Register the entire route set at compile time: no heap-backed route registry.
+macro Server @server(...)
+{
+	$assert $vaarg.len > 0 : "@server requires at least one route";
+	var $routes = { ...$vaarg };
+	return {
+		.handler = fn void?(Request* request, Response* response, void* context) {
+			return @dispatch(request, response, context, $routes);
+		},
+		.options = default_server_options(),
+	};
+}
+
+macro void? Server.listen(&self, String host = "0.0.0.0", uint port = 8080)
+	=> serve_impl(host, port, self.handler, self.context, self.options);
+
+// path() and query() borrow the raw target; neither decodes nor allocates.
+macro String RequestView.path(&self) => request_path_impl(self.target);
+macro String RequestView.query(&self) => request_query_impl(self.target);
+macro void ResponseView.text(&self, String body, ushort status = 200)
+	=> response_view_set_impl(self, status, body, "text/plain; charset=utf-8");
+// Accepts already serialized JSON; does not allocate or serialize.
+macro void ResponseView.json(&self, String body, ushort status = 200)
+	=> response_view_set_impl(self, status, body, "application/json");

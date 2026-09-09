@@ -1,0 +1,72 @@
+[
+  {
+    "label": "before",
+    "repeat": 0,
+    "raw": "parser_0 57.951 ns/request\nparser_1 89.306 ns/request\nparser_2 98.975 ns/request\nchecksum 990000000\n"
+  },
+  {
+    "label": "after",
+    "repeat": 0,
+    "raw": "parser_0 58.427 ns/request\nparser_1 87.742 ns/request\nparser_2 96.631 ns/request\nchecksum 990000000\n"
+  },
+  {
+    "label": "after",
+    "repeat": 1,
+    "raw": "parser_0 58.359 ns/request\nparser_1 88.202 ns/request\nparser_2 97.454 ns/request\nchecksum 990000000\n"
+  },
+  {
+    "label": "before",
+    "repeat": 1,
+    "raw": "parser_0 58.516 ns/request\nparser_1 88.644 ns/request\nparser_2 98.226 ns/request\nchecksum 990000000\n"
+  },
+  {
+    "label": "before",
+    "repeat": 2,
+    "raw": "parser_0 58.352 ns/request\nparser_1 87.401 ns/request\nparser_2 96.420 ns/request\nchecksum 990000000\n"
+  },
+  {
+    "label": "after",
+    "repeat": 2,
+    "raw": "parser_0 58.342 ns/request\nparser_1 86.982 ns/request\nparser_2 97.041 ns/request\nchecksum 990000000\n"
+  },
+  {
+    "label": "after",
+    "repeat": 3,
+    "raw": "parser_0 58.491 ns/request\nparser_1 87.174 ns/request\nparser_2 96.706 ns/request\nchecksum 990000000\n"
+  },
+  {
+    "label": "before",
+    "repeat": 3,
+    "raw": "parser_0 57.560 ns/request\nparser_1 86.203 ns/request\nparser_2 95.774 ns/request\nchecksum 990000000\n"
+  },
+  {
+    "label": "before",
+    "repeat": 4,
+    "raw": "parser_0 58.147 ns/request\nparser_1 87.228 ns/request\nparser_2 96.686 ns/request\nchecksum 990000000\n"
+  },
+  {
+    "label": "after",
+    "repeat": 4,
+    "raw": "parser_0 58.158 ns/request\nparser_1 89.123 ns/request\nparser_2 97.266 ns/request\nchecksum 990000000\n"
+  },
+  {
+    "label": "after",
+    "repeat": 5,
+    "raw": "parser_0 57.992 ns/request\nparser_1 87.283 ns/request\nparser_2 96.701 ns/request\nchecksum 990000000\n"
+  },
+  {
+    "label": "before",
+    "repeat": 5,
+    "raw": "parser_0 58.369 ns/request\nparser_1 87.122 ns/request\nparser_2 96.790 ns/request\nchecksum 990000000\n"
+  },
+  {
+    "label": "before",
+    "repeat": 6,
+    "raw": "parser_0 57.771 ns/request\nparser_1 86.514 ns/request\nparser_2 96.220 ns/request\nchecksum 990000000\n"
+  },
+  {
+    "label": "after",
+    "repeat": 6,
+    "raw": "parser_0 57.919 ns/request\nparser_1 86.576 ns/request\nparser_2 96.440 ns/request\nchecksum 990000000\n"
+  }
+]

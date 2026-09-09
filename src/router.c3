@@ -1,5 +1,32 @@
 module c3ttp @private;
 
+macro @route_entry(#entry) @private
+{
+	$if $Typeof(#entry)::kind == UNTYPEDLIST:
+		// Keep the explicit { Method, path, &handler } API available too.
+		return #entry;
+	$else
+		$assert $defined($reflect(#entry).has_tag("c3ttp:route")) : "Pass an annotated function name or { Method, path, &handler }";
+		$assert $reflect(#entry).has_tag("c3ttp:route") : "Handler needs @Route({ method, path })";
+		RouteConfig $config = $reflect(#entry).get_tag("c3ttp:route");
+		return { $config.method, $config.path, &#entry };
+	$endif
+}
+
+// Bind each function as an expression parameter in its original module.
+// Indexing $vaarg directly resolves function names as values in C3 0.8.3;
+// forwarding the remaining argument pack preserves the unevaluated names.
+macro @collect_routes(#first, ...) @private
+{
+	var $entry = @route_entry(#first);
+	$if $vaarg.len:
+		var $rest = @collect_routes(...$vaarg);
+		return { $entry, ...$rest };
+	$else
+		return { $entry };
+	$endif
+}
+
 fn String request_path_impl(String target) @private @inline
 {
 	usz end = find_byte((char[])target, 0, '?');

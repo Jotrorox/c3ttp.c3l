@@ -181,6 +181,15 @@ macro bool io_uring_available()
 alias Request = RequestView;
 alias Response = ResponseView;
 
+// Route metadata is read at compile time; nothing is stored on the request.
+struct RouteConfig
+{
+	Method method;
+	String path;
+}
+
+attrdef @Route(RouteConfig config) = @tag("c3ttp:route", config);
+
 struct Server
 {
 	ViewHandler handler;
@@ -192,7 +201,7 @@ struct Server
 macro Server @server(...)
 {
 	$assert $vaarg.len > 0 : "@server requires at least one route";
-	var $routes = { ...$vaarg };
+	var $routes = @collect_routes(...$vaarg);
 	return {
 		.handler = fn void?(Request* request, Response* response, void* context) {
 			return @dispatch(request, response, context, $routes);
@@ -212,3 +221,7 @@ macro void ResponseView.text(&self, String body, ushort status = 200)
 // Accepts already serialized JSON; does not allocate or serialize.
 macro void ResponseView.json(&self, String body, ushort status = 200)
 	=> response_view_set_impl(self, status, body, "application/json");
+
+// Individual setters preserve the other response fields and borrow the body.
+macro void ResponseView.set_body(&self, String body) => self.body = body;
+macro void ResponseView.set_status(&self, ushort status) => self.status = status;

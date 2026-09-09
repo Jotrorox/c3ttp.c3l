@@ -3,22 +3,22 @@ module hello_server;
 import c3ttp;
 import std::io;
 
-fn String hello()
+fn String hello() @Route({ GET, "/" })
 {
 	return "Hello from c3ttp\n";
 }
 
-fn String health()
+fn String health() @Route({ GET, "/health" })
 {
 	return "ok";
 }
 
-fn void api_status(Response* response)
+fn void api_status(Response* response) @Route({ GET, "/status" })
 {
 	response.json("{\"status\":\"ok\"}");
 }
 
-fn String echo(Request* request)
+fn String echo(Request* request) @Route({ POST, "/echo" })
 {
 	return request.body;
 }
@@ -44,12 +44,7 @@ fn int main(String[] args)
 	{
 		io::printfn("c3ttp listening on http://127.0.0.1:8080 (%s, all allowed CPUs)", backend);
 	}
-	Server server = c3ttp::@server(
-		{ Method.GET, "/health", &health },
-		{ Method.GET, "/", &hello },
-		{ Method.GET, "/status", &api_status },
-		{ Method.POST, "/echo", &echo },
-	);
+	Server server = c3ttp::@server(health, hello, api_status, echo);
 	server.options = options;
 	server.listen("127.0.0.1", 8080)!!;
 	return 0;

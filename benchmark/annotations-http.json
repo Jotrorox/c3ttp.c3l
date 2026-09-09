@@ -1,0 +1,341 @@
+{
+  "config": {
+    "binaries": [
+      "before=benchmark/out/annotation-before-server",
+      "after=benchmark/out/annotation-after-server"
+    ],
+    "wrk": "/tmp/c3ttp-wrk/wrk",
+    "runs": 5,
+    "seconds": 3,
+    "server_cpu": 2,
+    "client_cpus": "4,5",
+    "backends": [
+      "epoll",
+      "io-uring"
+    ],
+    "output": "benchmark/annotations-http.json",
+    "max_regression": 3.0
+  },
+  "results": [
+    {
+      "label": "before",
+      "backend": "epoll",
+      "connections": 2,
+      "repeat": 0,
+      "rps": 156405.26,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.32us    8.74us 735.00us   99.68%\n    Req/Sec    78.63k     1.42k   80.17k    95.16%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   16.00us\n  484838 requests in 3.10s, 48.55MB read\nRequests/sec: 156405.26\nTransfer/sec:     15.66MB\n"
+    },
+    {
+      "label": "after",
+      "backend": "epoll",
+      "connections": 2,
+      "repeat": 0,
+      "rps": 156155.19,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    16.98us   94.82us   3.43ms   99.58%\n    Req/Sec    78.59k     2.56k   80.72k    96.77%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   18.00us\n  484090 requests in 3.10s, 48.47MB read\nRequests/sec: 156155.19\nTransfer/sec:     15.64MB\n"
+    },
+    {
+      "label": "after",
+      "backend": "epoll",
+      "connections": 2,
+      "repeat": 1,
+      "rps": 156846.35,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.23us    6.95us 572.00us   99.69%\n    Req/Sec    78.99k     1.75k   81.13k    85.48%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   16.00us\n  486192 requests in 3.10s, 48.69MB read\nRequests/sec: 156846.35\nTransfer/sec:     15.71MB\n"
+    },
+    {
+      "label": "before",
+      "backend": "epoll",
+      "connections": 2,
+      "repeat": 1,
+      "rps": 159230.1,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    11.91us    2.00us 340.00us   96.41%\n    Req/Sec    80.09k   718.96    81.94k    72.58%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   12.00us\n     99%   15.00us\n  493595 requests in 3.10s, 49.43MB read\nRequests/sec: 159230.10\nTransfer/sec:     15.94MB\n"
+    },
+    {
+      "label": "before",
+      "backend": "epoll",
+      "connections": 2,
+      "repeat": 2,
+      "rps": 155614.25,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    13.29us   28.14us   1.59ms   99.70%\n    Req/Sec    78.31k     2.14k   81.39k    82.26%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   17.00us\n  482320 requests in 3.10s, 48.30MB read\nRequests/sec: 155614.25\nTransfer/sec:     15.58MB\n"
+    },
+    {
+      "label": "after",
+      "backend": "epoll",
+      "connections": 2,
+      "repeat": 2,
+      "rps": 157536.92,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.05us    2.31us 265.00us   97.97%\n    Req/Sec    79.25k   688.95    80.32k    66.13%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   15.00us\n  488358 requests in 3.10s, 48.90MB read\nRequests/sec: 157536.92\nTransfer/sec:     15.78MB\n"
+    },
+    {
+      "label": "after",
+      "backend": "epoll",
+      "connections": 2,
+      "repeat": 3,
+      "rps": 156064.61,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    13.95us   53.61us   3.14ms   99.76%\n    Req/Sec    78.51k     2.14k   80.74k    91.94%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   17.00us\n  483743 requests in 3.10s, 48.44MB read\nRequests/sec: 156064.61\nTransfer/sec:     15.63MB\n"
+    },
+    {
+      "label": "before",
+      "backend": "epoll",
+      "connections": 2,
+      "repeat": 3,
+      "rps": 155261.38,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.41us    8.76us 668.00us   99.74%\n    Req/Sec    78.09k     0.89k   79.31k    64.52%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   17.00us\n  481321 requests in 3.10s, 48.20MB read\nRequests/sec: 155261.38\nTransfer/sec:     15.55MB\n"
+    },
+    {
+      "label": "before",
+      "backend": "epoll",
+      "connections": 2,
+      "repeat": 4,
+      "rps": 154796.56,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    15.03us   62.37us   3.03ms   99.59%\n    Req/Sec    77.98k     2.31k   80.22k    93.55%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   18.00us\n  479867 requests in 3.10s, 48.05MB read\nRequests/sec: 154796.56\nTransfer/sec:     15.50MB\n"
+    },
+    {
+      "label": "after",
+      "backend": "epoll",
+      "connections": 2,
+      "repeat": 4,
+      "rps": 156776.87,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    11.98us    6.97us   0.94ms   99.78%\n    Req/Sec    80.06k   699.33    81.25k    68.85%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   15.00us\n  485873 requests in 3.10s, 48.65MB read\nRequests/sec: 156776.87\nTransfer/sec:     15.70MB\n"
+    },
+    {
+      "label": "before",
+      "backend": "epoll",
+      "connections": 64,
+      "repeat": 0,
+      "rps": 270079.81,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   235.70us   65.59us   2.75ms   91.85%\n    Req/Sec   136.42k     4.66k  145.89k    78.33%\n  Latency Distribution\n     50%  224.00us\n     75%  231.00us\n     90%  253.00us\n     99%  355.00us\n  812759 requests in 3.01s, 81.39MB read\nRequests/sec: 270079.81\nTransfer/sec:     27.04MB\n"
+    },
+    {
+      "label": "after",
+      "backend": "epoll",
+      "connections": 64,
+      "repeat": 0,
+      "rps": 270462.16,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   233.51us   32.36us 640.00us   90.19%\n    Req/Sec   136.69k     3.16k  144.08k    66.67%\n  Latency Distribution\n     50%  225.00us\n     75%  231.00us\n     90%  253.00us\n     99%  350.00us\n  814265 requests in 3.01s, 81.54MB read\nRequests/sec: 270462.16\nTransfer/sec:     27.08MB\n"
+    },
+    {
+      "label": "after",
+      "backend": "epoll",
+      "connections": 64,
+      "repeat": 1,
+      "rps": 270612.75,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   236.57us   96.23us   6.24ms   95.38%\n    Req/Sec   136.57k     3.73k  144.20k    80.00%\n  Latency Distribution\n     50%  225.00us\n     75%  231.00us\n     90%  247.00us\n     99%  355.00us\n  814057 requests in 3.01s, 81.52MB read\nRequests/sec: 270612.75\nTransfer/sec:     27.10MB\n"
+    },
+    {
+      "label": "before",
+      "backend": "epoll",
+      "connections": 64,
+      "repeat": 1,
+      "rps": 270425.76,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   234.03us   41.38us   1.95ms   91.74%\n    Req/Sec   136.72k     3.42k  143.15k    60.00%\n  Latency Distribution\n     50%  225.00us\n     75%  231.00us\n     90%  249.00us\n     99%  352.00us\n  814014 requests in 3.01s, 81.51MB read\nRequests/sec: 270425.76\nTransfer/sec:     27.08MB\n"
+    },
+    {
+      "label": "before",
+      "backend": "epoll",
+      "connections": 64,
+      "repeat": 2,
+      "rps": 268448.41,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   235.72us   31.94us 746.00us   90.63%\n    Req/Sec   135.47k     4.21k  144.20k    65.00%\n  Latency Distribution\n     50%  227.00us\n     75%  233.00us\n     90%  252.00us\n     99%  353.00us\n  807059 requests in 3.01s, 80.82MB read\nRequests/sec: 268448.41\nTransfer/sec:     26.88MB\n"
+    },
+    {
+      "label": "after",
+      "backend": "epoll",
+      "connections": 64,
+      "repeat": 2,
+      "rps": 268604.95,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   236.32us   64.77us   3.27ms   90.50%\n    Req/Sec   135.61k     5.56k  146.25k    78.33%\n  Latency Distribution\n     50%  225.00us\n     75%  232.00us\n     90%  263.00us\n     99%  357.00us\n  807553 requests in 3.01s, 80.86MB read\nRequests/sec: 268604.95\nTransfer/sec:     26.90MB\n"
+    },
+    {
+      "label": "after",
+      "backend": "epoll",
+      "connections": 64,
+      "repeat": 3,
+      "rps": 269985.73,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   235.58us   61.15us   3.16ms   92.42%\n    Req/Sec   136.11k     3.54k  143.93k    66.67%\n  Latency Distribution\n     50%  227.00us\n     75%  233.00us\n     90%  248.00us\n     99%  352.00us\n  811525 requests in 3.01s, 81.26MB read\nRequests/sec: 269985.73\nTransfer/sec:     27.04MB\n"
+    },
+    {
+      "label": "before",
+      "backend": "epoll",
+      "connections": 64,
+      "repeat": 3,
+      "rps": 267093.46,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   239.91us  103.82us   3.79ms   96.06%\n    Req/Sec   134.99k     4.74k  141.98k    78.33%\n  Latency Distribution\n     50%  227.00us\n     75%  233.00us\n     90%  259.00us\n     99%  364.00us\n  803845 requests in 3.01s, 80.49MB read\nRequests/sec: 267093.46\nTransfer/sec:     26.75MB\n"
+    },
+    {
+      "label": "before",
+      "backend": "epoll",
+      "connections": 64,
+      "repeat": 4,
+      "rps": 267721.18,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   239.72us  104.01us   4.64ms   96.88%\n    Req/Sec   135.08k     3.44k  143.09k    65.00%\n  Latency Distribution\n     50%  228.00us\n     75%  235.00us\n     90%  250.00us\n     99%  359.00us\n  804919 requests in 3.01s, 80.60MB read\nRequests/sec: 267721.18\nTransfer/sec:     26.81MB\n"
+    },
+    {
+      "label": "after",
+      "backend": "epoll",
+      "connections": 64,
+      "repeat": 4,
+      "rps": 264464.08,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   236.61us   86.67us   3.84ms   91.62%\n    Req/Sec   135.39k     7.71k  179.91k    95.08%\n  Latency Distribution\n     50%  229.00us\n     75%  235.00us\n     90%  249.00us\n     99%  364.00us\n  819923 requests in 3.10s, 82.10MB read\nRequests/sec: 264464.08\nTransfer/sec:     26.48MB\n"
+    },
+    {
+      "label": "before",
+      "backend": "io-uring",
+      "connections": 2,
+      "repeat": 0,
+      "rps": 156953.94,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    14.42us   66.39us   3.30ms   99.75%\n    Req/Sec    78.98k     3.17k   82.57k    85.48%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   18.00us\n  486477 requests in 3.10s, 48.71MB read\nRequests/sec: 156953.94\nTransfer/sec:     15.72MB\n"
+    },
+    {
+      "label": "after",
+      "backend": "io-uring",
+      "connections": 2,
+      "repeat": 0,
+      "rps": 162502.46,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    11.69us    2.42us 329.00us   98.34%\n    Req/Sec    81.72k     1.37k   83.40k    64.52%\n  Latency Distribution\n     50%   11.00us\n     75%   12.00us\n     90%   12.00us\n     99%   15.00us\n  503704 requests in 3.10s, 50.44MB read\nRequests/sec: 162502.46\nTransfer/sec:     16.27MB\n"
+    },
+    {
+      "label": "after",
+      "backend": "io-uring",
+      "connections": 2,
+      "repeat": 1,
+      "rps": 160245.56,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    11.84us    2.64us 398.00us   97.96%\n    Req/Sec    80.58k     0.99k   82.37k    56.45%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   12.00us\n     99%   16.00us\n  496684 requests in 3.10s, 49.74MB read\nRequests/sec: 160245.56\nTransfer/sec:     16.05MB\n"
+    },
+    {
+      "label": "before",
+      "backend": "io-uring",
+      "connections": 2,
+      "repeat": 1,
+      "rps": 157980.24,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    13.51us   49.80us   3.00ms   99.82%\n    Req/Sec    79.44k     1.50k   81.68k    79.03%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   16.00us\n  489631 requests in 3.10s, 49.03MB read\nRequests/sec: 157980.24\nTransfer/sec:     15.82MB\n"
+    },
+    {
+      "label": "before",
+      "backend": "io-uring",
+      "connections": 2,
+      "repeat": 2,
+      "rps": 160383.98,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    11.90us    5.58us 715.00us   99.59%\n    Req/Sec    80.68k   719.76    82.17k    72.58%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   16.00us\n  497127 requests in 3.10s, 49.78MB read\nRequests/sec: 160383.98\nTransfer/sec:     16.06MB\n"
+    },
+    {
+      "label": "after",
+      "backend": "io-uring",
+      "connections": 2,
+      "repeat": 2,
+      "rps": 162998.35,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    11.64us    1.62us 180.00us   95.07%\n    Req/Sec    81.99k     1.06k   83.36k    83.87%\n  Latency Distribution\n     50%   11.00us\n     75%   12.00us\n     90%   12.00us\n     99%   15.00us\n  505290 requests in 3.10s, 50.60MB read\nRequests/sec: 162998.35\nTransfer/sec:     16.32MB\n"
+    },
+    {
+      "label": "after",
+      "backend": "io-uring",
+      "connections": 2,
+      "repeat": 3,
+      "rps": 157131.53,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.23us    8.64us 807.00us   99.71%\n    Req/Sec    79.10k     1.03k   80.83k    59.68%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   16.00us\n  487106 requests in 3.10s, 48.78MB read\nRequests/sec: 157131.53\nTransfer/sec:     15.73MB\n"
+    },
+    {
+      "label": "before",
+      "backend": "io-uring",
+      "connections": 2,
+      "repeat": 3,
+      "rps": 157791.7,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.09us    4.98us 538.00us   99.46%\n    Req/Sec    79.48k     1.28k   82.57k    70.97%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   16.00us\n  489094 requests in 3.10s, 48.98MB read\nRequests/sec: 157791.70\nTransfer/sec:     15.80MB\n"
+    },
+    {
+      "label": "before",
+      "backend": "io-uring",
+      "connections": 2,
+      "repeat": 4,
+      "rps": 157543.13,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.03us    2.45us 392.00us   97.58%\n    Req/Sec    79.31k     0.97k   81.23k    72.58%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   16.00us\n  488321 requests in 3.10s, 48.90MB read\nRequests/sec: 157543.13\nTransfer/sec:     15.78MB\n"
+    },
+    {
+      "label": "after",
+      "backend": "io-uring",
+      "connections": 2,
+      "repeat": 4,
+      "rps": 156551.33,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 2 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.96us   28.28us   1.81ms   99.76%\n    Req/Sec    78.76k     2.29k   81.15k    90.32%\n  Latency Distribution\n     50%   12.00us\n     75%   12.00us\n     90%   13.00us\n     99%   18.00us\n  485236 requests in 3.10s, 48.59MB read\nRequests/sec: 156551.33\nTransfer/sec:     15.68MB\n"
+    },
+    {
+      "label": "before",
+      "backend": "io-uring",
+      "connections": 64,
+      "repeat": 0,
+      "rps": 341219.55,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   180.02us   11.22us 452.00us   84.42%\n    Req/Sec   172.12k     2.05k  176.12k    68.33%\n  Latency Distribution\n     50%  180.00us\n     75%  185.00us\n     90%  190.00us\n     99%  211.00us\n  1025953 requests in 3.01s, 102.73MB read\nRequests/sec: 341219.55\nTransfer/sec:     34.17MB\n"
+    },
+    {
+      "label": "after",
+      "backend": "io-uring",
+      "connections": 64,
+      "repeat": 0,
+      "rps": 339837.92,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   181.69us   29.49us   1.74ms   96.71%\n    Req/Sec   171.86k     4.61k  177.29k    83.33%\n  Latency Distribution\n     50%  180.00us\n     75%  185.00us\n     90%  191.00us\n     99%  237.00us\n  1024089 requests in 3.01s, 102.55MB read\nRequests/sec: 339837.92\nTransfer/sec:     34.03MB\n"
+    },
+    {
+      "label": "after",
+      "backend": "io-uring",
+      "connections": 64,
+      "repeat": 1,
+      "rps": 340872.09,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   180.57us   11.42us 622.00us   84.60%\n    Req/Sec   171.93k     1.34k  174.70k    83.33%\n  Latency Distribution\n     50%  180.00us\n     75%  185.00us\n     90%  190.00us\n     99%  212.00us\n  1025016 requests in 3.01s, 102.64MB read\nRequests/sec: 340872.09\nTransfer/sec:     34.13MB\n"
+    },
+    {
+      "label": "before",
+      "backend": "io-uring",
+      "connections": 64,
+      "repeat": 1,
+      "rps": 340932.8,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   182.95us   76.56us   3.85ms   98.75%\n    Req/Sec   172.77k     4.83k  176.34k    96.67%\n  Latency Distribution\n     50%  180.00us\n     75%  184.00us\n     90%  189.00us\n     99%  226.00us\n  1029839 requests in 3.02s, 103.12MB read\nRequests/sec: 340932.80\nTransfer/sec:     34.14MB\n"
+    },
+    {
+      "label": "before",
+      "backend": "io-uring",
+      "connections": 64,
+      "repeat": 2,
+      "rps": 340612.79,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   183.24us   18.42us   1.20ms   95.31%\n    Req/Sec   171.72k     4.79k  175.54k    96.67%\n  Latency Distribution\n     50%  181.00us\n     75%  186.00us\n     90%  192.00us\n     99%  237.00us\n  1023771 requests in 3.01s, 102.52MB read\nRequests/sec: 340612.79\nTransfer/sec:     34.11MB\n"
+    },
+    {
+      "label": "after",
+      "backend": "io-uring",
+      "connections": 64,
+      "repeat": 2,
+      "rps": 338645.62,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   182.86us   11.93us 628.00us   86.70%\n    Req/Sec   170.87k     1.35k  172.96k    63.33%\n  Latency Distribution\n     50%  183.00us\n     75%  187.00us\n     90%  192.00us\n     99%  214.00us\n  1018878 requests in 3.01s, 102.03MB read\nRequests/sec: 338645.62\nTransfer/sec:     33.91MB\n"
+    },
+    {
+      "label": "after",
+      "backend": "io-uring",
+      "connections": 64,
+      "repeat": 3,
+      "rps": 339004.66,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   184.91us   55.16us   2.89ms   98.76%\n    Req/Sec   171.02k     5.31k  174.72k    91.67%\n  Latency Distribution\n     50%  182.00us\n     75%  187.00us\n     90%  192.00us\n     99%  237.00us\n  1019625 requests in 3.01s, 102.10MB read\nRequests/sec: 339004.66\nTransfer/sec:     33.95MB\n"
+    },
+    {
+      "label": "before",
+      "backend": "io-uring",
+      "connections": 64,
+      "repeat": 3,
+      "rps": 342003.88,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   183.44us   55.06us   3.87ms   99.26%\n    Req/Sec   172.51k     1.84k  175.28k    70.00%\n  Latency Distribution\n     50%  182.00us\n     75%  186.00us\n     90%  190.00us\n     99%  217.00us\n  1028327 requests in 3.01s, 102.97MB read\nRequests/sec: 342003.88\nTransfer/sec:     34.25MB\n"
+    },
+    {
+      "label": "before",
+      "backend": "io-uring",
+      "connections": 64,
+      "repeat": 4,
+      "rps": 333959.22,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   185.88us   50.52us   2.88ms   98.83%\n    Req/Sec   168.76k     4.56k  173.44k    93.33%\n  Latency Distribution\n     50%  184.00us\n     75%  189.00us\n     90%  194.00us\n     99%  229.00us\n  1005791 requests in 3.01s, 100.72MB read\nRequests/sec: 333959.22\nTransfer/sec:     33.44MB\n"
+    },
+    {
+      "label": "after",
+      "backend": "io-uring",
+      "connections": 64,
+      "repeat": 4,
+      "rps": 340949.8,
+      "raw": "Running 3s test @ http://127.0.0.1:8080/health\n  2 threads and 64 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   182.99us   37.36us   3.00ms   99.00%\n    Req/Sec   172.28k     1.61k  175.15k    78.33%\n  Latency Distribution\n     50%  182.00us\n     75%  186.00us\n     90%  191.00us\n     99%  218.00us\n  1026442 requests in 3.01s, 102.78MB read\nRequests/sec: 340949.80\nTransfer/sec:     34.14MB\n"
+    }
+  ]
+}

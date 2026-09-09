@@ -18,6 +18,14 @@ CASES = [
     ('{ Method.GET, "/", &too_many }', "at most three parameters"),
     ('{ Method.GET, "/" }', "must be { Method, path, &handler }"),
     ('{ 1, "/", &hello }', "methods must use Method.GET"),
+    ("hello", "Handler needs @Route"),
+    ("hello, annotated", "Handler needs @Route"),
+    ("&annotated", "Pass an annotated function name"),
+    ("annotated, annotated", "Duplicate route"),
+    ('annotated, { Method.GET, "/annotated", &hello }', "Duplicate route"),
+    ("annotated, invalid_path", "must start with /"),
+    ("annotated, invalid_return", "must return String"),
+    ("annotated, invalid_parameter", "parameters must be Request*"),
 ]
 with tempfile.TemporaryDirectory(prefix="c3ttp-compile-test-") as directory:
     source = Path(directory) / "invalid.c3"
@@ -28,6 +36,10 @@ fn String hello() => "hello";
 fn int bad_return() => 1;
 fn String bad_parameter(int id) => "bad";
 fn String too_many(Request* a, Request* b, Request* c, Request* d) => "bad";
+fn String annotated() @Route({ GET, "/annotated" }) => "annotated";
+fn String invalid_path() @Route({ GET, "relative" }) => "bad";
+fn int invalid_return() @Route({ GET, "/return" }) => 1;
+fn String invalid_parameter(int id) @Route({ GET, "/parameter" }) => "bad";
 fn int main() {
     Server server = c3ttp::@server(''' + routes + ''');
     return 0;

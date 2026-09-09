@@ -12,7 +12,7 @@ Requires C3 0.8.3 or later.
 - **SIMD delimiter scanning**: 32-byte vector operations accelerate delimiter scanning and header validation.
 - **Linux `io_uring` & `epoll`**: Uses `io_uring` by default for asynchronous I/O and falls back cleanly to `epoll` when unavailable.
 - **Multi-worker architecture**: Multi-process worker model via `SO_REUSEPORT` with CPU affinity pinning and cache-line aligned connection states.
-- **Static route API**: Simple string-returning handlers, request/response helpers, and compile-time validation without a runtime route registry.
+- **Annotated static routes**: `@Route({ GET, "/" })`, simple string-returning handlers, and compile-time validation without a runtime route registry.
 - **Zero steady-state allocations**: Connection and buffer pools are allocated once at startup per worker.
 - **Strict HTTP/1.1 validation**: Handles chunked transfer encoding, trailers, pipelining, keep-alive, and guards against malformed or conflicting framing headers.
 
@@ -25,22 +25,19 @@ module app;
 
 import c3ttp;
 
-fn String hello()
+fn String hello() @Route({ GET, "/" })
 {
     return "Hello world!\n";
 }
 
-fn void status(Response* response)
+fn void status(Request* request, Response* response) @Route({ GET, "/status" })
 {
-    response.json("{\"status\":\"ok\"}");
+    response.set_body("OK");
 }
 
 fn int main()
 {
-    Server server = c3ttp::@server(
-        { Method.GET, "/", &hello },
-        { Method.GET, "/status", &status },
-    );
+    Server server = c3ttp::@server(hello, status);
     server.listen("127.0.0.1", 8080)!!;
     return 0;
 }
@@ -59,12 +56,35 @@ c3c run hello_server -- --workers=2
 
 ### Routes and handlers
 
-`@server` compiles `{ method, path, &handler }` entries into direct comparisons
-and calls. It creates no route registry and allocates no memory per request.
-The route list, methods, paths, and function pointers must be compile-time constants.
-Duplicate method/path pairs, malformed paths, and unsupported handler signatures
-produce compiler errors. Routes are checked in declaration order; keep frequently
-used routes near the front when using a large list.
+Annotate a function with `@Route({ method, path })`, then register its **name**
+in `c3ttp::@server(hello, status)`. The method and path belong to the function;
+registration does not repeat them. Functions in another imported module can be
+registered by qualified name, e.g. `c3ttp::@server(api::health, api::status)`.
+An annotation alone does not register a function.
+
+The macro reads annotations at compile time and emits direct comparisons and
+calls. It creates no route registry and allocates no memory per request. Missing
+annotations, duplicate method/path pairs, malformed paths, and unsupported handler
+signatures produce compiler errors. Routes are checked in registration order;
+keep frequently used routes near the front when using a large list.
+
+The explicit `{ method, path, &handler }` API remains supported and can be mixed
+with annotated handlers, for example to reuse a handler for an additional method:
+
+```c3
+Server server = c3ttp::@server(
+    hello,
+    { Method.HEAD, "/", &hello },
+    status,
+);
+```
+
+All route metadata and function references must be compile-time constants.
+This experimental annotation API takes inspiration from
+[Eclair](https://github.com/Ecoral360/eclair.c3l). Registration remains a single
+`@server(...)` call so the compiler can emit the complete dispatcher. Eclair's
+incremental `new_server()` / `server.@add_route()` API, automatic parameter
+extraction, and automatic JSON serialization are not implemented here.
 
 Handlers can return `String` (200 with a plain-text body), `String?`, `void`, or
 `void?`. Use a `void` handler to set a custom status or content type. Faults from
@@ -75,17 +95,17 @@ in the library module. Private callbacks are not supported by this macro on C3 0
 Take only the parameters you need, in any order, up to three parameters:
 
 ```c3
-fn String echo(Request* request)
+fn String echo(Request* request) @Route({ POST, "/echo" })
 {
     return request.body; // For a fixed-length body; see chunked bodies below.
 }
 
-fn void create(Response* response)
+fn void create(Response* response) @Route({ POST, "/create" })
 {
     response.text("created", 201);
 }
 
-fn void contextual(Request* request, Response* response, void* context)
+fn void contextual(Request* request, Response* response, void* context) @Route({ GET, "/context" })
 {
     response.text(*(String*)context);
 }
@@ -107,6 +127,10 @@ are not provided.
 allocation or URL decoding. `request.target` retains the full original target.
 `response.text(body, status: 200)` and `response.json(body, status: 200)` set the
 body and content type; `json()` takes **already serialized JSON**.
+`response.set_body(body)` and `response.set_status(status)` update only their
+respective fields. Both preserve the content type and connection policy. A
+string-returning handler still produces a 200 plain-text response; use a `void`
+handler when setting status and body independently.
 
 `Request` and `Response` are aliases for `RequestView` and `ResponseView`, with
 identical layouts and lifetime rules. The original `serve()`, `ViewHandler`,
@@ -196,6 +220,8 @@ If io_uring is unavailable, run the HTTP checks with
 
 See [benchmark/README.md](benchmark/README.md) for reproducible before/after
 measurements, raw results, and the workload limits of the comparison.
+The [annotation experiment](benchmark/annotations.md) separately compares this
+branch with the previous explicit route API, including a machine-code comparison.
 
 ## Non-Goals
 

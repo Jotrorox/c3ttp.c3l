@@ -1,5 +1,10 @@
 # Explicit routes with annotation adapters
 
+> Historical measurements are preserved in this report. Raw benchmark results,
+> generated tables, charts, and logs are no longer versioned. Artifact filenames
+> below identify local outputs or historical records; use the reproduction
+> commands to collect fresh results.
+
 Branch: `experiment/explicit-route-annotations`, based on `ad52a0f`.
 This experiment combines the explicit branch's route tuples with generic
 `@Route` declarations, retaining the existing APIs for compatibility.
@@ -73,7 +78,7 @@ was collected to attribute the compiler allocation to one expansion.
 The recorded successful build time is not an isolated compiler benchmark.
 
 Raw compiler version, timing, and failure diagnostic:
-[inventory-scale.json](inventory-scale.json). The regular regression test defaults
+`inventory-scale.json`. The regular regression test defaults
 to 100 routes; explicitly requesting 1,000 records the known failure and exits
 nonzero.
 
@@ -86,8 +91,8 @@ The review script verifies every instruction, permitting only those address
 changes after checking the referenced literal's actual contents. The relocated
 literals are `text/plain; charset=utf-8` and `Not Found`.
 
-See [raw code comparison](inventory-codegen.json) and
-[verified literal relocation review](inventory-codegen-review.json).
+See raw code comparison (`inventory-codegen.json`) and
+verified literal relocation review (`inventory-codegen-review.json`).
 The generated runtime operations are equivalent for this fixture. This is not
 a claim that the complete executable's `.text` section is byte-identical.
 
@@ -96,7 +101,7 @@ a claim that the complete executable's `.text` section is byte-identical.
 Before: `experiment/eclair-annotations` at
 `c1875c5790f012020b94143bd37429b9384df1d3`.
 After: the hybrid example and library sources identified by SHA-256 in
-[inventory-build.json](inventory-build.json).
+`inventory-build.json`.
 
 Both use C3 0.8.3, LLVM 22.1.8, `-O3`, one worker on CPU 2, wrk's two client
 threads on CPUs 4/5, and the same four routes with `/health` first. Each sample
@@ -117,7 +122,7 @@ range from −1.08% to +1.15%; all pass the configured 3% regression allowance.
 The higher-concurrency p99 measurements fluctuate more than throughput, so this
 does not establish a latency improvement.
 
-Raw wrk output: [inventory-http.json](inventory-http.json). These short loopback
+Raw wrk output: `inventory-http.json`. These short loopback
 measurements on a laptop include background scheduling and frequency variation;
 they are not production capacity estimates. Code inspection provides a separate
 check that the registration change adds no dispatch operations.

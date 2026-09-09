@@ -378,7 +378,8 @@ hybrid API with the generic `@Route` branch, including generated code, HTTP
 throughput, and the 100/1,000-route compilation trials.
 
 See [benchmark/README.md](benchmark/README.md) for reproducible before/after
-measurements, raw results, and the workload limits of the comparison.
+measurements, reproduction commands, and the workload limits of the comparison.
+Generated benchmark results, charts, tables, and logs are ignored by Git.
 The [annotation experiment](benchmark/annotations.md) separately compares this
 API with the previous explicit route API, including a machine-code comparison.
 The [method annotation experiment](benchmark/method-annotations.md) compares

@@ -1,5 +1,10 @@
 # Memory and resource comparison
 
+> Historical measurements are preserved in this report. Raw benchmark results,
+> generated tables, charts, and logs are no longer versioned. Artifact filenames
+> below identify local outputs or historical records; use the reproduction
+> commands to collect fresh results.
+
 This extends the template experiment's three-way comparison to process memory,
 connection scaling, retained memory, and CPU consumption. It uses the **same
 12 binaries** as the throughput comparison: `main`, the starting inventory branch,
@@ -121,12 +126,12 @@ Route-count scaling from 4 to 100 is modest in memory because it adds generated
 code rather than another per-connection route registry. The library's fixed pools
 remain the dominant cost, and these measurements cover **one worker** only.
 
-See [complete memory tables](memory-tables.md), [raw samples](memory-results.json),
-and [machine-readable summary](memory-summary.json). Tables report medians; the
+See complete memory tables (`memory-tables.md`), raw samples (`memory-results.json`),
+and machine-readable summary (`memory-summary.json`). Tables report medians; the
 raw samples and summary retain observed ranges. No failed run is included in a
 median.
 
-![Resident memory by workload and backend](memory.svg)
+Generated chart (local output): `memory.svg`.
 
 ## Reproduce
 

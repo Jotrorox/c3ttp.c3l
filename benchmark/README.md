@@ -1,5 +1,10 @@
 # API performance comparison
 
+> Historical measurements are preserved in this report. Raw benchmark results,
+> generated tables, charts, and logs are no longer versioned. Artifact filenames
+> below identify local outputs or historical records; use the reproduction
+> commands to collect fresh results.
+
 For all four API versions versus Eclair, see the
 [five-way comparison](five-way/README.md), including a runnable Eclair project,
 larger route sets, memory measurements, and usability ratings.
@@ -64,7 +69,7 @@ Both binaries use the same `parser.c3` workload. The checksum must be 990000000.
 ## Recorded results
 
 Measured on an Intel Core Ultra 5 125U using C3 0.8.3 / LLVM 22.1.8, Linux x64.
-Full versions, CPU information, and wrk revision are in [environment.json](environment.json).
+Full versions, CPU information, and wrk revision are in `environment.json`.
 
 HTTP throughput medians (higher is better):
 
@@ -107,9 +112,9 @@ The small timing differences therefore reflect measurement variability.
 
 Raw measurements:
 
-- [baseline-http.json](baseline-http.json): before-only runs collected before API edits.
-- [comparison.json](comparison.json): final alternating HTTP measurements.
-- [parser-comparison.json](parser-comparison.json): seven alternating parser pairs.
+- `baseline-http.json`: before-only runs collected before API edits.
+- `comparison.json`: final alternating HTTP measurements.
+- `parser-comparison.json`: seven alternating parser pairs.
 
 This is a local, single-worker, small-response throughput comparison. It does
 not establish performance for large route sets, multi-worker scaling, large

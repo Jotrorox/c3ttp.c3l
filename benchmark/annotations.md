@@ -1,5 +1,10 @@
 # Route annotation experiment
 
+> Historical measurements are preserved in this report. Raw benchmark results,
+> generated tables, charts, and logs are no longer versioned. Artifact filenames
+> below identify local outputs or historical records; use the reproduction
+> commands to collect fresh results.
+
 Branch: `experiment/eclair-annotations`, based on
 `9585c33c35477119f3161172c6bc9733a54389ab` (`feat/developer-api`).
 
@@ -49,7 +54,7 @@ The old and new optimized example dispatchers are **byte-for-byte identical**:
 Across the complete executable `.text` section there is only one differing byte:
 a startup panic's source-line number changed from 54 to 49 when the registration
 list became shorter. The request-handling instructions are unchanged.
-See [annotations-codegen.json](annotations-codegen.json).
+See `annotations-codegen.json`.
 
 These results are specific to the included example, route set, compiler, and
 build flags. The comparison helper intentionally fails if the symbol bytes
@@ -83,7 +88,7 @@ Throughput changes range from -0.32% to +1.56%; no material throughput
 regression was detected. All 40 timed samples completed without wrk socket or
 HTTP status errors. These small differences are not evidence of a speedup.
 
-All samples are retained in [annotations-http.json](annotations-http.json).
+All samples are retained in `annotations-http.json`.
 The unchanged dispatcher is stronger evidence of annotation overhead than small
 wall-clock differences on this laptop with CPU frequency scaling enabled.
 The network test is still limited to a small response and a single worker;

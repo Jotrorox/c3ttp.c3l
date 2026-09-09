@@ -1,5 +1,10 @@
 # HTTP method annotation experiment
 
+> Historical measurements are preserved in this report. Raw benchmark results,
+> generated tables, charts, and logs are no longer versioned. Artifact filenames
+> below identify local outputs or historical records; use the reproduction
+> commands to collect fresh results.
+
 Branch: `experiment/http-method-annotations`, based on
 `c1875c5790f012020b94143bd37429b9384df1d3` (`experiment/eclair-annotations`).
 
@@ -54,7 +59,7 @@ The optimized example's **entire `.text` section is byte-for-byte identical**
 to its `@Route` version. The 572-byte dispatcher retains SHA-256
 `3539f0ccc3311441afa26973efc31f537b732446a7517c6e02b39a9cd1570db9`.
 There are zero differing code bytes. See
-[method-annotations-codegen.json](method-annotations-codegen.json).
+`method-annotations-codegen.json`.
 
 This establishes that the shorthand introduces no runtime instruction changes
 for this example and compiler configuration. It is not a claim about every
@@ -91,7 +96,7 @@ samples completed without wrk socket or HTTP status errors. The latency results
 are included above; this benchmark is not a guarantee of identical timing.
 
 All samples and latency output are in
-[method-annotations-http.json](method-annotations-http.json). Small differences
+`method-annotations-http.json`. Small differences
 between runs of identical machine code reflect measurement variability, not a
 speedup or slowdown caused by method annotations. CPU frequency scaling remained
 enabled; this is a local, single-worker, small-response experiment.

@@ -1,5 +1,10 @@
 # Templated route experiment
 
+> Historical measurements are preserved in this report. Raw benchmark results,
+> generated tables, charts, and logs are no longer versioned. Artifact filenames
+> below identify local outputs or historical records; use the reproduction
+> commands to collect fresh results.
+
 `experiment/templated-routes` adds compile-time whole-segment parameters to the
 existing route inventories and annotations:
 
@@ -130,7 +135,7 @@ builds describe this run, not precise compiler performance estimates.
 
 The literal dispatcher matches the starting branch's 580-byte, 157-instruction
 sequence, allowing only verified relocated addresses of identical string literals.
-See [machine-code comparison](literal-codegen.json). This establishes equivalence
+See machine-code comparison (`literal-codegen.json`). This establishes equivalence
 for this fixture, rather than every possible literal application.
 
 The dispatch-only medians show the remaining API cost more clearly than HTTP:
@@ -143,8 +148,8 @@ The starting branch's mixed `/health` wrapper adds an extra call, so its higher
 microbenchmark cost on that one endpoint should not be attributed to native
 literal routing.
 
-See [measured tables](tables.md), [raw results and build metadata](results.json),
-and [test logs](checks.json). Throughput uses medians with observed min–max;
+See measured tables (`tables.md`), raw results and build metadata (`results.json`),
+and test logs (`checks.json`). Throughput uses medians with observed min–max;
 latency uses the median of each run's p99, not a combined percentile.
 
 ## Memory and resource usage

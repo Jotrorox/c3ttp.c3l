@@ -12,8 +12,17 @@ out/
 testrun
 benchmarkrun
 
+# Generated benchmark results, charts, and tables.
+# Keep source, authored reports, and fixture project manifests versioned.
+/benchmark/**/results/
+/benchmark/**/*.json
+!/benchmark/**/project.json
+/benchmark/**/*.svg
+/benchmark/**/*.png
+/benchmark/**/tables.md
+/benchmark/**/*-tables.md
+
 # Transient benchmark workspaces and compiler output.
-# Keep benchmark source, reports, and recorded JSON/SVG/PNG results versioned.
 /benchmark/**/logs/
 /benchmark/**/memory-logs/
 /benchmark/**/tmp/

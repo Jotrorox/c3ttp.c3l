@@ -1,5 +1,10 @@
 # Five-way API comparison
 
+> Historical measurements are preserved in this report. Raw benchmark results,
+> generated tables, charts, and logs are no longer versioned. Artifact filenames
+> below identify local outputs or historical records; use the reproduction
+> commands to collect fresh results.
+
 This experiment compares the four existing c3ttp branches with an unmodified,
 pinned Eclair checkout. It adds benchmark applications and reports; it does not
 change any library implementation. Results were collected on 2026-09-09.
@@ -25,7 +30,7 @@ All five use C3 **0.8.4 prerelease**, compiler commit
 Eclair requires 0.8.4 and cannot use the installed 0.8.3 release's reflection API.
 Using the same newer compiler for every implementation avoids comparing compiler
 versions. Eclair's C backend is also compiled with **`-O3`**: the compiler wrapper
-records the actual arguments, retained in [build.json](results/build.json).
+records the actual arguments, retained in build.json (`results/build.json`).
 The application's `cflags` setting alone did not propagate to that dependency's
 C compilation, so the wrapper supplies the flag explicitly.
 
@@ -81,7 +86,7 @@ Median **requests/second**, epoll throughout:
 | `@Get` / `@Post` | 156,087 | 266,674 | 261,999 | 267,692 | **compile failure** |
 | Eclair | 20,930 | 66,123 | 47,068 | 60,965 | **memory limit** |
 
-![Throughput comparison](results/throughput.svg)
+Generated chart (local output): `results/throughput.svg`.
 
 For the small GET workload at 64 connections, c3ttp is about **4.0–4.1×**
 Eclair's throughput. The POST difference is about **5.5–5.6×**. The method
@@ -95,13 +100,13 @@ io_uring result for Eclair.
 
 There are **130 valid samples and five failed samples**. All five failures are
 Eclair's 100-route workload: it exhausts the 2 GiB virtual-memory ceiling during
-the measured interval. The [final failed server log](results/eclair-100-memory-limit.log)
+the measured interval. The final failed server log (`results/eclair-100-memory-limit.log`)
 records `mem::OUT_OF_MEMORY`. Partial throughput from those failed runs is excluded.
 
-The [complete tables](results/tables.md) include every workload, p99, ranges, and
-end-of-sample RSS. [http.json](results/http.json) retains wrk output, run order,
+The complete tables (`results/tables.md`) include every workload, p99, ranges, and
+end-of-sample RSS. http.json (`results/http.json`) retains wrk output, run order,
 validation results, memory measurements, and any failed samples.
-[validation.json](results/validation.json) adds a final check of 100 repeated GET
+validation.json (`results/validation.json`) adds a final check of 100 repeated GET
 and POST requests per benchmark endpoint on persistent connections; those checks
 pass for all runnable implementations. The mixed-target Eclair failure remains
 recorded separately.
@@ -126,9 +131,9 @@ executable `.text` sections** for matching four-route fixtures. The dispatcher i
 299 bytes. The 32-route explicit and method annotation applications also have
 identical `.text` sections; their dispatcher is 2,064 bytes.
 
-See [explicit versus Route](results/codegen-explicit-route-4.json),
-[Route versus method annotations](results/codegen-route-methods-4.json), and
-[32-route explicit versus method annotations](results/codegen-explicit-methods-32.json).
+See explicit versus Route (`results/codegen-explicit-route-4.json`),
+Route versus method annotations (`results/codegen-route-methods-4.json`), and
+32-route explicit versus method annotations (`results/codegen-explicit-methods-32.json`).
 Small measured differences between these binaries are not evidence of an
 annotation runtime cost. These results establish equivalence for the tested
 fixtures, rather than proving every possible application has identical output.
@@ -141,7 +146,7 @@ Both annotation branches build and run the 32-route fixture, but **fail to compi
 100 registered handlers** with “max call depth reached”. Their recursive
 `@collect_routes` expansion reaches the compiler's macro call-depth limit.
 The explicit branch, handwritten main application, and Eclair compile all 100.
-The full diagnostics are retained in [build.json](results/build.json).
+The full diagnostics are retained in build.json (`results/build.json`).
 
 The 100-route table consequently has no throughput number for either annotation
 branch. This is an API scalability limitation even though the generated runtime
@@ -312,8 +317,8 @@ comparison's 0.8.4 prerelease. Final HTTP validation covers 23 implementation /
 route-count / backend configurations, 893 fresh-connection checks, and 6,000
 repeated GET/POST checks. All of those pass; the Eclair mixed-target failure is
 retained separately. The standalone Eclair project was rebuilt and tested as well.
-See [checks.json](results/checks.json) and
-[standalone project validation](results/eclair-project-validation.json).
+See checks.json (`results/checks.json`) and
+standalone project validation (`results/eclair-project-validation.json`).
 
 ## Reproduce
 
@@ -337,7 +342,7 @@ python3 benchmark/five-way/summarize.py /tmp/c3ttp-five-way/http.json
 ```
 
 The prerelease download URL is mutable. For an exact reproduction, verify its
-compiler commit and archive SHA-256 against [build.json](results/build.json), or
+compiler commit and archive SHA-256 against build.json (`results/build.json`), or
 use an archived copy of that toolchain. `build.py --compiler /path/to/c3c` accepts
 another compiler for a new experiment, recording its version. The build step
 clones and pins Eclair and Dessert automatically and preserves build failures as

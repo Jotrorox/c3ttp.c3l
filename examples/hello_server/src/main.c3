@@ -3,22 +3,22 @@ module hello_server;
 import c3ttp;
 import std::io;
 
-fn String hello() @Route({ GET, "/" })
+fn String hello() @Get("/")
 {
 	return "Hello from c3ttp\n";
 }
 
-fn String health() @Route({ GET, "/health" })
+fn String health() @Get("/health")
 {
 	return "ok";
 }
 
-fn void api_status(Response* response) @Route({ GET, "/status" })
+fn void api_status(Response* response) @Get("/status")
 {
 	response.json("{\"status\":\"ok\"}");
 }
 
-fn String echo(Request* request) @Route({ POST, "/echo" })
+fn String echo(Request* request) @Post("/echo")
 {
 	return request.body;
 }

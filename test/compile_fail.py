@@ -18,14 +18,24 @@ CASES = [
     ('{ Method.GET, "/", &too_many }', "at most three parameters"),
     ('{ Method.GET, "/" }', "must be { Method, path, &handler }"),
     ('{ 1, "/", &hello }', "methods must use Method.GET"),
-    ("hello", "Handler needs @Route"),
-    ("hello, annotated", "Handler needs @Route"),
+    ("hello", "Handler needs a route annotation"),
+    ("hello, annotated", "Handler needs a route annotation"),
     ("&annotated", "Pass an annotated function name"),
     ("annotated, annotated", "Duplicate route"),
     ('annotated, { Method.GET, "/annotated", &hello }', "Duplicate route"),
     ("annotated, invalid_path", "must start with /"),
     ("annotated, invalid_return", "must return String"),
     ("annotated, invalid_parameter", "parameters must be Request*"),
+    ("short_get, short_get", "Duplicate route"),
+    ("short_get, annotated", "Duplicate route"),
+    ('short_get, { Method.GET, "/annotated", &hello }', "Duplicate route"),
+    ("short_invalid_path", "must start with /"),
+    ("short_empty_path", "must not be empty"),
+    ("short_query_path", "query, or a fragment"),
+    ("short_invalid_return", "must return String"),
+    ("short_invalid_parameter", "parameters must be Request*"),
+    ("stacked_collision", "Duplicate route"),
+    ("stacked_invalid_path", "must start with /"),
 ]
 with tempfile.TemporaryDirectory(prefix="c3ttp-compile-test-") as directory:
     source = Path(directory) / "invalid.c3"
@@ -40,6 +50,14 @@ fn String annotated() @Route({ GET, "/annotated" }) => "annotated";
 fn String invalid_path() @Route({ GET, "relative" }) => "bad";
 fn int invalid_return() @Route({ GET, "/return" }) => 1;
 fn String invalid_parameter(int id) @Route({ GET, "/parameter" }) => "bad";
+fn String short_get() @Get("/annotated") => "get";
+fn String short_invalid_path() @Post("relative") => "bad";
+fn String short_empty_path() @Put("") => "bad";
+fn String short_query_path() @Delete("/?query") => "bad";
+fn int short_invalid_return() @Patch("/return") => 1;
+fn String short_invalid_parameter(int id) @Get("/parameter") => "bad";
+fn String stacked_collision() @Route({ GET, "/collision" }) @Get("/collision") => "bad";
+fn String stacked_invalid_path() @Get("/valid") @Post("relative") => "bad";
 fn int main() {
     Server server = c3ttp::@server(''' + routes + ''');
     return 0;

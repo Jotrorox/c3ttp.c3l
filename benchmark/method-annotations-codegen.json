@@ -1,0 +1,30 @@
+{
+  "symbol": "c3ttp.$server$lambda1",
+  "before": {
+    "binary": "benchmark/out/method-before-server",
+    "size": 572,
+    "sha256": "3539f0ccc3311441afa26973efc31f537b732446a7517c6e02b39a9cd1570db9"
+  },
+  "after": {
+    "binary": "benchmark/out/method-after-server",
+    "size": 572,
+    "sha256": "3539f0ccc3311441afa26973efc31f537b732446a7517c6e02b39a9cd1570db9"
+  },
+  "identical_dispatcher": true,
+  "identical_text_section": true,
+  "text_differing_bytes": 0,
+  "build": {
+    "baseline_commit": "c1875c5790f012020b94143bd37429b9384df1d3",
+    "compiler": "C3 Compiler Version:       0.8.3\nInstalled directory:       /home/johannes/.local/share/c3\nGit Hash:                  1d155ee04d3b607261b99aa15ed5eefd6d7db284\nBackends:                  LLVM\nLLVM version:              22.1.8\nLLVM default target:       x86_64-unknown-linux-gnu\n",
+    "flags": "-O3",
+    "after_source_sha256": {
+      "c3ttp.c3i": "fd6078def099d744bb96ba2066ec106c17204c632128a415eeb7b1ed25e28a01",
+      "src/router.c3": "d78496dc1b4ba3c89fdee06be5ca24f95863da0f4b768590b5c0b38abf045f9b",
+      "src/parser.c3": "280a29123dc1c308a8fe3d1e852021403b605c0afd93e89f1089fd485b4aaadd",
+      "src/server.c3": "54032700095c9fc7f8398d9cd49aa46b5bba90eb3aa852bf0d9588bf26f2f07a",
+      "src/response.c3": "884d476107a24deabdcb911ce33820b1bc4ddb51f314aacc46c336cbc67d34b6",
+      "src/uring.c3": "d9d032587f3df000dff6332b4c4f3894767be081bcfbe8cb0c9c20de38e7b4d5",
+      "examples/hello_server/src/main.c3": "9e30b7bb88d32e4d1888027cf2092318b0431b5d598fc1e4f7b2fa9592487a59"
+    }
+  }
+}

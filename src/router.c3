@@ -1,15 +1,40 @@
 module c3ttp @private;
 
-macro @route_entry(#entry) @private
+macro @route_entries(#entry) @private
 {
 	$if $Typeof(#entry)::kind == UNTYPEDLIST:
 		// Keep the explicit { Method, path, &handler } API available too.
-		return #entry;
+		return { #entry };
 	$else
 		$assert $defined($reflect(#entry).has_tag("c3ttp:route")) : "Pass an annotated function name or { Method, path, &handler }";
-		$assert $reflect(#entry).has_tag("c3ttp:route") : "Handler needs @Route({ method, path })";
-		RouteConfig $config = $reflect(#entry).get_tag("c3ttp:route");
-		return { $config.method, $config.path, &#entry };
+		var $entries = {};
+		$if $reflect(#entry).has_tag("c3ttp:route"):
+			RouteConfig $config = $reflect(#entry).get_tag("c3ttp:route");
+			$entries = { { $config.method, $config.path, &#entry } };
+		$endif
+		var $methods = {
+			{ "c3ttp:route:get", Method.GET },
+			{ "c3ttp:route:post", Method.POST },
+			{ "c3ttp:route:put", Method.PUT },
+			{ "c3ttp:route:delete", Method.DELETE },
+			{ "c3ttp:route:head", Method.HEAD },
+			{ "c3ttp:route:options", Method.OPTIONS },
+			{ "c3ttp:route:patch", Method.PATCH },
+			{ "c3ttp:route:connect", Method.CONNECT },
+			{ "c3ttp:route:trace", Method.TRACE },
+		};
+		$foreach $method : $methods:
+			$if $reflect(#entry).has_tag($method[0]):
+				var $route = { $method[1], $reflect(#entry).get_tag($method[0]), &#entry };
+				$if $entries.len:
+					$entries = { ...$entries, $route };
+				$else
+					$entries = { $route };
+				$endif
+			$endif
+		$endforeach
+		$assert $entries.len > 0 : "Handler needs a route annotation such as @Get(path) or @Route({ method, path })";
+		return $entries;
 	$endif
 }
 
@@ -18,12 +43,12 @@ macro @route_entry(#entry) @private
 // forwarding the remaining argument pack preserves the unevaluated names.
 macro @collect_routes(#first, ...) @private
 {
-	var $entry = @route_entry(#first);
+	var $entries = @route_entries(#first);
 	$if $vaarg.len:
 		var $rest = @collect_routes(...$vaarg);
-		return { $entry, ...$rest };
+		return { ...$entries, ...$rest };
 	$else
-		return { $entry };
+		return $entries;
 	$endif
 }
 

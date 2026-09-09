@@ -12,7 +12,7 @@ Requires C3 0.8.3 or later.
 - **SIMD delimiter scanning**: 32-byte vector operations accelerate delimiter scanning and header validation.
 - **Linux `io_uring` & `epoll`**: Uses `io_uring` by default for asynchronous I/O and falls back cleanly to `epoll` when unavailable.
 - **Multi-worker architecture**: Multi-process worker model via `SO_REUSEPORT` with CPU affinity pinning and cache-line aligned connection states.
-- **Annotated static routes**: `@Route({ GET, "/" })`, simple string-returning handlers, and compile-time validation without a runtime route registry.
+- **Method annotations**: `@Get("/")`, `@Post("/items")`, simple string-returning handlers, and compile-time validation without a runtime route registry.
 - **Zero steady-state allocations**: Connection and buffer pools are allocated once at startup per worker.
 - **Strict HTTP/1.1 validation**: Handles chunked transfer encoding, trailers, pipelining, keep-alive, and guards against malformed or conflicting framing headers.
 
@@ -25,12 +25,12 @@ module app;
 
 import c3ttp;
 
-fn String hello() @Route({ GET, "/" })
+fn String hello() @Get("/")
 {
     return "Hello world!\n";
 }
 
-fn void status(Request* request, Response* response) @Route({ GET, "/status" })
+fn void status(Request* request, Response* response) @Get("/status")
 {
     response.set_body("OK");
 }
@@ -56,11 +56,41 @@ c3c run hello_server -- --workers=2
 
 ### Routes and handlers
 
-Annotate a function with `@Route({ method, path })`, then register its **name**
+Annotate a function with `@Get("/path")`, `@Post("/path")`, etc., then register its **name**
 in `c3ttp::@server(hello, status)`. The method and path belong to the function;
 registration does not repeat them. Functions in another imported module can be
 registered by qualified name, e.g. `c3ttp::@server(api::health, api::status)`.
 An annotation alone does not register a function.
+
+Available method annotations:
+
+| Annotation | HTTP method |
+| --- | --- |
+| `@Get(path)` | GET |
+| `@Post(path)` | POST |
+| `@Put(path)` | PUT |
+| `@Delete(path)` | DELETE |
+| `@Head(path)` | HEAD |
+| `@Options(path)` | OPTIONS |
+| `@Patch(path)` | PATCH |
+| `@Connect(path)` | CONNECT |
+| `@Trace(path)` | TRACE |
+
+C3 0.8.3 requires type-style capitalization for custom attributes: `@Get`, not
+`@GET`. The annotations select HTTP methods; transport behavior is unchanged.
+
+Different method annotations can share a handler, including different paths:
+
+```c3
+fn String health() @Get("/health") @Head("/health")
+{
+    return "ok";
+}
+```
+
+Register `health` once to add both routes. Use each method annotation at most
+once on a function: C3 overwrites repeated tags of the same name. To expose the
+same handler at another path for the same method, add an explicit route triple.
 
 The macro reads annotations at compile time and emits direct comparisons and
 calls. It creates no route registry and allocates no memory per request. Missing
@@ -68,13 +98,14 @@ annotations, duplicate method/path pairs, malformed paths, and unsupported handl
 signatures produce compiler errors. Routes are checked in registration order;
 keep frequently used routes near the front when using a large list.
 
-The explicit `{ method, path, &handler }` API remains supported and can be mixed
-with annotated handlers, for example to reuse a handler for an additional method:
+The previous `@Route({ GET, "/path" })` annotation and explicit
+`{ method, path, &handler }` API remain supported. All three forms can be mixed,
+for example to reuse a handler at another path:
 
 ```c3
 Server server = c3ttp::@server(
     hello,
-    { Method.HEAD, "/", &hello },
+    { Method.GET, "/greeting", &hello },
     status,
 );
 ```
@@ -95,17 +126,17 @@ in the library module. Private callbacks are not supported by this macro on C3 0
 Take only the parameters you need, in any order, up to three parameters:
 
 ```c3
-fn String echo(Request* request) @Route({ POST, "/echo" })
+fn String echo(Request* request) @Post("/echo")
 {
     return request.body; // For a fixed-length body; see chunked bodies below.
 }
 
-fn void create(Response* response) @Route({ POST, "/create" })
+fn void create(Response* response) @Post("/create")
 {
     response.text("created", 201);
 }
 
-fn void contextual(Request* request, Response* response, void* context) @Route({ GET, "/context" })
+fn void contextual(Request* request, Response* response, void* context) @Get("/context")
 {
     response.text(*(String*)context);
 }
@@ -221,7 +252,9 @@ If io_uring is unavailable, run the HTTP checks with
 See [benchmark/README.md](benchmark/README.md) for reproducible before/after
 measurements, raw results, and the workload limits of the comparison.
 The [annotation experiment](benchmark/annotations.md) separately compares this
-branch with the previous explicit route API, including a machine-code comparison.
+API with the previous explicit route API, including a machine-code comparison.
+The [method annotation experiment](benchmark/method-annotations.md) compares
+`@Get` / `@Post` with `@Route`, including generated code and HTTP measurements.
 
 ## Non-Goals
 

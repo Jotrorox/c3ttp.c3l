@@ -190,6 +190,19 @@ struct RouteConfig
 
 attrdef @Route(RouteConfig config) = @tag("c3ttp:route", config);
 
+// C3 custom attributes use type-style names (@Get, not @GET).
+// Distinct tags allow multiple methods on one function. They are normalized
+// to the same compile-time route triples as @Route during registration.
+attrdef @Get(String path) = @tag("c3ttp:route:get", path);
+attrdef @Post(String path) = @tag("c3ttp:route:post", path);
+attrdef @Put(String path) = @tag("c3ttp:route:put", path);
+attrdef @Delete(String path) = @tag("c3ttp:route:delete", path);
+attrdef @Head(String path) = @tag("c3ttp:route:head", path);
+attrdef @Options(String path) = @tag("c3ttp:route:options", path);
+attrdef @Patch(String path) = @tag("c3ttp:route:patch", path);
+attrdef @Connect(String path) = @tag("c3ttp:route:connect", path);
+attrdef @Trace(String path) = @tag("c3ttp:route:trace", path);
+
 struct Server
 {
 	ViewHandler handler;
